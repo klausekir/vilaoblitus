@@ -1,0 +1,3603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Locais e Enigmas - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .editor-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar */
+        .locations-sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-right: 2px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .add-location-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .add-location-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        .locations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .location-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .location-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .location-item.dragging {
+            opacity: 0.4;
+        }
+
+        .location-item.drag-over {
+            border-top: 3px solid #667eea;
+        }
+
+        .location-item-name {
+            font-weight: 600;
+        }
+
+        .location-item-id {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .delete-location-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-location-btn:hover {
+            background: #cc0000;
+        }
+
+        /* Main Editor Area */
+        .editor-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .editor-header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .editor-header h1 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .editor-header .location-id {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        /* Puzzle Editor */
+        .puzzle-type-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .puzzle-type-btn {
+            padding: 15px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .puzzle-type-btn:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .puzzle-type-btn.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Items & Hotspots List */
+        .items-list, .hotspots-list, .connections-list {
+            margin-top: 20px;
+        }
+
+        .list-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .list-item-details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Export Section */
+        .export-section {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 600px;
+        }
+
+        .copy-code-btn {
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            font-size: 15px;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .toast.warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+
+        .toast.info {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Authentication Check -->
+    <script>
+        // Check if user is admin
+        const isAdmin = localStorage.getItem('is_admin') === 'true';
+        const username = localStorage.getItem('username');
+
+        if (!isAdmin) {
+            alert('❌ Acesso Negado\n\nApenas administradores podem acessar o Editor.\n\nVocê será redirecionado para o jogo.');
+            window.location.href = 'game-phaser.html';
+        } else {
+            console.log('✓ Admin access granted:', username);
+        }
+    </script>
+
+    <div class="editor-container">
+        <!-- Left Sidebar -->
+        <div class="locations-sidebar">
+            <div class="sidebar-header">
+                <a href="admin-panel.html" style="display: inline-block; padding: 8px 15px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 4px; margin-bottom: 15px; font-size: 14px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">← Painel Admin</a>
+                <h2>Locais do Jogo</h2>
+                <button class="add-location-btn" onclick="addNewLocation()">+ Adicionar Novo Local</button>
+                <button class="btn btn-danger" onclick="resetEditorData()" style="width: 100%; margin-top: 10px;">🔄 Resetar Dados do Editor</button>
+            </div>
+            <div class="locations-list" id="locationsList">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="editor-main">
+            <div class="editor-header">
+                <h1 id="currentLocationName">Selecione um local</h1>
+                <div class="location-id" id="currentLocationId"></div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('basic')">📝 Informações Básicas</button>
+                <button class="tab-btn" onclick="switchTab('visual')">🖼️ Posicionamento Visual</button>
+                <button class="tab-btn" onclick="switchTab('puzzle')">🧩 Enigma</button>
+                <button class="tab-btn" onclick="switchTab('items')">💎 Itens</button>
+                <button class="tab-btn" onclick="switchTab('hotspots')">🎯 Hotspots</button>
+                <button class="tab-btn" onclick="switchTab('connections')">🔗 Conexões</button>
+            </div>
+
+            <div class="tab-content">
+                <!-- Basic Info Tab -->
+                <div class="tab-panel active" id="tab-basic">
+                    <div class="form-group">
+                        <label>ID do Local</label>
+                        <input type="text" id="edit-id" placeholder="ex: forest_entrance" onchange="saveBasicInfo()">
+                        <div class="form-hint">Identificador único (sem espaços, use underscore)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome do Local</label>
+                        <input type="text" id="edit-name" placeholder="ex: Entrada da Floresta" onchange="saveBasicInfo()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="edit-description" placeholder="Descreva o local..." onchange="saveBasicInfo()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Imagem do Local</label>
+                        <input type="text" id="edit-image" placeholder="ex: images/forest_entrance.jpg" onchange="saveBasicInfo()">
+                        <div class="form-hint">Caminho relativo para a imagem</div>
+
+                        <div style="margin-top: 10px;">
+                            <input type="file" id="location-image-upload" accept="image/*" style="display: none;" onchange="handleLocationImageUpload(event)">
+                            <button class="btn btn-secondary" onclick="document.getElementById('location-image-upload').click()">📁 Fazer Upload da Imagem</button>
+                        </div>
+
+                        <div id="location-image-preview" style="margin-top: 15px; display: none;">
+                            <img id="location-preview-img" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="edit-unlocked" onchange="saveBasicInfo()">
+                        <label for="edit-unlocked">Local desbloqueado no início do jogo</label>
+                    </div>
+
+                    <button class="btn btn-success" onclick="saveBasicInfo()">💾 Salvar Informações</button>
+                </div>
+
+                <!-- Visual Positioning Tab -->
+                <div class="tab-panel" id="tab-visual">
+                    <h3>Posicionamento Visual de Itens e Hotspots</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Arraste itens PNG e desenhe áreas clicáveis sobre a imagem</p>
+
+                    <div style="display: grid; grid-template-columns: 250px 1fr 280px; gap: 20px;">
+                        <!-- Left Panel: Items + Hotspots -->
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; max-height: 600px; overflow-y: auto;">
+                            <h4 style="margin-bottom: 15px;">Itens Disponíveis</h4>
+                            <div id="visual-items-list" style="margin-bottom: 20px;">
+                                <!-- Populated by JS -->
+                            </div>
+
+                            <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+
+                            <h4 style="margin-bottom: 10px;">🎯 Hotspots de Navegação</h4>
+                            <button class="btn btn-primary" onclick="startDrawingHotspot()" style="width: 100%; margin-bottom: 10px; font-size: 12px;">
+                                ➕ Desenhar Área
+                            </button>
+                            <div id="visual-hotspots-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Canvas Area -->
+                        <div style="background: #1e1e1e; border-radius: 8px; padding: 20px; position: relative; overflow: visible;">
+                            <div id="visual-wrapper" style="position: relative; display: inline-block; max-width: 100%; overflow: visible;">
+                                <img id="visual-location-image"
+                                     style="max-width: 100%; display: block; border-radius: 8px;"
+                                     src=""
+                                     alt="Imagem do local">
+                                <div id="visual-hotspots-container"
+                                     style="position: absolute; top: 0; left: 0; pointer-events: auto; overflow: visible;">
+                                    <!-- Hotspots drawn here -->
+                                </div>
+                                <div id="visual-items-container"
+                                     style="position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; perspective: 1000px;">
+                                    <!-- Items positioned here -->
+                                </div>
+                            </div>
+                            <div id="visual-no-image" style="color: #999; text-align: center; padding: 100px 20px;">
+                                <div style="font-size: 48px; margin-bottom: 20px;">🖼️</div>
+                                <p>Faça upload da imagem do local na aba "Informações Básicas"</p>
+                            </div>
+                        </div>
+
+                        <!-- Transform Controls Panel -->
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; max-height: 600px; overflow-y: auto;">
+                            <h4 style="margin-bottom: 15px;">Transformações</h4>
+                            <div id="transform-controls">
+                                <div style="color: #999; text-align: center; padding: 20px; font-size: 14px;">
+                                    Selecione um item para editar
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Puzzle Tab -->
+                <div class="tab-panel" id="tab-puzzle">
+                    <h3>Configurar Enigma</h3>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="has-puzzle" onchange="togglePuzzleEditor()">
+                        <label for="has-puzzle">Este local tem um enigma</label>
+                    </div>
+
+                    <div id="puzzle-editor" style="display: none;">
+                        <div class="form-group">
+                            <label>ID do Enigma</label>
+                            <input type="text" id="puzzle-id" placeholder="ex: fountain_puzzle">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tipo de Enigma</label>
+                            <div class="puzzle-type-selector">
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('direction')">
+                                    <div>🧭 Direção</div>
+                                    <small>4 direções</small>
+                                </div>
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('riddle')">
+                                    <div>📜 Charada</div>
+                                    <small>Múltipla escolha</small>
+                                </div>
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('sequence_symbols')">
+                                    <div>🔢 Sequência</div>
+                                    <small>Ordem correta</small>
+                                </div>
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('math')">
+                                    <div>➕ Matemática</div>
+                                    <small>Cálculo</small>
+                                </div>
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('code')">
+                                    <div>🔐 Código</div>
+                                    <small>Senha numérica</small>
+                                </div>
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('item_combination')">
+                                    <div>🔧 Combinar Itens</div>
+                                    <small>Items necessários</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="puzzle-options-container">
+                            <!-- Populated dynamically based on puzzle type -->
+                        </div>
+
+                        <div class="form-group">
+                            <label>Item de Recompensa - ID</label>
+                            <input type="text" id="puzzle-reward-id" placeholder="ex: fountain_key">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Item de Recompensa - Nome</label>
+                            <input type="text" id="puzzle-reward-name" placeholder="ex: Chave da Fonte">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Imagem da Recompensa (opcional)</label>
+                            <input type="text" id="puzzle-reward-image" placeholder="images/items/tesouro.png">
+                            <div class="form-hint">Use caminho relativo, ex: images/items/tesouro.png</div>
+                        </div>
+
+                        <button class="btn btn-success" onclick="savePuzzle()">💾 Salvar Enigma</button>
+                    </div>
+                </div>
+
+                <!-- Items Tab -->
+                <div class="tab-panel" id="tab-items">
+                    <h3>Itens Colecionáveis</h3>
+                    <button class="btn btn-primary" onclick="addNewItem()" style="margin-bottom: 20px;">+ Adicionar Item</button>
+
+                    <div class="items-list" id="itemsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Hotspots Tab -->
+                <div class="tab-panel" id="tab-hotspots">
+                    <h3>Hotspots Interativos</h3>
+                    <button class="btn btn-primary" onclick="addNewHotspot()" style="margin-bottom: 20px;">+ Adicionar Hotspot</button>
+
+                    <div class="hotspots-list" id="hotspotsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Connections Tab -->
+                <div class="tab-panel" id="tab-connections">
+                    <h3>Conexões com Outros Locais</h3>
+                    <p style="margin-bottom: 20px; color: #666;">Selecione os locais que podem ser acessados a partir deste local.</p>
+
+                    <div class="connections-list" id="connectionsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="export-section">
+        <button class="export-btn" onclick="syncToDatabase()" style="background: #28a745;">💾 Salvar</button>
+    </div>
+
+    <!-- Save Indicator -->
+    <div class="save-indicator" id="saveIndicator">✓ Salvo automaticamente</div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeExportModal()">×</button>
+            <h2>Código Exportado - map.js</h2>
+            <p>Copie o código abaixo e substitua o conteúdo do arquivo <strong>js/map.js</strong></p>
+            <div class="code-block" id="exportedCode"></div>
+            <button class="btn btn-primary copy-code-btn" onclick="copyExportedCode()">📋 Copiar Código</button>
+        </div>
+    </div>
+
+    <script src="js/map.js?v=123456789"></script>
+    <script>
+        // Load initial game data from original map.js structure
+        let gameLocations = GAME_MAP;;
+
+        let currentLocationId = null;
+        let currentTab = 'basic';
+        let currentPuzzleType = null;
+        let locationOrder = []; // Track order of locations for drag-and-drop
+        let draggedElement = null;
+
+        // Visual positioning variables
+        let selectedItemIndex = null;
+        let selectedVisualType = null; // 'item' | 'puzzle' | null
+        let draggedItem = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        const DEFAULT_VISUAL_TRANSFORM = {
+            rotation: 0,
+            rotateX: 0,
+            rotateY: 0,
+            scaleX: 1,
+            scaleY: 1,
+            skewX: 0,
+            skewY: 0,
+            flipX: false,
+            flipY: false,
+            opacity: 1,
+            shadowBlur: 0,
+            shadowOffsetX: 0,
+            shadowOffsetY: 0
+        };
+
+        function cloneDefaultTransform() {
+            return {
+                rotation: DEFAULT_VISUAL_TRANSFORM.rotation,
+                rotateX: DEFAULT_VISUAL_TRANSFORM.rotateX,
+                rotateY: DEFAULT_VISUAL_TRANSFORM.rotateY,
+                scaleX: DEFAULT_VISUAL_TRANSFORM.scaleX,
+                scaleY: DEFAULT_VISUAL_TRANSFORM.scaleY,
+                skewX: DEFAULT_VISUAL_TRANSFORM.skewX,
+                skewY: DEFAULT_VISUAL_TRANSFORM.skewY,
+                flipX: DEFAULT_VISUAL_TRANSFORM.flipX,
+                flipY: DEFAULT_VISUAL_TRANSFORM.flipY,
+                opacity: DEFAULT_VISUAL_TRANSFORM.opacity,
+                shadowBlur: DEFAULT_VISUAL_TRANSFORM.shadowBlur,
+                shadowOffsetX: DEFAULT_VISUAL_TRANSFORM.shadowOffsetX,
+                shadowOffsetY: DEFAULT_VISUAL_TRANSFORM.shadowOffsetY
+            };
+        }
+
+        function ensureItemDefaults(item) {
+            if (!item) return;
+            if (!item.position) item.position = { x: 50, y: 50 };
+            if (!item.size) item.size = { width: 80, height: 80 };
+            if (!item.transform) item.transform = cloneDefaultTransform();
+        }
+
+        function ensurePuzzleDefaults(puzzle) {
+            if (!puzzle) return;
+            if (!puzzle.visual) {
+                puzzle.visual = {
+                    beforeImage: '',
+                    afterImage: '',
+                    position: { x: 50, y: 50 },
+                    size: { width: 120, height: 120 },
+                    transform: cloneDefaultTransform()
+                };
+            } else {
+                if (typeof puzzle.visual.beforeImage === 'undefined') {
+                    puzzle.visual.beforeImage = '';
+                }
+                if (typeof puzzle.visual.afterImage === 'undefined') {
+                    puzzle.visual.afterImage = '';
+                }
+                if (!puzzle.visual.position) {
+                    puzzle.visual.position = { x: 50, y: 50 };
+                }
+                if (!puzzle.visual.size) {
+                    puzzle.visual.size = { width: 120, height: 120 };
+                }
+                if (!puzzle.visual.transform) {
+                    puzzle.visual.transform = cloneDefaultTransform();
+                }
+            }
+        }
+
+        function getSelectedVisual() {
+            if (!currentLocationId) return null;
+            const location = gameLocations[currentLocationId];
+            if (!location) return null;
+
+            if (selectedVisualType === 'item' && selectedItemIndex !== null && location.items) {
+                const item = location.items[selectedItemIndex];
+                if (!item) return null;
+                ensureItemDefaults(item);
+                return { type: 'item', data: item };
+            }
+
+            if (selectedVisualType === 'puzzle' && location.puzzle) {
+                ensurePuzzleDefaults(location.puzzle);
+                return { type: 'puzzle', data: location.puzzle.visual, puzzle: location.puzzle };
+            }
+
+            return null;
+        }
+
+        function highlightSelectedVisual() {
+            const container = document.getElementById('visual-items-container');
+            if (!container) return;
+            Array.from(container.children).forEach(el => {
+                const visualType = el.dataset.visualType || 'item';
+                const indexAttr = el.dataset.itemIndex;
+                const index = typeof indexAttr !== 'undefined' ? parseInt(indexAttr) : null;
+                const isSelected =
+                    (visualType === 'item' && selectedVisualType === 'item' && index === selectedItemIndex) ||
+                    (visualType === 'puzzle' && selectedVisualType === 'puzzle');
+                el.style.boxShadow = isSelected ? '0 0 0 3px #667eea' : 'none';
+            });
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            // Remove existing toast if any
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            // Hide and remove toast after 1 second
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 1000);
+        }
+
+        // Initialize
+        window.onload = async function() {
+            console.log('🔧 Iniciando editor...');
+            await loadFromDatabase(true); // Carrega automaticamente do banco
+        };
+
+        // Initialize location order
+        function initializeLocationOrder() {
+            locationOrder = Object.keys(gameLocations);
+        }
+
+        // Auto-save to localStorage
+        async function autoSave() {
+            console.log('[GEMINI_DEBUG] Autosaving data...', { locations: gameLocations, order: locationOrder });
+            const saveData = {
+                locations: gameLocations,
+                order: locationOrder
+            };
+            try {
+                await saveToIndexedDB('editorData', saveData);
+                showSaveIndicator();
+            } catch (e) {
+                console.error('Erro ao salvar:', e);
+            }
+        }
+
+        async function loadFromLocalStorage() {
+            try {
+                const saveData = await loadFromIndexedDB('editorData');
+                if (saveData) {
+                    if (saveData.locations) {
+                        gameLocations = saveData.locations;
+                        if (saveData.order) {
+                            locationOrder = saveData.order;
+                        } else {
+                            initializeLocationOrder();
+                        }
+                    } else {
+                        // Old format compatibility
+                        gameLocations = saveData;
+                        initializeLocationOrder();
+                    }
+                    renderLocationsList();
+                    console.log('✅ Dados do editor carregados do IndexedDB');
+                } else {
+                    console.log('ℹ️ Nenhum dado salvo encontrado');
+                }
+            } catch (e) {
+                console.error('Erro ao carregar dados salvos:', e);
+            }
+        }
+
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+
+        // Render locations list
+        function renderLocationsList() {
+            console.log('🎨 Renderizando lista de localizações:', {
+                total: Object.keys(gameLocations).length,
+                locationOrder: locationOrder,
+                locations: Object.keys(gameLocations)
+            });
+
+            const list = document.getElementById('locationsList');
+            list.innerHTML = '';
+
+            locationOrder.forEach((locationId, index) => {
+                const location = gameLocations[locationId];
+                if (!location) return; // Skip if location doesn't exist
+
+                const item = document.createElement('div');
+                item.className = 'location-item' + (currentLocationId === location.id ? ' active' : '');
+                item.draggable = true;
+                item.dataset.locationId = location.id;
+                item.dataset.index = index;
+
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="cursor: grab; opacity: 0.5;">☰</div>
+                        <div>
+                            <div class="location-item-name">${location.name}</div>
+                            <div class="location-item-id">${location.id}</div>
+                        </div>
+                    </div>
+                    <button class="delete-location-btn" onclick="deleteLocation('${location.id}'); event.stopPropagation();">🗑️</button>
+                `;
+
+                // Drag and drop event handlers
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+
+                item.onclick = (e) => {
+                    if (!e.target.classList.contains('delete-location-btn')) {
+                        selectLocation(location.id);
+                    }
+                };
+
+                list.appendChild(item);
+            });
+        }
+
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            // Remove drag-over class from all items
+            document.querySelectorAll('.location-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+
+            // Add drag-over class to current target
+            const targetItem = e.target.closest('.location-item');
+            if (targetItem && targetItem !== draggedElement) {
+                targetItem.classList.add('drag-over');
+            }
+
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const targetItem = this;
+            if (draggedElement !== targetItem) {
+                const draggedIndex = parseInt(draggedElement.dataset.index);
+                const targetIndex = parseInt(targetItem.dataset.index);
+
+                // Reorder the locationOrder array
+                const draggedId = locationOrder[draggedIndex];
+                locationOrder.splice(draggedIndex, 1);
+                locationOrder.splice(targetIndex, 0, draggedId);
+
+                // Re-render and save
+                renderLocationsList();
+                syncToDatabase(true); // silent sync
+            }
+
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.location-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
+        // Select location
+        function selectLocation(locationId) {
+            currentLocationId = locationId;
+            renderLocationsList();
+            loadLocationData();
+        }
+
+        // Load location data into editor
+        function loadLocationData() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            document.getElementById('currentLocationName').textContent = location.name;
+            document.getElementById('currentLocationId').textContent = location.id;
+
+            // Basic info
+            document.getElementById('edit-id').value = location.id;
+            document.getElementById('edit-name').value = location.name;
+            document.getElementById('edit-description').value = location.description;
+            document.getElementById('edit-image').value = location.image;
+            document.getElementById('edit-unlocked').checked = location.unlocked || false;
+
+            // Puzzle
+            const hasPuzzle = !!location.puzzle;
+            document.getElementById('has-puzzle').checked = hasPuzzle;
+            togglePuzzleEditor();
+            if (hasPuzzle) {
+                loadPuzzleData(location.puzzle);
+            }
+
+            // Reset visual selections ao trocar de local
+            selectedVisualType = null;
+            selectedItemIndex = null;
+
+            // Items
+            renderItemsList();
+
+            // Hotspots
+            renderHotspotsList();
+
+            // Connections
+            renderConnectionsList();
+
+            // Image preview
+            loadImagePreview();
+
+            // Visual editor
+            loadVisualEditor();
+        }
+
+        // Load image preview in basic tab
+        function loadImagePreview() {
+            const location = gameLocations[currentLocationId];
+            if (location && location.imageData) {
+                document.getElementById('location-image-preview').style.display = 'block';
+                document.getElementById('location-preview-img').src = location.imageData;
+            } else if (location && location.image) {
+                document.getElementById('location-image-preview').style.display = 'block';
+                document.getElementById('location-preview-img').src = location.image;
+            } else {
+                document.getElementById('location-image-preview').style.display = 'none';
+            }
+        }
+
+        // Handle location image upload
+        function handleLocationImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const location = gameLocations[currentLocationId];
+            const imagePath = `images/${file.name}`;
+
+            location.image = imagePath;
+            delete location.imageData; // Remove embedded image data
+
+            // Update preview
+            document.getElementById('location-image-preview').style.display = 'block';
+            document.getElementById('location-preview-img').src = imagePath;
+
+            // Update the input field with the new path
+            document.getElementById('edit-image').value = imagePath;
+
+            // Update visual editor
+            loadVisualEditor();
+
+            autoSave();
+            showToast('✓ Imagem carregada com sucesso!');
+        }
+
+        // Load visual editor
+        function loadVisualEditor() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const visualImage = document.getElementById('visual-location-image');
+            const noImageDiv = document.getElementById('visual-no-image');
+
+            if (location.image) {
+                visualImage.src = location.image;
+                visualImage.style.display = 'block';
+                noImageDiv.style.display = 'none';
+
+                // Salvar dimensões se ainda não existirem
+                visualImage.onload = function() {
+                    if (!location.imageDimensions) {
+                        location.imageDimensions = {
+                            width: visualImage.naturalWidth,
+                            height: visualImage.naturalHeight
+                        };
+                        console.log('📐 Dimensões da imagem detectadas:', location.imageDimensions);
+                    }
+                    renderPositionedItems();
+                    renderPositionedHotspots();
+                };
+
+                // Render items list
+                renderVisualItemsList();
+                renderVisualHotspotsList();
+
+                // Wait for image to load before rendering items
+                if (visualImage.complete) {
+                    if (!location.imageDimensions) {
+                        location.imageDimensions = {
+                            width: visualImage.naturalWidth,
+                            height: visualImage.naturalHeight
+                        };
+                        console.log('📐 Dimensões da imagem detectadas:', location.imageDimensions);
+                    }
+                    renderPositionedItems();
+                    renderPositionedHotspots();
+                }
+            } else {
+                visualImage.style.display = 'none';
+                noImageDiv.style.display = 'block';
+            }
+        }
+
+        // Render visual items list
+        function renderVisualItemsList() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const list = document.getElementById('visual-items-list');
+
+            list.innerHTML = '';
+
+            const hasItems = Array.isArray(location.items) && location.items.length > 0;
+            if (!hasItems) {
+                const emptyInfo = document.createElement('p');
+                emptyInfo.style.cssText = 'color: #999; font-size: 14px; margin-bottom: 15px;';
+                emptyInfo.textContent = 'Nenhum item. Adicione itens na aba "Itens".';
+                list.appendChild(emptyInfo);
+            } else {
+                location.items.forEach((item, index) => {
+                    ensureItemDefaults(item);
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.style.cssText = 'background: white; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 2px solid #e0e0e0;';
+
+                    itemDiv.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 8px;">${item.name}</div>
+                        <input type="file"
+                               id="item-image-${index}"
+                               accept="image/png"
+                               style="display: none;"
+                               onchange="handleItemImageUpload(${index}, event)">
+                        <button class="btn btn-secondary btn-small"
+                                style="width: 100%; margin-bottom: 5px;"
+                                onclick="document.getElementById('item-image-${index}').click()">
+                            ${item.image ? '✓ Alterar PNG' : '📁 Upload PNG'}
+                        </button>
+                        ${item.image ? `
+                            <div style="text-align: center; margin-top: 8px;">
+                                <img src="${item.image}" style="max-width: 100%; max-height: 80px; image-rendering: crisp-edges;">
+                                <div style="font-size: 11px; color: #999; margin-top: 5px;">
+                                    ${item.position ? `Posição: ${item.position.x.toFixed(1)}%, ${item.position.y.toFixed(1)}%` : 'Arraste para posicionar'}
+                                </div>
+                            </div>
+                        ` : ''}
+                    `;
+
+                    list.appendChild(itemDiv);
+                });
+            }
+
+            if (location.puzzle) {
+                ensurePuzzleDefaults(location.puzzle);
+                const puzzleVisual = location.puzzle.visual;
+
+                const puzzleDiv = document.createElement('div');
+                puzzleDiv.style.cssText = 'background: #fff6e5; padding: 12px; border-radius: 8px; border: 2px solid #f0a500;';
+
+                puzzleDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="font-size: 15px;">🧩 Visual do Enigma</strong>
+                        <span style="font-size: 12px; color: #b36b00;">Baú fechado / aberto</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="background: white; border: 1px solid #f0a500; border-radius: 6px; padding: 8px; text-align: center;">
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Antes (fechado)</div>
+                            <input type="file" id="puzzle-image-before" accept="image/png" style="display: none;" onchange="handlePuzzleImageUpload('before', event)">
+                            <button class="btn btn-secondary btn-small" style="width: 100%; margin-bottom: 6px;"
+                                    onclick="document.getElementById('puzzle-image-before').click()">
+                                ${puzzleVisual.beforeImage ? '✓ Alterar PNG' : '📁 Upload PNG'}
+                            </button>
+                            ${puzzleVisual.beforeImage ? `<img src="${puzzleVisual.beforeImage}" style="max-width: 100%; max-height: 90px; image-rendering: crisp-edges;">` : '<div style="font-size: 12px; color: #999;">Sem imagem</div>'}
+                        </div>
+
+                        <div style="background: white; border: 1px solid #f0a500; border-radius: 6px; padding: 8px; text-align: center;">
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Depois (aberto)</div>
+                            <input type="file" id="puzzle-image-after" accept="image/png" style="display: none;" onchange="handlePuzzleImageUpload('after', event)">
+                            <button class="btn btn-secondary btn-small" style="width: 100%; margin-bottom: 6px;"
+                                    onclick="document.getElementById('puzzle-image-after').click()">
+                                ${puzzleVisual.afterImage ? '✓ Alterar PNG' : '📁 Upload PNG'}
+                            </button>
+                            ${puzzleVisual.afterImage ? `<img src="${puzzleVisual.afterImage}" style="max-width: 100%; max-height: 90px; image-rendering: crisp-edges;">` : '<div style="font-size: 12px; color: #999;">Sem imagem</div>'}
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 10px; font-size: 11px; color: #805400; line-height: 1.4;">
+                        ➕ Após enviar as imagens, selecione o enigma no cenário e ajuste posição/tamanho na pré-visualização.
+                    </div>
+                    <button class="btn btn-primary btn-small" style="width: 100%; margin-top: 10px;"
+                            onclick="selectPuzzleVisual(); renderPositionedItems();">
+                        🎯 Selecionar Enigma no Cenário
+                    </button>
+                `;
+
+                list.appendChild(puzzleDiv);
+            }
+        }
+
+        // Handle item image upload
+        function handleItemImageUpload(itemIndex, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            event.target.value = '';
+
+            const location = gameLocations[currentLocationId];
+            const imagePath = `images/items/${file.name}`;
+
+            // Save as image path reference (not base64 data)
+            location.items[itemIndex].image = imagePath;
+            delete location.items[itemIndex].imageData; // Remove old embedded image data if exists
+
+            // Set default size if not set
+            if (!location.items[itemIndex].size) {
+                location.items[itemIndex].size = { width: 80, height: 80 };
+            }
+
+            // Set default position if not set (center of canvas)
+            if (!location.items[itemIndex].position) {
+                location.items[itemIndex].position = { x: 50, y: 50 };
+            }
+
+            renderVisualItemsList();
+            renderPositionedItems();
+            autoSave();
+
+            showToast('✓ Imagem de item carregada!');
+        }
+
+        function handlePuzzleImageUpload(state, event) {
+            if (!currentLocationId) return;
+
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+
+            const location = gameLocations[currentLocationId];
+            if (!location.puzzle) {
+                showToast('Configure o enigma antes de adicionar imagens', 'warning');
+                return;
+            }
+
+            ensurePuzzleDefaults(location.puzzle);
+
+            const imagePath = `images/puzzles/${file.name}`;
+            if (state === 'after') {
+                location.puzzle.visual.afterImage = imagePath;
+            } else {
+                location.puzzle.visual.beforeImage = imagePath;
+            }
+
+            renderVisualItemsList();
+            renderPositionedItems();
+            autoSave();
+
+            showToast('✓ Imagem do enigma atualizada!');
+        }
+
+        // Ajustar escala do container no editor
+        function adjustEditorContainer() {
+            const visualImage = document.getElementById('visual-location-image');
+            const container = document.getElementById('visual-items-container');
+
+            if (!visualImage || !container) return;
+
+            const imgRect = visualImage.getBoundingClientRect();
+            const naturalWidth = visualImage.naturalWidth || imgRect.width;
+            const naturalHeight = visualImage.naturalHeight || imgRect.height;
+            const scale = imgRect.width / naturalWidth;
+
+            container.style.width = naturalWidth + 'px';
+            container.style.height = naturalHeight + 'px';
+            container.style.transform = `scale(${scale})`;
+            container.style.transformOrigin = 'top left';
+        }
+
+        // Render positioned items on the image
+        function renderPositionedItems() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const container = document.getElementById('visual-items-container');
+
+            if (!container) {
+                console.error('Container visual-items-container não encontrado!');
+                return;
+            }
+
+            // Ajustar escala do container
+            adjustEditorContainer();
+
+            container.innerHTML = '';
+
+            if (!Array.isArray(location.items)) {
+                location.items = [];
+            }
+
+            if (location.puzzle) {
+                ensurePuzzleDefaults(location.puzzle);
+                const puzzleVisual = location.puzzle.visual;
+                const isPuzzleSelected = selectedVisualType === 'puzzle';
+
+                const transforms = [
+                    'translate(-50%, -50%)',
+                    `rotateZ(${puzzleVisual.transform.rotation || 0}deg)`,
+                    `rotateX(${puzzleVisual.transform.rotateX || 0}deg)`,
+                    `rotateY(${puzzleVisual.transform.rotateY || 0}deg)`,
+                    `scaleX(${(puzzleVisual.transform.scaleX || 1) * (puzzleVisual.transform.flipX ? -1 : 1)})`,
+                    `scaleY(${(puzzleVisual.transform.scaleY || 1) * (puzzleVisual.transform.flipY ? -1 : 1)})`,
+                    `skewX(${puzzleVisual.transform.skewX || 0}deg)`,
+                    `skewY(${puzzleVisual.transform.skewY || 0}deg)`
+                ];
+
+                const shadowBlur = puzzleVisual.transform.shadowBlur || 0;
+                const shadowX = puzzleVisual.transform.shadowOffsetX || 0;
+                const shadowY = puzzleVisual.transform.shadowOffsetY || 0;
+                const filterString = shadowBlur > 0
+                    ? `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.5))`
+                    : 'none';
+
+                const backgroundStyle = puzzleVisual.beforeImage
+                    ? `background-image: url(${puzzleVisual.beforeImage}); background-size: contain; background-repeat: no-repeat;`
+                    : `background: repeating-linear-gradient(45deg, rgba(240,165,0,0.3), rgba(240,165,0,0.3) 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px); border: 3px dashed #f0a500;`;
+
+                const puzzleEl = document.createElement('div');
+                puzzleEl.dataset.visualType = 'puzzle';
+                puzzleEl.style.cssText = `
+                    position: absolute;
+                    left: ${puzzleVisual.position.x}%;
+                    top: ${puzzleVisual.position.y}%;
+                    width: ${puzzleVisual.size.width}px;
+                    height: ${puzzleVisual.size.height}px;
+                    transform: ${transforms.join(' ')};
+                    cursor: move;
+                    pointer-events: auto;
+                    z-index: 120;
+                    ${backgroundStyle}
+                    background-position: center;
+                    border-radius: 6px;
+                    opacity: ${puzzleVisual.transform.opacity || 1};
+                    filter: ${filterString};
+                    ${isPuzzleSelected ? 'box-shadow: 0 0 0 3px #f0a500;' : ''}
+                `;
+
+                const label = document.createElement('div');
+                label.textContent = location.puzzle.id || 'Enigma';
+                label.style.cssText = `
+                    position: absolute;
+                    bottom: -25px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(240, 165, 0, 0.9);
+                    color: #2a1600;
+                    padding: 4px 8px;
+                    font-size: 11px;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                    pointer-events: none;
+                    font-weight: 600;
+                `;
+                puzzleEl.appendChild(label);
+
+                puzzleEl.addEventListener('mousedown', startDragItem);
+
+                container.appendChild(puzzleEl);
+            }
+
+            location.items.forEach((item, index) => {
+                ensureItemDefaults(item);
+
+                const isSelected = selectedVisualType === 'item' && selectedItemIndex === index;
+
+                const transforms = [
+                    'translate(-50%, -50%)',
+                    `rotateZ(${item.transform.rotation || 0}deg)`,
+                    `rotateX(${item.transform.rotateX || 0}deg)`,
+                    `rotateY(${item.transform.rotateY || 0}deg)`,
+                    `scaleX(${(item.transform.scaleX || 1) * (item.transform.flipX ? -1 : 1)})`,
+                    `scaleY(${(item.transform.scaleY || 1) * (item.transform.flipY ? -1 : 1)})`,
+                    `skewX(${item.transform.skewX || 0}deg)`,
+                    `skewY(${item.transform.skewY || 0}deg)`
+                ];
+
+                const shadowBlur = item.transform.shadowBlur || 0;
+                const shadowX = item.transform.shadowOffsetX || 0;
+                const shadowY = item.transform.shadowOffsetY || 0;
+                const filterString = shadowBlur > 0
+                    ? `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.5))`
+                    : 'none';
+
+                const backgroundStyle = item.image
+                    ? `background-image: url(${item.image}); background-size: contain; background-repeat: no-repeat;`
+                    : `background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 3px dashed white;`;
+
+                const itemEl = document.createElement('div');
+                itemEl.dataset.visualType = 'item';
+                itemEl.dataset.itemIndex = index;
+                itemEl.style.cssText = `
+                    position: absolute;
+                    left: ${item.position.x}%;
+                    top: ${item.position.y}%;
+                    width: ${item.size.width}px;
+                    height: ${item.size.height}px;
+                    transform: ${transforms.join(' ')};
+                    cursor: move;
+                    pointer-events: auto;
+                    z-index: 100;
+                    ${backgroundStyle}
+                    background-position: center;
+                    border-radius: 4px;
+                    opacity: ${item.transform.opacity || 1};
+                    filter: ${filterString};
+                    ${isSelected ? 'box-shadow: 0 0 0 3px #667eea;' : ''}
+                `;
+
+                const label = document.createElement('div');
+                label.textContent = item.name;
+                label.style.cssText = `
+                    position: absolute;
+                    bottom: -25px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 4px 8px;
+                    font-size: 11px;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                    pointer-events: none;
+                `;
+
+                itemEl.appendChild(label);
+                itemEl.addEventListener('mousedown', startDragItem);
+                container.appendChild(itemEl);
+            });
+
+            highlightSelectedVisual();
+        }
+
+        // Render transform controls panel
+        function renderTransformControls() {
+            const panel = document.getElementById('transform-controls');
+
+            if (!currentLocationId) {
+                panel.innerHTML = '<div style="color: #999; text-align: center; padding: 20px; font-size: 14px;">Selecione um local para editar</div>';
+                return;
+            }
+
+            const visual = getSelectedVisual();
+            if (!visual) {
+                panel.innerHTML = '<div style="color: #999; text-align: center; padding: 20px; font-size: 14px;">Selecione um item ou enigma para editar</div>';
+                return;
+            }
+
+            const data = visual.data;
+            const transform = data.transform || cloneDefaultTransform();
+            data.transform = transform;
+            const size = data.size || { width: 80, height: 80 };
+            data.size = size;
+
+            const title = visual.type === 'item'
+                ? (data.name || 'Item sem nome')
+                : `Enigma ${visual.puzzle?.id || ''}`;
+
+            const previewImage = visual.type === 'item' ? (data.image || '') : (data.beforeImage || '');
+            const afterImage = visual.type === 'puzzle' ? data.afterImage : null;
+
+            const previewHtml = previewImage
+                ? `<img src="${previewImage}" style="max-width: 100%; max-height: 100px; image-rendering: crisp-edges;">`
+                : '<div style="color: #999; font-size: 12px;">Sem imagem atribuída</div>';
+
+            const afterHtml = afterImage
+                ? `<div style="margin-top: 10px;">
+                        <label style="font-size: 11px; color: #805400;">Após resolver</label>
+                        <img src="${afterImage}" style="max-width: 100%; max-height: 80px; image-rendering: crisp-edges; opacity: 0.85;">
+                   </div>`
+                : '';
+
+            panel.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <strong style="display: block; margin-bottom: 8px;">${title}</strong>
+                    ${previewHtml}
+                    ${afterHtml}
+                    ${visual.type === 'puzzle' ? '<div style="margin-top:6px; font-size: 11px; color: #805400;">Este visual representa o estado antes de resolver o enigma.</div>' : ''}
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">Tamanho</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: #666;">Largura (px)</label>
+                            <input type="number" id="item-width" value="${size.width || 80}"
+                                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                   onchange="updateItemSize()">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">Altura (px)</label>
+                            <input type="number" id="item-height" value="${size.height || 80}"
+                                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                   onchange="updateItemSize()">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">Rotação Z (plano)</label>
+                    <input type="range" id="item-rotation" min="-180" max="180" value="${transform.rotation || 0}"
+                           style="width: 100%;"
+                           oninput="updateItemTransform()">
+                    <div style="text-align: center; font-size: 12px; color: #666; margin-top: 4px;">
+                        <span id="rotation-value">${transform.rotation || 0}°</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px; padding: 10px; background: #f0f0ff; border-radius: 6px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #667eea;">🎯 Perspectiva 3D</label>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 11px; color: #666;">Inclinar X (horizontal)</label>
+                        <input type="range" id="item-rotate-x" min="-90" max="90" value="${transform.rotateX || 0}"
+                               style="width: 100%;"
+                               oninput="updateItemTransform()">
+                        <div style="text-align: center; font-size: 11px;" id="rotate-x-value">${transform.rotateX || 0}°</div>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 11px; color: #666;">Inclinar Y (vertical)</label>
+                        <input type="range" id="item-rotate-y" min="-90" max="90" value="${transform.rotateY || 0}"
+                               style="width: 100%;"
+                               oninput="updateItemTransform()">
+                        <div style="text-align: center; font-size: 11px;" id="rotate-y-value">${transform.rotateY || 0}°</div>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 11px; color: #666;">Distorcer X (horizontal)</label>
+                        <input type="range" id="item-skew-x" min="-45" max="45" value="${transform.skewX || 0}"
+                               style="width: 100%;"
+                               oninput="updateItemTransform()">
+                        <div style="text-align: center; font-size: 11px;" id="skew-x-value">${transform.skewX || 0}°</div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 11px; color: #666;">Distorcer Y (vertical)</label>
+                        <input type="range" id="item-skew-y" min="-45" max="45" value="${transform.skewY || 0}"
+                               style="width: 100%;"
+                               oninput="updateItemTransform()">
+                        <div style="text-align: center; font-size: 11px;" id="skew-y-value">${transform.skewY || 0}°</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600;">Escala</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: #666;">Escala X</label>
+                            <input type="range" id="item-scale-x" min="0.1" max="3" step="0.1" value="${transform.scaleX || 1}"
+                                   style="width: 100%;"
+                                   oninput="updateItemTransform()">
+                            <div style="text-align: center; font-size: 11px;" id="scale-x-value">${transform.scaleX || 1}x</div>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">Escala Y</label>
+                            <input type="range" id="item-scale-y" min="0.1" max="3" step="0.1" value="${transform.scaleY || 1}"
+                                   style="width: 100%;"
+                                   oninput="updateItemTransform()">
+                            <div style="text-align: center; font-size: 11px;" id="scale-y-value">${transform.scaleY || 1}x</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600;">Espelhar</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button onclick="toggleFlipX()" class="btn btn-secondary btn-small" style="width: 100%;">
+                            ${transform.flipX ? '↔️ Desfazer X' : '↔️ Flip X'}
+                        </button>
+                        <button onclick="toggleFlipY()" class="btn btn-secondary btn-small" style="width: 100%;">
+                            ${transform.flipY ? '↕️ Desfazer Y' : '↕️ Flip Y'}
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px; padding: 10px; background: #f0fff0; border-radius: 6px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #28a745;">💧 Transparência & Sombra</label>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 11px; color: #666;">Opacidade</label>
+                        <input type="range" id="item-opacity" min="0" max="1" step="0.1" value="${typeof transform.opacity === 'number' ? transform.opacity : 1}"
+                               style="width: 100%;"
+                               oninput="updateItemEffects()">
+                        <div style="text-align: center; font-size: 11px;" id="opacity-value">${Math.round((typeof transform.opacity === 'number' ? transform.opacity : 1) * 100)}%</div>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 11px; color: #666;">Desfoque da Sombra</label>
+                        <input type="range" id="item-shadow-blur" min="0" max="30" step="1" value="${transform.shadowBlur || 0}"
+                               style="width: 100%;"
+                               oninput="updateItemEffects()">
+                        <div style="text-align: center; font-size: 11px;" id="shadow-blur-value">${transform.shadowBlur || 0}px</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: #666;">Sombra X</label>
+                            <input type="range" id="item-shadow-x" min="-20" max="20" step="1" value="${transform.shadowOffsetX || 0}"
+                                   style="width: 100%;"
+                                   oninput="updateItemEffects()">
+                            <div style="text-align: center; font-size: 11px;" id="shadow-x-value">${transform.shadowOffsetX || 0}px</div>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">Sombra Y</label>
+                            <input type="range" id="item-shadow-y" min="-20" max="20" step="1" value="${transform.shadowOffsetY || 0}"
+                                   style="width: 100%;"
+                                   oninput="updateItemEffects()">
+                            <div style="text-align: center; font-size: 11px;" id="shadow-y-value">${transform.shadowOffsetY || 0}px</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                    <button onclick="resetTransforms()" class="btn btn-danger btn-small" style="width: 100%;">
+                        🔄 Resetar Transformações
+                    </button>
+                </div>
+            `;
+        }
+
+        function updateItemSize() {
+            if (!currentLocationId) return;
+            const visual = getSelectedVisual();
+            if (!visual) return;
+
+            const width = parseInt(document.getElementById('item-width').value);
+            const height = parseInt(document.getElementById('item-height').value);
+
+            if (!Number.isNaN(width)) visual.data.size.width = width;
+            if (!Number.isNaN(height)) visual.data.size.height = height;
+
+            renderPositionedItems();
+        }
+
+        function updateItemTransform() {
+            if (!currentLocationId) return;
+            const visual = getSelectedVisual();
+            if (!visual) return;
+
+            const transform = visual.data.transform || cloneDefaultTransform();
+            visual.data.transform = transform;
+
+            const rotation = parseFloat(document.getElementById('item-rotation').value);
+            const scaleX = parseFloat(document.getElementById('item-scale-x').value);
+            const scaleY = parseFloat(document.getElementById('item-scale-y').value);
+            const rotateX = parseFloat(document.getElementById('item-rotate-x').value);
+            const rotateY = parseFloat(document.getElementById('item-rotate-y').value);
+            const skewX = parseFloat(document.getElementById('item-skew-x').value);
+            const skewY = parseFloat(document.getElementById('item-skew-y').value);
+
+            if (!Number.isNaN(rotation)) transform.rotation = rotation;
+            if (!Number.isNaN(scaleX)) transform.scaleX = scaleX;
+            if (!Number.isNaN(scaleY)) transform.scaleY = scaleY;
+            if (!Number.isNaN(rotateX)) transform.rotateX = rotateX;
+            if (!Number.isNaN(rotateY)) transform.rotateY = rotateY;
+            if (!Number.isNaN(skewX)) transform.skewX = skewX;
+            if (!Number.isNaN(skewY)) transform.skewY = skewY;
+
+            document.getElementById('rotation-value').textContent = (transform.rotation || 0) + '°';
+            document.getElementById('scale-x-value').textContent = (transform.scaleX || 1) + 'x';
+            document.getElementById('scale-y-value').textContent = (transform.scaleY || 1) + 'x';
+            document.getElementById('rotate-x-value').textContent = (transform.rotateX || 0) + '°';
+            document.getElementById('rotate-y-value').textContent = (transform.rotateY || 0) + '°';
+            document.getElementById('skew-x-value').textContent = (transform.skewX || 0) + '°';
+            document.getElementById('skew-y-value').textContent = (transform.skewY || 0) + '°';
+
+            renderPositionedItems();
+        }
+
+        function updateItemEffects() {
+            if (!currentLocationId) return;
+            const visual = getSelectedVisual();
+            if (!visual) return;
+
+            const transform = visual.data.transform || cloneDefaultTransform();
+            visual.data.transform = transform;
+
+            const opacity = parseFloat(document.getElementById('item-opacity').value);
+            const shadowBlur = parseInt(document.getElementById('item-shadow-blur').value);
+            const shadowX = parseInt(document.getElementById('item-shadow-x').value);
+            const shadowY = parseInt(document.getElementById('item-shadow-y').value);
+
+            if (!Number.isNaN(opacity)) transform.opacity = opacity;
+            if (!Number.isNaN(shadowBlur)) transform.shadowBlur = shadowBlur;
+            if (!Number.isNaN(shadowX)) transform.shadowOffsetX = shadowX;
+            if (!Number.isNaN(shadowY)) transform.shadowOffsetY = shadowY;
+
+            document.getElementById('opacity-value').textContent = Math.round((transform.opacity || 1) * 100) + '%';
+            document.getElementById('shadow-blur-value').textContent = (transform.shadowBlur || 0) + 'px';
+            document.getElementById('shadow-x-value').textContent = (transform.shadowOffsetX || 0) + 'px';
+            document.getElementById('shadow-y-value').textContent = (transform.shadowOffsetY || 0) + 'px';
+
+            renderPositionedItems();
+        }
+
+        function toggleFlipX() {
+            if (!currentLocationId) return;
+            const visual = getSelectedVisual();
+            if (!visual) return;
+
+            const transform = visual.data.transform || cloneDefaultTransform();
+            transform.flipX = !transform.flipX;
+            visual.data.transform = transform;
+
+            autoSave();
+            renderTransformControls();
+            renderPositionedItems();
+        }
+
+        function toggleFlipY() {
+            if (!currentLocationId) return;
+            const visual = getSelectedVisual();
+            if (!visual) return;
+
+            const transform = visual.data.transform || cloneDefaultTransform();
+            transform.flipY = !transform.flipY;
+            visual.data.transform = transform;
+
+            autoSave();
+            renderTransformControls();
+            renderPositionedItems();
+        }
+
+        function resetTransforms() {
+            if (!currentLocationId) return;
+            const visual = getSelectedVisual();
+            if (!visual) return;
+
+            visual.data.transform = cloneDefaultTransform();
+
+            autoSave();
+            renderTransformControls();
+            renderPositionedItems();
+        }
+
+        function startResizeItem(e) {
+            resizingItem = e.target.parentElement;
+            resizeDirection = e.target.dataset.direction;
+
+            const visualType = resizingItem?.dataset.visualType || 'item';
+            if (visualType === 'item') {
+                const index = parseInt(resizingItem.dataset.itemIndex);
+                if (!Number.isNaN(index)) {
+                    selectItem(index);
+                }
+            } else if (visualType === 'puzzle') {
+                selectPuzzleVisual();
+            }
+
+            document.addEventListener('mousemove', resizeItem);
+            document.addEventListener('mouseup', stopResizeItem);
+
+            e.stopPropagation();
+            e.preventDefault();
+        }
+
+        function resizeItem(e) {
+            if (!resizingItem || !currentLocationId) return;
+
+            const visual = getSelectedVisual();
+            if (!visual) return;
+
+            const container = document.getElementById('visual-items-container');
+            const rect = container.getBoundingClientRect();
+
+            const centerX = (parseFloat(resizingItem.style.left) / 100) * rect.width;
+            const centerY = (parseFloat(resizingItem.style.top) / 100) * rect.height;
+
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const newWidth = Math.abs(mouseX - centerX) * 2;
+            const newHeight = Math.abs(mouseY - centerY) * 2;
+
+            visual.data.size.width = Math.max(20, Math.round(newWidth));
+            visual.data.size.height = Math.max(20, Math.round(newHeight));
+
+            resizingItem.style.width = visual.data.size.width + 'px';
+            resizingItem.style.height = visual.data.size.height + 'px';
+        }
+
+        function stopResizeItem() {
+            if (resizingItem) {
+                renderTransformControls();
+                autoSave();
+            }
+
+            resizingItem = null;
+            resizeDirection = null;
+            document.removeEventListener('mousemove', resizeItem);
+            document.removeEventListener('mouseup', stopResizeItem);
+        }
+
+        function startDragItem(e) {
+            draggedItem = this;
+            const visualType = draggedItem.dataset.visualType || 'item';
+
+            if (visualType === 'item') {
+                const index = parseInt(draggedItem.dataset.itemIndex);
+                if (!Number.isNaN(index)) {
+                    selectItem(index);
+                }
+            } else if (visualType === 'puzzle') {
+                selectPuzzleVisual();
+            }
+
+            const container = document.getElementById('visual-items-container');
+            const rect = container.getBoundingClientRect();
+
+            const currentLeft = parseFloat(draggedItem.style.left);
+            const currentTop = parseFloat(draggedItem.style.top);
+
+            const currentLeftPx = (currentLeft / 100) * rect.width;
+            const currentTopPx = (currentTop / 100) * rect.height;
+
+            dragOffsetX = e.clientX - rect.left - currentLeftPx;
+            dragOffsetY = e.clientY - rect.top - currentTopPx;
+
+            document.addEventListener('mousemove', dragItem);
+            document.addEventListener('mouseup', stopDragItem);
+
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function selectItem(itemIndex) {
+            selectedVisualType = 'item';
+            selectedItemIndex = itemIndex;
+            renderTransformControls();
+            highlightSelectedVisual();
+        }
+
+        function selectPuzzleVisual() {
+            selectedVisualType = 'puzzle';
+            selectedItemIndex = null;
+            renderTransformControls();
+            highlightSelectedVisual();
+        }
+
+        function dragItem(e) {
+            if (!draggedItem) return;
+
+            const container = document.getElementById('visual-items-container');
+            const rect = container.getBoundingClientRect();
+
+            let x = ((e.clientX - rect.left - dragOffsetX) / rect.width) * 100;
+            let y = ((e.clientY - rect.top - dragOffsetY) / rect.height) * 100;
+
+            x = Math.max(0, Math.min(100, x));
+            y = Math.max(0, Math.min(100, y));
+
+            draggedItem.style.left = x + '%';
+            draggedItem.style.top = y + '%';
+        }
+
+        function stopDragItem(e) {
+            if (!draggedItem || !currentLocationId) return;
+
+            const visualType = draggedItem.dataset.visualType || 'item';
+            const location = gameLocations[currentLocationId];
+            const newX = parseFloat(draggedItem.style.left);
+            const newY = parseFloat(draggedItem.style.top);
+
+            if (visualType === 'item') {
+                const index = parseInt(draggedItem.dataset.itemIndex);
+                if (!Number.isNaN(index) && location.items && location.items[index]) {
+                    ensureItemDefaults(location.items[index]);
+                    location.items[index].position = { x: newX, y: newY };
+                }
+            } else if (visualType === 'puzzle' && location.puzzle) {
+                ensurePuzzleDefaults(location.puzzle);
+                location.puzzle.visual.position = { x: newX, y: newY };
+            }
+
+            autoSave();
+            renderVisualItemsList();
+
+            draggedItem = null;
+            document.removeEventListener('mousemove', dragItem);
+            document.removeEventListener('mouseup', stopDragItem);
+        }
+
+        // ==================== HOTSPOTS VISUAIS ====================
+        let isDrawingHotspot = false;
+        let hotspotStartX = 0;
+        let hotspotStartY = 0;
+        let currentDrawingRect = null;
+
+        function startDrawingHotspot() {
+            if (!currentLocationId) {
+                showToast('⚠️ Selecione um local primeiro', 'warning');
+                return;
+            }
+
+            const visualImage = document.getElementById('visual-location-image');
+            if (!visualImage.src || visualImage.style.display === 'none') {
+                showToast('⚠️ Faça upload de uma imagem primeiro', 'warning');
+                return;
+            }
+
+            isDrawingHotspot = true;
+            showToast('✏️ Clique e arraste na imagem', 'info');
+        }
+
+        function renderVisualHotspotsList() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const list = document.getElementById('visual-hotspots-list');
+
+            if (!location.hotspots || location.hotspots.length === 0) {
+                list.innerHTML = '<div style="color: #999; font-size: 12px; text-align: center; padding: 10px;">Nenhum hotspot</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            location.hotspots.forEach((hotspot, index) => {
+                if (hotspot.action === 'navigate' && hotspot.position) {
+                    const hotspotEl = document.createElement('div');
+                    hotspotEl.style.cssText = `
+                        background: #fff;
+                        padding: 8px;
+                        margin-bottom: 8px;
+                        border-radius: 4px;
+                        border: 2px solid #28a745;
+                        font-size: 11px;
+                        cursor: pointer;
+                    `;
+                    hotspotEl.innerHTML = `
+                        <div style="font-weight: bold; margin-bottom: 4px;">📍 ${hotspot.name || 'Hotspot ' + (index + 1)}</div>
+                        <div style="color: #666; font-size: 10px;">→ ${hotspot.target || 'destino'}</div>
+                        <div style="margin-top: 6px; display: flex; gap: 4px;">
+                            <button onclick="editVisualHotspot(${index})" style="flex: 1; padding: 4px; font-size: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">✏️ Editar</button>
+                            <button onclick="deleteVisualHotspot(${index})" style="flex: 1; padding: 4px; font-size: 10px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer;">🗑️</button>
+                        </div>
+                    `;
+                    list.appendChild(hotspotEl);
+                }
+            });
+        }
+
+        let selectedHotspotIndex = null;
+        let isDraggingHotspot = false;
+        let isResizingHotspot = false;
+        let hotspotDragOffset = { x: 0, y: 0 };
+        let hotspotResizeHandle = null;
+
+        function selectHotspot(index) {
+            if (selectedHotspotIndex === index) return;
+            selectedHotspotIndex = index;
+            renderPositionedHotspots();
+        }
+
+        function deselectHotspots() {
+            if (selectedHotspotIndex === null) return;
+            selectedHotspotIndex = null;
+            renderPositionedHotspots();
+        }
+
+        function renderPositionedHotspots() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const container = document.getElementById('visual-hotspots-container');
+            if (!container) return;
+
+            const visualImage = document.getElementById('visual-location-image');
+            const wrapper = document.getElementById('visual-wrapper');
+            if (!visualImage || !visualImage.naturalWidth || !wrapper) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const imgRect = visualImage.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const scale = imgRect.width / (visualImage.naturalWidth || imgRect.width);
+
+            container.style.width = visualImage.naturalWidth + 'px';
+            container.style.height = visualImage.naturalHeight + 'px';
+            container.style.transform = `scale(${scale})`;
+            container.style.transformOrigin = 'top left';
+            container.style.left = (imgRect.left - wrapperRect.left) + 'px';
+            container.style.top = (imgRect.top - wrapperRect.top) + 'px';
+
+            container.innerHTML = '';
+
+            if (!location.hotspots) {
+                console.log('🔍 Nenhum hotspot encontrado para:', currentLocationId);
+                return;
+            }
+
+            console.log('🔍 Renderizando hotspots para:', currentLocationId);
+            console.log('📊 Total de hotspots:', location.hotspots.length);
+
+            location.hotspots.forEach((hotspot, index) => {
+                console.log(`  [${index}] action: "${hotspot.action}", position:`, hotspot.position);
+
+                // Aceita tanto 'navigate' quanto 'navigation'
+                const isNavigationHotspot = (hotspot.action === 'navigate' || hotspot.action === 'navigation');
+                if (!isNavigationHotspot || !hotspot.position) {
+                    console.log(`  ❌ [${index}] IGNORADO - isNav: ${isNavigationHotspot}, hasPos: ${!!hotspot.position}`);
+                    return;
+                }
+
+                console.log(`  ✅ [${index}] RENDERIZANDO:`, hotspot.name);
+
+                const isSelected = index === selectedHotspotIndex;
+
+                const hotspotEl = document.createElement('div');
+                hotspotEl.dataset.hotspotIndex = index;
+                hotspotEl.style.cssText = `
+                    position: absolute;
+                    left: ${hotspot.position.x}%;
+                    top: ${hotspot.position.y}%;
+                    width: ${hotspot.position.width}%;
+                    height: ${hotspot.position.height}%;
+                    border: 3px ${isSelected ? '#ff4444' : 'dashed #28a745'};
+                    background: ${isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(40, 167, 69, 0.2)'};
+                    cursor: move;
+                    pointer-events: auto;
+                    z-index: 50;
+                `;
+
+                const label = document.createElement('div');
+                label.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: ${isSelected ? 'rgba(204, 0, 0, 0.9)' : 'rgba(40, 167, 69, 0.9)'};
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    pointer-events: none;
+                    white-space: nowrap;
+                `;
+                label.textContent = hotspot.name || 'Hotspot';
+                hotspotEl.appendChild(label);
+
+                hotspotEl.addEventListener('mousedown', handleHotspotMouseDown);
+                hotspotEl.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    editVisualHotspot(index);
+                });
+
+                if (isSelected) {
+                    const handles = ['nw', 'ne', 'sw', 'se'];
+                    handles.forEach(handle => {
+                        const handleEl = document.createElement('div');
+                        handleEl.className = 'resize-handle';
+                        handleEl.dataset.direction = handle;
+                        handleEl.style.cssText = `
+                            position: absolute;
+                            width: 12px; height: 12px; 
+                            background: #ff4444; border: 1px solid white;
+                            z-index: 100;
+                            cursor: ${handle}-resize;
+                        `;
+                        if (handle.includes('n')) handleEl.style.top = '-6px';
+                        if (handle.includes('s')) handleEl.style.bottom = '-6px';
+                        if (handle.includes('w')) handleEl.style.left = '-6px';
+                        if (handle.includes('e')) handleEl.style.right = '-6px';
+                        
+                        handleEl.addEventListener('mousedown', handleResizeMouseDown);
+                        hotspotEl.appendChild(handleEl);
+                    });
+                }
+
+                container.appendChild(hotspotEl);
+            });
+        }
+
+        function handleHotspotMouseDown(e) {
+            e.stopPropagation();
+            const index = parseInt(e.target.closest('[data-hotspot-index]').dataset.hotspotIndex);
+            selectHotspot(index);
+
+            isDraggingHotspot = true;
+            const containerRect = document.getElementById('visual-hotspots-container').getBoundingClientRect();
+            const hotspotData = gameLocations[currentLocationId].hotspots[index];
+            
+            const startX = (hotspotData.position.x / 100) * containerRect.width;
+            const startY = (hotspotData.position.y / 100) * containerRect.height;
+
+            hotspotDragOffset.x = e.clientX - containerRect.left - startX;
+            hotspotDragOffset.y = e.clientY - containerRect.top - startY;
+
+            document.addEventListener('mousemove', handleHotspotMouseMove);
+            document.addEventListener('mouseup', handleHotspotMouseUp);
+        }
+
+        function handleHotspotMouseMove(e) {
+            if (!isDraggingHotspot) return;
+            e.stopPropagation();
+
+            const container = document.getElementById('visual-hotspots-container');
+            const containerRect = container.getBoundingClientRect();
+            const hotspot = gameLocations[currentLocationId].hotspots[selectedHotspotIndex];
+
+            let newX = e.clientX - containerRect.left - hotspotDragOffset.x;
+            let newY = e.clientY - containerRect.top - hotspotDragOffset.y;
+
+            let newXPercent = (newX / containerRect.width) * 100;
+            let newYPercent = (newY / containerRect.height) * 100;
+
+            // Clamp to bounds
+            newXPercent = Math.max(0, Math.min(100 - hotspot.position.width, newXPercent));
+            newYPercent = Math.max(0, Math.min(100 - hotspot.position.height, newYPercent));
+
+            hotspot.position.x = newXPercent;
+            hotspot.position.y = newYPercent;
+
+            renderPositionedHotspots(); // Re-render to show movement
+        }
+
+        function handleHotspotMouseUp(e) {
+            if (isDraggingHotspot) {
+                isDraggingHotspot = false;
+                autoSave();
+            }
+            document.removeEventListener('mousemove', handleHotspotMouseMove);
+            document.removeEventListener('mouseup', handleHotspotMouseUp);
+        }
+
+        function handleResizeMouseDown(e) {
+            e.stopPropagation();
+            isResizingHotspot = true;
+            hotspotResizeHandle = e.target.dataset.direction;
+
+            document.addEventListener('mousemove', handleResizeMouseMove);
+            document.addEventListener('mouseup', handleResizeMouseUp);
+        }
+
+        function handleResizeMouseMove(e) {
+            if (!isResizingHotspot) return;
+            e.stopPropagation();
+
+            const container = document.getElementById('visual-hotspots-container');
+            const containerRect = container.getBoundingClientRect();
+            const hotspot = gameLocations[currentLocationId].hotspots[selectedHotspotIndex];
+            const pos = hotspot.position;
+
+            const mouseX = e.clientX - containerRect.left;
+            const mouseY = e.clientY - containerRect.top;
+
+            const mouseXPercent = (mouseX / containerRect.width) * 100;
+            const mouseYPercent = (mouseY / containerRect.height) * 100;
+
+            const right = pos.x + pos.width;
+            const bottom = pos.y + pos.height;
+
+            if (hotspotResizeHandle.includes('e')) {
+                pos.width = Math.max(1, mouseXPercent - pos.x);
+            }
+            if (hotspotResizeHandle.includes('s')) {
+                pos.height = Math.max(1, mouseYPercent - pos.y);
+            }
+            if (hotspotResizeHandle.includes('w')) {
+                pos.width = Math.max(1, right - mouseXPercent);
+                pos.x = mouseXPercent;
+            }
+            if (hotspotResizeHandle.includes('n')) {
+                pos.height = Math.max(1, bottom - mouseYPercent);
+                pos.y = mouseYPercent;
+            }
+
+            renderPositionedHotspots();
+        }
+
+        function handleResizeMouseUp(e) {
+            if (isResizingHotspot) {
+                isResizingHotspot = false;
+                autoSave();
+            }
+            document.removeEventListener('mousemove', handleResizeMouseMove);
+            document.removeEventListener('mouseup', handleResizeMouseUp);
+        }
+
+        function editVisualHotspot(index) {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const hotspot = location.hotspots[index];
+
+            const newName = prompt('Nome do hotspot:', hotspot.name || '');
+            if (newName === null) return;
+
+            const oldTarget = hotspot.target;
+            const newTarget = prompt('Local de destino (ID):', hotspot.target || '');
+            if (newTarget === null) return;
+
+            hotspot.name = newName;
+            hotspot.target = newTarget;
+
+            if (oldTarget !== newTarget) {
+                if (!location.connections) location.connections = [];
+                if (!location.connections.includes(newTarget)) {
+                    location.connections.push(newTarget);
+                }
+            }
+
+            autoSave();
+            renderVisualHotspotsList();
+            renderPositionedHotspots();
+        }
+
+
+
+        function deleteVisualHotspot(index) {
+            if (!currentLocationId) return;
+            if (!confirm('Remover este hotspot?')) return;
+
+            const location = gameLocations[currentLocationId];
+            location.hotspots.splice(index, 1);
+
+            autoSave();
+            renderVisualHotspotsList();
+            renderPositionedHotspots();
+        }
+
+        // Função de debug para verificar hotspots e connections
+        function debugLocation(locationId) {
+            const loc = gameLocations[locationId];
+            if (!loc) {
+                console.error('❌ Local não encontrado:', locationId);
+                return;
+            }
+
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('📍 Local:', locationId);
+            console.log('🔗 Connections:', loc.connections);
+            console.log('🎯 Hotspots:', loc.hotspots?.length || 0);
+
+            if (loc.hotspots) {
+                loc.hotspots.forEach((h, i) => {
+                    console.log(`  ${i}. "${h.name}" → ${h.target} (${h.action})`);
+                    if (h.action === 'navigate') {
+                        const temConexao = loc.connections?.includes(h.target);
+                        console.log(`     ${temConexao ? '✅' : '❌'} Conexão existe: ${temConexao}`);
+                    }
+                });
+            }
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        }
+
+        // Disponibilizar no console global
+        window.debugLocation = debugLocation;
+        window.gameLocations = gameLocations;
+
+        // Carregar dados ao iniciar
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+        });
+
+        // Inicializar eventos de desenho de hotspots
+        window.addEventListener('load', () => {
+            const visualWrapper = document.getElementById('visual-wrapper');
+            if (!visualWrapper) return;
+
+            visualWrapper.addEventListener('mousedown', (e) => {
+                if (!isDrawingHotspot) return;
+
+                const visualImage = document.getElementById('visual-location-image');
+                const imgRect = visualImage.getBoundingClientRect();
+
+                // Verificar se clicou na imagem
+                if (e.clientX < imgRect.left || e.clientX > imgRect.right ||
+                    e.clientY < imgRect.top || e.clientY > imgRect.bottom) {
+                    return;
+                }
+
+                hotspotStartX = e.clientX - imgRect.left;
+                hotspotStartY = e.clientY - imgRect.top;
+
+                // Criar retângulo temporário
+                const container = document.getElementById('visual-hotspots-container');
+                currentDrawingRect = document.createElement('div');
+                currentDrawingRect.style.cssText = `
+                    position: absolute;
+                    border: 3px dashed #28a745;
+                    background: rgba(40, 167, 69, 0.3);
+                    pointer-events: none;
+                    z-index: 200;
+                `;
+
+                // Converter para coordenadas escaladas
+                const scale = imgRect.width / (visualImage.naturalWidth || imgRect.width);
+                currentDrawingRect.style.left = hotspotStartX / scale + 'px';
+                currentDrawingRect.style.top = hotspotStartY / scale + 'px';
+
+                container.appendChild(currentDrawingRect);
+            });
+
+            visualWrapper.addEventListener('mousemove', (e) => {
+                if (!isDrawingHotspot || !currentDrawingRect) return;
+
+                const visualImage = document.getElementById('visual-location-image');
+                const imgRect = visualImage.getBoundingClientRect();
+
+                const currentX = e.clientX - imgRect.left;
+                const currentY = e.clientY - imgRect.top;
+
+                const width = Math.abs(currentX - hotspotStartX);
+                const height = Math.abs(currentY - hotspotStartY);
+                const left = Math.min(hotspotStartX, currentX);
+                const top = Math.min(hotspotStartY, currentY);
+
+                const scale = imgRect.width / (visualImage.naturalWidth || imgRect.width);
+
+                currentDrawingRect.style.left = left / scale + 'px';
+                currentDrawingRect.style.top = top / scale + 'px';
+                currentDrawingRect.style.width = width / scale + 'px';
+                currentDrawingRect.style.height = height / scale + 'px';
+            });
+
+            visualWrapper.addEventListener('mouseup', (e) => {
+                if (!isDrawingHotspot || !currentDrawingRect) return;
+
+                const visualImage = document.getElementById('visual-location-image');
+                const imgRect = visualImage.getBoundingClientRect();
+
+                const currentX = e.clientX - imgRect.left;
+                const currentY = e.clientY - imgRect.top;
+
+                const width = Math.abs(currentX - hotspotStartX);
+                const height = Math.abs(currentY - hotspotStartY);
+
+                // Mínimo 20px de área
+                if (width < 20 || height < 20) {
+                    currentDrawingRect.remove();
+                    currentDrawingRect = null;
+                    showToast('⚠️ Área muito pequena', 'warning');
+                    return;
+                }
+
+                // Converter para porcentagem
+                const x = (Math.min(hotspotStartX, currentX) / imgRect.width) * 100;
+                const y = (Math.min(hotspotStartY, currentY) / imgRect.height) * 100;
+                const w = (width / imgRect.width) * 100;
+                const h = (height / imgRect.height) * 100;
+
+                // Pedir informações
+                const name = prompt('Nome do hotspot:');
+                if (!name) {
+                    currentDrawingRect.remove();
+                    currentDrawingRect = null;
+                    isDrawingHotspot = false;
+                    return;
+                }
+
+                const target = prompt('Local de destino (ID):');
+                if (!target) {
+                    currentDrawingRect.remove();
+                    currentDrawingRect = null;
+                    isDrawingHotspot = false;
+                    return;
+                }
+
+                // Salvar hotspot
+                const location = gameLocations[currentLocationId];
+                if (!location.hotspots) location.hotspots = [];
+
+                const newHotspot = {
+                    id: 'hotspot_' + Date.now(),
+                    name: name,
+                    action: 'navigate',
+                    target: target,
+                    position: {
+                        x: x,
+                        y: y,
+                        width: w,
+                        height: h
+                    }
+                };
+
+                location.hotspots.push(newHotspot);
+
+                // Adicionar conexão automaticamente se não existir
+                if (!location.connections) location.connections = [];
+                if (!location.connections.includes(target)) {
+                    location.connections.push(target);
+                    console.log('➕ Conexão adicionada automaticamente:', target);
+                }
+
+                autoSave();
+
+                currentDrawingRect.remove();
+                currentDrawingRect = null;
+                isDrawingHotspot = false;
+
+                renderVisualHotspotsList();
+                renderPositionedHotspots();
+
+                showToast('✅ Hotspot criado!');
+            });
+        });
+
+        // Switch tabs
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Load visual editor when switching to visual tab
+            if (tabName === 'visual') {
+                loadVisualEditor();
+            }
+        }
+
+        // Save basic info
+        function saveBasicInfo() {
+            if (!currentLocationId) return;
+
+            const oldId = currentLocationId;
+            const newId = document.getElementById('edit-id').value.trim();
+
+            // Update location data
+            const location = gameLocations[oldId];
+            location.id = newId;
+            location.name = document.getElementById('edit-name').value;
+            location.description = document.getElementById('edit-description').value;
+            location.image = document.getElementById('edit-image').value;
+            location.unlocked = document.getElementById('edit-unlocked').checked;
+
+            // If ID changed, update the object key and all connections
+            if (oldId !== newId) {
+                gameLocations[newId] = location;
+                delete gameLocations[oldId];
+
+                // Update connections in all locations
+                Object.values(gameLocations).forEach(loc => {
+                    if (loc.connections) {
+                        loc.connections = loc.connections.map(conn => conn === oldId ? newId : conn);
+                    }
+                    if (loc.hotspots) {
+                        loc.hotspots.forEach(hotspot => {
+                            if (hotspot.target === oldId) hotspot.target = newId;
+                        });
+                    }
+                });
+
+                currentLocationId = newId;
+
+                // Update locationOrder array
+                const orderIndex = locationOrder.indexOf(oldId);
+                if (orderIndex > -1) {
+                    locationOrder[orderIndex] = newId;
+                }
+            }
+
+            autoSave();
+            renderLocationsList();
+            showToast('✓ Informações salvas!');
+        }
+
+        // Toggle puzzle editor
+        function togglePuzzleEditor() {
+            const hasPuzzle = document.getElementById('has-puzzle').checked;
+            document.getElementById('puzzle-editor').style.display = hasPuzzle ? 'block' : 'none';
+        }
+
+        // Select puzzle type
+        function selectPuzzleType(type) {
+            currentPuzzleType = type;
+
+            document.querySelectorAll('.puzzle-type-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.closest('.puzzle-type-btn').classList.add('selected');
+
+            renderPuzzleOptions(type);
+        }
+
+        // Render puzzle options based on type
+        function renderPuzzleOptions(type) {
+            const container = document.getElementById('puzzle-options-container');
+
+            const templates = {
+                direction: `
+                    <div class="form-group">
+                        <label>Pergunta</label>
+                        <textarea id="puzzle-question" placeholder="Digite a pergunta..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Opções (uma por linha)</label>
+                        <textarea id="puzzle-options" placeholder="Norte\nSul\nLeste\nOeste"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Resposta Correta (número da opção, começando em 0)</label>
+                        <input type="number" id="puzzle-answer" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Dica (opcional)</label>
+                        <input type="text" id="puzzle-hint" placeholder="Dica...">
+                    </div>
+                `,
+                riddle: `
+                    <div class="form-group">
+                        <label>Pergunta / Charada</label>
+                        <textarea id="puzzle-question" placeholder="Digite a charada..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Opções (uma por linha)</label>
+                        <textarea id="puzzle-options" placeholder="Opção 1\nOpção 2\nOpção 3\nOpção 4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Resposta Correta (número da opção, começando em 0)</label>
+                        <input type="number" id="puzzle-answer" placeholder="0">
+                    </div>
+                `,
+                sequence_symbols: `
+                    <div class="form-group">
+                        <label>Pergunta</label>
+                        <textarea id="puzzle-question" placeholder="Digite a pergunta..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Sequência Correta (números separados por vírgula, começando em 0)</label>
+                        <input type="text" id="puzzle-sequence" placeholder="0,2,1">
+                        <div class="form-hint">Exemplo: 0,2,1 significa primeira opção, terceira opção, segunda opção</div>
+                    </div>
+                `,
+                math: `
+                    <div class="form-group">
+                        <label>Pergunta / Problema Matemático</label>
+                        <textarea id="puzzle-question" placeholder="Digite o problema..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Resposta Correta (número)</label>
+                        <input type="number" id="puzzle-answer" placeholder="42">
+                    </div>
+                `,
+                code: `
+                    <div class="form-group">
+                        <label>Pergunta</label>
+                        <textarea id="puzzle-question" placeholder="Digite a pergunta..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Código Correto (número)</label>
+                        <input type="number" id="puzzle-answer" placeholder="1234">
+                    </div>
+                    <div class="form-group">
+                        <label>Dica (opcional)</label>
+                        <input type="text" id="puzzle-hint" placeholder="Dica...">
+                    </div>
+                `,
+                item_combination: `
+                    <div class="form-group">
+                        <label>Pergunta</label>
+                        <textarea id="puzzle-question" placeholder="Digite a pergunta..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Itens Necessários (IDs separados por vírgula)</label>
+                        <input type="text" id="puzzle-required-items" placeholder="golden_gear,crystal_key">
+                    </div>
+                `
+            };
+
+            container.innerHTML = templates[type] || '';
+        }
+
+        // Load puzzle data
+        function loadPuzzleData(puzzle) {
+            if (!puzzle) return;
+
+            document.getElementById('puzzle-id').value = puzzle.id || '';
+            currentPuzzleType = puzzle.type;
+
+            // Select puzzle type button
+            document.querySelectorAll('.puzzle-type-btn').forEach(btn => btn.classList.remove('selected'));
+            const typeBtn = Array.from(document.querySelectorAll('.puzzle-type-btn')).find(btn =>
+                btn.textContent.includes(getPuzzleTypeName(puzzle.type))
+            );
+            if (typeBtn) typeBtn.classList.add('selected');
+
+            renderPuzzleOptions(puzzle.type);
+
+            // Fill in puzzle data
+            setTimeout(() => {
+                const questionEl = document.getElementById('puzzle-question');
+                if (questionEl) questionEl.value = puzzle.question || '';
+
+                if (puzzle.type === 'direction' || puzzle.type === 'riddle') {
+                    const optionsEl = document.getElementById('puzzle-options');
+                    if (optionsEl && puzzle.options) {
+                        optionsEl.value = puzzle.options.join('\n');
+                    }
+                    const answerEl = document.getElementById('puzzle-answer');
+                    if (answerEl) answerEl.value = puzzle.correctAnswer || 0;
+                    const hintEl = document.getElementById('puzzle-hint');
+                    if (hintEl && puzzle.hint) hintEl.value = puzzle.hint;
+                } else if (puzzle.type === 'sequence_symbols') {
+                    const seqEl = document.getElementById('puzzle-sequence');
+                    if (seqEl && puzzle.correctSequence) {
+                        seqEl.value = puzzle.correctSequence.join(',');
+                    }
+                } else if (puzzle.type === 'math' || puzzle.type === 'code') {
+                    const answerEl = document.getElementById('puzzle-answer');
+                    if (answerEl) answerEl.value = puzzle.correctAnswer || '';
+                    const hintEl = document.getElementById('puzzle-hint');
+                    if (hintEl && puzzle.hint) hintEl.value = puzzle.hint;
+                } else if (puzzle.type === 'item_combination' || puzzle.type === 'key_check') {
+                    const itemsEl = document.getElementById('puzzle-required-items');
+                    if (itemsEl && puzzle.requiredItems) {
+                        itemsEl.value = puzzle.requiredItems.join(',');
+                    }
+                }
+
+                if (puzzle.reward) {
+                    document.getElementById('puzzle-reward-id').value = puzzle.reward.id || '';
+                    document.getElementById('puzzle-reward-name').value = puzzle.reward.name || '';
+                    const rewardImageEl = document.getElementById('puzzle-reward-image');
+                    if (rewardImageEl) rewardImageEl.value = puzzle.reward.image || '';
+                }
+            }, 100);
+        }
+
+        function getPuzzleTypeName(type) {
+            const names = {
+                direction: 'Direção',
+                riddle: 'Charada',
+                sequence_symbols: 'Sequência',
+                math: 'Matemática',
+                code: 'Código',
+                item_combination: 'Combinar Itens'
+            };
+            return names[type] || type;
+        }
+
+        // Save puzzle
+        function savePuzzle() {
+            if (!currentLocationId) return;
+
+            const hasPuzzle = document.getElementById('has-puzzle').checked;
+            const location = gameLocations[currentLocationId];
+
+            if (!hasPuzzle) {
+                delete location.puzzle;
+                autoSave();
+                showToast('✓ Enigma removido!');
+                if (selectedVisualType === 'puzzle') {
+                    selectedVisualType = null;
+                    selectedItemIndex = null;
+                    renderTransformControls();
+                    renderPositionedItems();
+                    renderVisualItemsList();
+                }
+                return;
+            }
+
+            if (!currentPuzzleType) {
+                showToast('Selecione um tipo de enigma!', 'warning');
+                return;
+            }
+
+            const puzzle = {
+                id: document.getElementById('puzzle-id').value,
+                type: currentPuzzleType
+            };
+
+            const questionEl = document.getElementById('puzzle-question');
+            if (questionEl) puzzle.question = questionEl.value;
+
+            if (currentPuzzleType === 'direction' || currentPuzzleType === 'riddle') {
+                const optionsEl = document.getElementById('puzzle-options');
+                if (optionsEl) puzzle.options = optionsEl.value.split('\n').filter(o => o.trim());
+                const answerEl = document.getElementById('puzzle-answer');
+                if (answerEl) puzzle.correctAnswer = parseInt(answerEl.value);
+                const hintEl = document.getElementById('puzzle-hint');
+                if (hintEl && hintEl.value) puzzle.hint = hintEl.value;
+            } else if (currentPuzzleType === 'sequence_symbols') {
+                const seqEl = document.getElementById('puzzle-sequence');
+                if (seqEl) puzzle.correctSequence = seqEl.value.split(',').map(n => parseInt(n.trim()));
+            } else if (currentPuzzleType === 'math' || currentPuzzleType === 'code') {
+                const answerEl = document.getElementById('puzzle-answer');
+                if (answerEl) puzzle.correctAnswer = parseInt(answerEl.value);
+                const hintEl = document.getElementById('puzzle-hint');
+                if (hintEl && hintEl.value) puzzle.hint = hintEl.value;
+            } else if (currentPuzzleType === 'item_combination' || currentPuzzleType === 'key_check') {
+                const itemsEl = document.getElementById('puzzle-required-items');
+                if (itemsEl) puzzle.requiredItems = itemsEl.value.split(',').map(i => i.trim());
+            }
+
+            const rewardId = document.getElementById('puzzle-reward-id').value;
+            const rewardName = document.getElementById('puzzle-reward-name').value;
+            const rewardImage = document.getElementById('puzzle-reward-image').value;
+            if (rewardId && rewardName) {
+                puzzle.reward = { id: rewardId, name: rewardName };
+                if (rewardImage) {
+                    puzzle.reward.image = rewardImage;
+                }
+            }
+
+            const previousVisual = location.puzzle?.visual ? JSON.parse(JSON.stringify(location.puzzle.visual)) : null;
+            location.puzzle = puzzle;
+            if (previousVisual) {
+                location.puzzle.visual = previousVisual;
+            } else {
+                ensurePuzzleDefaults(location.puzzle);
+            }
+
+            autoSave();
+            showToast('✓ Enigma salvo!');
+            renderVisualItemsList();
+            renderPositionedItems();
+        }
+
+        // Render items list
+        function renderItemsList() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const list = document.getElementById('itemsList');
+
+            if (!location.items || location.items.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>Nenhum item neste local</p></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            location.items.forEach((item, index) => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'list-item';
+                itemEl.innerHTML = `
+                    <div class="list-item-content">
+                        <div class="list-item-title">${item.name}</div>
+                        <div class="list-item-details">ID: ${item.id}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-secondary btn-small" onclick="editItem(${index})">✏️ Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteItem(${index})">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(itemEl);
+            });
+        }
+
+        function addNewItem() {
+            if (!currentLocationId) return;
+
+            const itemId = prompt('ID do item (ex: old_coin):');
+            if (!itemId) return;
+
+            const itemName = prompt('Nome do item (ex: Moeda Antiga):');
+            if (!itemName) return;
+
+            const location = gameLocations[currentLocationId];
+            if (!location.items) location.items = [];
+
+            location.items.push({ id: itemId, name: itemName, found: false });
+            autoSave();
+            renderItemsList();
+        }
+
+        function editItem(index) {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const item = location.items[index];
+
+            const newId = prompt('ID do item:', item.id);
+            if (newId === null) return;
+
+            const newName = prompt('Nome do item:', item.name);
+            if (newName === null) return;
+
+            item.id = newId;
+            item.name = newName;
+
+            autoSave();
+            renderItemsList();
+        }
+
+        function deleteItem(index) {
+            if (!currentLocationId) return;
+
+            if (!confirm('Remover este item?')) return;
+
+            const location = gameLocations[currentLocationId];
+            location.items.splice(index, 1);
+
+            autoSave();
+            renderItemsList();
+        }
+
+        // Render hotspots list
+        function renderHotspotsList() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const list = document.getElementById('hotspotsList');
+
+            if (!location.hotspots || location.hotspots.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div><p>Nenhum hotspot neste local</p></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            location.hotspots.forEach((hotspot, index) => {
+                const hotspotEl = document.createElement('div');
+                hotspotEl.className = 'list-item';
+
+                let arrowDirectionDropdown = '';
+                if (hotspot.action === 'navigate') {
+                    arrowDirectionDropdown = `
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label style="font-size: 12px;">Direção da Seta</label>
+                            <select onchange="updateHotspotArrowDirection(${index}, this.value)" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="right" ${hotspot.arrowDirection === 'right' ? 'selected' : ''}>Direita</option>
+                                <option value="left" ${hotspot.arrowDirection === 'left' ? 'selected' : ''}>Esquerda</option>
+                                <option value="up" ${hotspot.arrowDirection === 'up' ? 'selected' : ''}>Cima</option>
+                                <option value="down" ${hotspot.arrowDirection === 'down' ? 'selected' : ''}>Baixo</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label style="font-size: 12px;">🔍 Tipo de Zoom</label>
+                            <select onchange="updateHotspotZoomDirection(${index}, this.value)" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="in" ${!hotspot.zoomDirection || hotspot.zoomDirection === 'in' ? 'selected' : ''}>🔎 Zoom In (aproximar)</option>
+                                <option value="out" ${hotspot.zoomDirection === 'out' ? 'selected' : ''}>🔍 Zoom Out (afastar)</option>
+                                <option value="none" ${hotspot.zoomDirection === 'none' ? 'selected' : ''}>➡️ Sem Zoom</option>
+                            </select>
+                        </div>
+                    `;
+                }
+
+                hotspotEl.innerHTML = `
+                    <div class="list-item-content">
+                        <div class="list-item-title">${hotspot.name}</div>
+                        <div class="list-item-details">
+                            ID: ${hotspot.id} | Ação: ${hotspot.action} | Posição: ${hotspot.position.x}%, ${hotspot.position.y}%
+                        </div>
+                        ${arrowDirectionDropdown}
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn btn-secondary btn-small" onclick="editHotspot(${index})">✏️ Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteHotspot(${index})">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(hotspotEl);
+            });
+        }
+
+        function updateHotspotArrowDirection(index, direction) {
+            if (!currentLocationId) return;
+            const location = gameLocations[currentLocationId];
+            const hotspot = location.hotspots[index];
+            hotspot.arrowDirection = direction;
+            autoSave();
+        }
+
+        function updateHotspotZoomDirection(index, zoomDirection) {
+            if (!currentLocationId) return;
+            const location = gameLocations[currentLocationId];
+            const hotspot = location.hotspots[index];
+            hotspot.zoomDirection = zoomDirection;
+            autoSave();
+            showToast(`Zoom: ${zoomDirection === 'in' ? 'In' : zoomDirection === 'out' ? 'Out' : 'Nenhum'}`);
+        }
+
+        function addNewHotspot() {
+            if (!currentLocationId) return;
+
+            const hotspotId = prompt('ID do hotspot (ex: fountain):');
+            if (!hotspotId) return;
+
+            const hotspotName = prompt('Nome do hotspot (ex: Fonte Seca):');
+            if (!hotspotName) return;
+
+            const action = prompt('Ação (examine, navigate, puzzle, collect):', 'examine');
+            if (!action) return;
+
+            const location = gameLocations[currentLocationId];
+            if (!location.hotspots) location.hotspots = [];
+
+            const newHotspot = {
+                id: hotspotId,
+                name: hotspotName,
+                position: { x: 50, y: 50, width: 15, height: 15 },
+                action: action
+            };
+
+            if (action === 'examine') {
+                newHotspot.message = prompt('Mensagem ao examinar:', 'Algo interessante...');
+            } else if (action === 'navigate') {
+                newHotspot.target = prompt('ID do local de destino:');
+            } else if (action === 'puzzle') {
+                newHotspot.target = prompt('ID do puzzle:');
+            } else if (action === 'collect') {
+                newHotspot.itemId = prompt('ID do item a coletar:');
+            }
+
+            location.hotspots.push(newHotspot);
+            autoSave();
+            renderHotspotsList();
+        }
+
+        function editHotspot(index) {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const hotspot = location.hotspots[index];
+
+            const newName = prompt('Nome do hotspot:', hotspot.name);
+            if (newName === null) return;
+            hotspot.name = newName;
+
+            const x = prompt('Posição X (%):', hotspot.position.x);
+            if (x !== null) hotspot.position.x = parseInt(x);
+
+            const y = prompt('Posição Y (%):', hotspot.position.y);
+            if (y !== null) hotspot.position.y = parseInt(y);
+
+            const width = prompt('Largura (%):', hotspot.position.width);
+            if (width !== null) hotspot.position.width = parseInt(width);
+
+            autoSave();
+            renderHotspotsList();
+            renderPositionedHotspots();
+        }
+
+        function deleteHotspot(index) {
+            if (!currentLocationId) return;
+
+            if (!confirm('Remover este hotspot?')) return;
+
+            const location = gameLocations[currentLocationId];
+            location.hotspots.splice(index, 1);
+
+            autoSave();
+            renderHotspotsList();
+        }
+
+        // Render connections list
+        function renderConnectionsList() {
+            if (!currentLocationId) return;
+
+            const currentLocation = gameLocations[currentLocationId];
+            const list = document.getElementById('connectionsList');
+            list.innerHTML = '';
+
+            Object.values(gameLocations).forEach(location => {
+                if (location.id === currentLocationId) return;
+
+                const isConnected = currentLocation.connections && currentLocation.connections.includes(location.id);
+
+                const connEl = document.createElement('div');
+                connEl.className = 'list-item';
+                connEl.style.background = isConnected ? '#e8f5e9' : '#f9f9f9';
+                connEl.innerHTML = `
+                    <div class="list-item-content">
+                        <div class="list-item-title">${location.name}</div>
+                        <div class="list-item-details">ID: ${location.id}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn ${isConnected ? 'btn-danger' : 'btn-success'} btn-small"
+                                onclick="toggleConnection('${location.id}')">
+                            ${isConnected ? '✕ Desconectar' : '+ Conectar'}
+                        </button>
+                    </div>
+                `;
+                list.appendChild(connEl);
+            });
+        }
+
+        function toggleConnection(targetId) {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const target = gameLocations[targetId];
+
+            if (!location.connections) location.connections = [];
+            if (!target.connections) target.connections = [];
+
+            const index = location.connections.indexOf(targetId);
+            if (index > -1) {
+                // Remove connection (bidirectional)
+                location.connections.splice(index, 1);
+                const targetIndex = target.connections.indexOf(currentLocationId);
+                if (targetIndex > -1) {
+                    target.connections.splice(targetIndex, 1);
+                }
+            } else {
+                // Add connection (bidirectional)
+                location.connections.push(targetId);
+                if (!target.connections.includes(currentLocationId)) {
+                    target.connections.push(currentLocationId);
+                }
+            }
+
+            autoSave();
+            renderConnectionsList();
+        }
+
+        // Add new location
+        function addNewLocation() {
+            const locationId = prompt('ID do novo local (ex: new_area):');
+            if (!locationId || !locationId.trim()) return;
+
+            if (gameLocations[locationId]) {
+                showToast('Já existe um local com este ID!', 'error');
+                return;
+            }
+
+            const locationName = prompt('Nome do novo local (ex: Área Nova):');
+            if (!locationName) return;
+
+            gameLocations[locationId] = {
+                id: locationId,
+                name: locationName,
+                description: 'Descrição do local...',
+                image: `images/${locationId}.jpg`,
+                unlocked: false,
+                connections: [],
+                hotspots: [],
+                items: []
+            };
+
+            // Add to location order at the end
+            locationOrder.push(locationId);
+
+            autoSave();
+            renderLocationsList();
+            selectLocation(locationId);
+        }
+
+        // Delete location
+        function deleteLocation(locationId) {
+            if (!confirm(`Tem certeza que deseja remover o local "${gameLocations[locationId].name}"?`)) return;
+
+            // Remove connections in other locations
+            Object.values(gameLocations).forEach(loc => {
+                if (loc.connections) {
+                    loc.connections = loc.connections.filter(conn => conn !== locationId);
+                }
+                if (loc.hotspots) {
+                    loc.hotspots = loc.hotspots.filter(hotspot => hotspot.target !== locationId);
+                }
+            });
+
+            delete gameLocations[locationId];
+
+            // Remove from location order
+            const orderIndex = locationOrder.indexOf(locationId);
+            if (orderIndex > -1) {
+                locationOrder.splice(orderIndex, 1);
+            }
+
+            if (currentLocationId === locationId) {
+                currentLocationId = null;
+                document.getElementById('currentLocationName').textContent = 'Selecione um local';
+                document.getElementById('currentLocationId').textContent = '';
+            }
+
+            autoSave();
+            renderLocationsList();
+        }
+
+        // Export game data
+        function exportGameData() {
+            const code = `// Vila Abandonada - Game Map Data
+// Generated by Location Editor
+
+const GAME_MAP = ${JSON.stringify(gameLocations, null, 4)};
+
+// Helper functions
+function getLocation(locationId) {
+    return GAME_MAP[locationId];
+}
+
+function getUnlockedLocations() {
+    return Object.values(GAME_MAP).filter(loc => loc.unlocked);
+}
+
+// Export for use in game
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { GAME_MAP, getLocation, getUnlockedLocations };
+}`;
+
+            document.getElementById('exportedCode').textContent = code;
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        // IndexedDB helpers (suporta arquivos grandes)
+        function openGameDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('VilaAbandonadaDB', 1);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('gameData')) {
+                        db.createObjectStore('gameData');
+                    }
+                };
+            });
+        }
+
+        async function saveToIndexedDB(key, data) {
+            const db = await openGameDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['gameData'], 'readwrite');
+                const store = transaction.objectStore('gameData');
+                const request = store.put(data, key);
+
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function loadFromIndexedDB(key) {
+            const db = await openGameDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['gameData'], 'readonly');
+                const store = transaction.objectStore('gameData');
+                const request = store.get(key);
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Save to game via IndexedDB (suporta arquivos grandes)
+        async function saveToGame() {
+            console.log('[GEMINI_DEBUG] Saving to game...', gameLocations);
+            try {
+                await saveToIndexedDB('gameLocations', gameLocations);
+                showToast('✅ Salvo no jogo!');
+            } catch (e) {
+                showToast('❌ Erro ao salvar: ' + e.message, 'error');
+            }
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function copyExportedCode() {
+            const code = document.getElementById('exportedCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('✓ Código copiado!');
+            });
+        }
+
+        function resetEditorData() {
+            if (confirm('Tem certeza que deseja resetar todos os dados do editor? Isso irá apagar todas as suas alterações e restaurar os dados para o padrão do arquivo.')) {
+                openGameDB().then(db => {
+                    const transaction = db.transaction(['gameData'], 'readwrite');
+                    const store = transaction.objectStore('gameData');
+                    store.delete('editorData');
+                    store.delete('gameLocations');
+                    transaction.oncomplete = () => {
+                        showToast('Dados resetados! Recarregando...');
+                        setTimeout(() => location.reload(), 1000);
+                    };
+                }).catch(err => {
+                    showToast('Erro ao resetar: ' + err.message, 'error');
+                });
+            }
+        }
+
+        // ============================================
+        // DATABASE SYNC FUNCTIONS
+        // ============================================
+
+        async function loadFromDatabase(auto = false) {
+            if (!auto) {
+                showToast('🔄 Carregando do banco...', 'info');
+            } else {
+                console.log('🔄 Carregamento automático do banco...');
+            }
+
+            try {
+                const response = await fetch('api/locations/list.php');
+                const result = await response.json();
+
+                if (!result.success) {
+                    showToast('❌ Erro: ' + result.message, 'error');
+                    return;
+                }
+
+                const locations = result.data.locations;
+
+                if (locations.length === 0) {
+                    if (!auto) {
+                        showToast('⚠️ Banco está vazio. Execute migrate-ui.html primeiro!', 'error');
+                        return;
+                    } else {
+                        console.warn('Banco vazio, usando dados locais');
+                        await loadFromLocalStorage();
+                        return;
+                    }
+                }
+
+                // Convert API format to editor format
+                console.log('📥 Dados recebidos do banco:', locations);
+
+                gameLocations = {};
+                locationOrder = [];
+
+                locations.forEach(loc => {
+                    // Separar hotspots entre navegação e items
+                    const hotspots = [];
+                    const items = [];
+
+                    (loc.hotspots || []).forEach(h => {
+                        console.log('Hotspot data from DB:', h);
+                        if (h.type === 'item' && h.item_id) {
+                            // Este é um item, não um hotspot de navegação
+                            items.push({
+                                id: h.item_id,
+                                name: h.label || h.item_id,
+                                description: h.description || '',
+                                image: h.item_image || '',  // ✅ Incluir imagem do JOIN
+                                position: {
+                                    x: parseFloat(h.x) || 50,
+                                    y: parseFloat(h.y) || 50
+                                },
+                                size: {
+                                    width: parseFloat(h.width) || 5,
+                                    height: parseFloat(h.height) || 5
+                                },
+                                transform: {
+                                    rotation: parseFloat(h.rotation) || 0,
+                                    rotateX: parseFloat(h.rotate_x) || 0,
+                                    rotateY: parseFloat(h.rotate_y) || 0,
+                                    scaleX: parseFloat(h.scale_x) || 1,
+                                    scaleY: parseFloat(h.scale_y) || 1,
+                                    skewX: parseFloat(h.skew_x) || 0,
+                                    skewY: parseFloat(h.skew_y) || 0,
+                                    flipX: h.flip_x === 1 || h.flip_x === '1' || h.flip_x === true,
+                                    flipY: h.flip_y === 1 || h.flip_y === '1' || h.flip_y === true,
+                                    opacity: parseFloat(h.opacity) ?? 1,
+                                    shadowBlur: parseFloat(h.shadow_blur) || 0,
+                                    shadowOffsetX: parseFloat(h.shadow_offset_x) || 0,
+                                    shadowOffsetY: parseFloat(h.shadow_offset_y) || 0
+                                },
+                                found: false
+                            });
+                        } else {
+                            // Este é um hotspot de navegação/interação
+                            let action = h.type || 'navigate';
+                            if (action === 'navigation') action = 'navigate';
+
+                            hotspots.push({
+                                id: 'hotspot_' + Date.now() + Math.random(),
+                                name: h.label || 'Hotspot',
+                                action: action,
+                                target: h.target_location || '',
+                                position: {
+                                    x: parseFloat(h.x) || 0,
+                                    y: parseFloat(h.y) || 0,
+                                    width: parseFloat(h.width) || 10,
+                                    height: parseFloat(h.height) || 10
+                                },
+                                arrowDirection: 'up',
+                                item: h.item_id || null
+                            });
+                        }
+                    });
+
+                    gameLocations[loc.id] = {
+                        id: loc.id,
+                        name: loc.name,
+                        description: loc.description,
+                        image: loc.background_image,
+                        unlocked: true,
+                        connections: [],
+                        hotspots: hotspots,
+                        items: items,
+                        imageDimensions: { width: 1024, height: 1024 }
+                    };
+
+                    if (loc.puzzle) {
+                        gameLocations[loc.id].puzzle = loc.puzzle;
+                        ensurePuzzleDefaults(gameLocations[loc.id].puzzle);
+                    }
+
+                    locationOrder.push(loc.id);
+                });
+
+                // Save to IndexedDB
+                await saveToIndexedDB('editorData', {
+                    locations: gameLocations,
+                    order: locationOrder
+                });
+
+                renderLocationsList();
+
+                if (!auto) {
+                    showToast(`✅ ${locations.length} localizações carregadas do banco!`);
+                } else {
+                    console.log(`✅ ${locations.length} localizações carregadas do banco`);
+                }
+
+            } catch (error) {
+                console.error('Load error:', error);
+                if (!auto) {
+                    showToast('❌ Erro ao carregar: ' + error.message, 'error');
+                }
+                // Se auto e falhar, tenta carregar do IndexedDB
+                if (auto) {
+                    console.warn('Banco vazio ou erro, usando dados locais');
+                    await loadFromLocalStorage();
+                }
+            }
+        }
+
+        async function syncToDatabase(silent = false) {
+            console.log('🔔 FUNÇÃO syncToDatabase() CHAMADA!');
+            console.log('📊 gameLocations:', gameLocations);
+            console.log('📊 Total de localizações:', Object.keys(gameLocations).length);
+
+            // IMPORTANTE: Salvar informações básicas da localização atual ANTES de sincronizar
+            if (currentLocationId) {
+                console.log('💾 Salvando informações da localização atual antes de sincronizar...');
+                saveBasicInfo();
+            }
+
+            if (Object.keys(gameLocations).length === 0) {
+                if (!silent) {
+                    alert('❌ Nenhuma localização para salvar! gameLocations está vazio.');
+                }
+                console.error('❌ gameLocations está vazio!');
+                return;
+            }
+
+            if (!silent) {
+                if (!confirm(`Sincronizar ${Object.keys(gameLocations).length} localizações com o banco MySQL?`)) {
+                    console.log('⚠️ Usuário cancelou a sincronização');
+                    return;
+                }
+            }
+
+            console.log('💾 Iniciando sincronização em LOTE (bulk save)...');
+            if (!silent) {
+                showToast('☁️ Sincronizando TODAS as localizações de uma vez...', 'info');
+            }
+
+            const startTime = Date.now();
+
+            try {
+                // Converter TODAS as localizações de uma vez
+                const allLocations = [];
+
+                for (const locationId in gameLocations) {
+                    const loc = gameLocations[locationId];
+
+                    // Convert editor format to API format
+                    const navigationHotspots = (loc.hotspots || []).map(h => ({
+                        type: h.action === 'navigate' ? 'navigation' : h.action === 'item' ? 'item' : 'interaction',
+                        x: h.position?.x || 0,
+                        y: h.position?.y || 0,
+                        width: h.position?.width || 10,
+                        height: h.position?.height || 10,
+                        label: h.name || '',
+                        description: h.description || '',
+                        target_location: h.target || null,
+                        item_id: h.item || null
+                    }));
+
+                    // IMPORTANTE: Converter items para hotspots do tipo 'item'
+                    const itemHotspots = (loc.items || []).map(item => ({
+                        type: 'item',
+                        item_id: item.id,
+                        label: item.name,
+                        description: item.description,
+                        item_image: item.image,
+                        x: item.position.x,
+                        y: item.position.y,
+                        width: item.size.width,
+                        height: item.size.height,
+                        rotation: item.transform?.rotation || 0,
+                        rotate_x: item.transform?.rotateX || 0,
+                        rotate_y: item.transform?.rotateY || 0,
+                        scale_x: item.transform?.scaleX || 1,
+                        scale_y: item.transform?.scaleY || 1,
+                        skew_x: item.transform?.skewX || 0,
+                        skew_y: item.transform?.skewY || 0,
+                        flip_x: item.transform?.flipX ? 1 : 0,
+                        flip_y: item.transform?.flipY ? 1 : 0,
+                        opacity: item.transform?.opacity || 1,
+                        shadow_blur: item.transform?.shadowBlur || 0,
+                        shadow_offset_x: item.transform?.shadowOffsetX || 0,
+                        shadow_offset_y: item.transform?.shadowOffsetY || 0
+                    }));
+
+                    // Combinar hotspots de navegação + items
+                    const allHotspots = [...navigationHotspots, ...itemHotspots];
+
+                    allLocations.push({
+                        id: loc.id,
+                        name: loc.name,
+                        description: loc.description || 'Descrição...',
+                        background_image: loc.image || '',
+                        hotspots: allHotspots,
+                        puzzle: loc.puzzle || null
+                    });
+                }
+
+                console.log(`📤 Enviando ${allLocations.length} localizações em uma única requisição...`);
+
+                // UMA ÚNICA REQUISIÇÃO para TODAS as localizações!
+                const response = await fetch('api/locations/bulk-save.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ locations: allLocations, order: locationOrder })
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error(`❌ HTTP ${response.status}:`, text);
+                    if (!silent) {
+                        showToast('❌ Erro ao salvar: ' + text.substring(0, 100), 'error');
+                    }
+                    return;
+                }
+
+                const result = await response.json();
+                console.log(`📨 Resposta da API:`, result);
+
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                if (result.success) {
+                    console.log(`✅ Sucesso! ${result.data.locations} localizações, ${result.data.hotspots} hotspots em ${elapsed}s`);
+                    if (!silent) {
+                        showToast(`✅ ${result.data.locations} localizações e ${result.data.hotspots} hotspots salvos em ${elapsed}s!`, 'success');
+                    }
+                } else {
+                    console.error(`❌ Erro:`, result.message);
+                    if (!silent) {
+                        showToast(`❌ Erro: ${result.message}`, 'error');
+                    }
+                }
+
+            } catch (error) {
+                console.error('❌ Erro ao sincronizar:', error);
+                if (!silent) {
+                    showToast('❌ Erro ao sincronizar: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Ajustar escala quando janela redimensiona
+        let editorResizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(editorResizeTimeout);
+            editorResizeTimeout = setTimeout(() => {
+                adjustEditorContainer();
+                renderPositionedHotspots();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

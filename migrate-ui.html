@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração de Dados - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            color: #f0a500;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #2196F3;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #f0a500;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+
+        .status-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .success {
+            color: #4CAF50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        .warning {
+            color: #ff9800;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #f0a500;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Load map.js -->
+    <script src="js/map.js"></script>
+
+    <div class="container">
+        <h1>🔄 Migração de Dados</h1>
+        <p class="subtitle">Vila Abandonada - map.js → MySQL Database</p>
+
+        <div class="info-box">
+            <h3>📋 O que esta ferramenta faz?</h3>
+            <p>
+                Esta ferramenta lê os dados do arquivo <code>map.js</code> e os envia para o banco de dados MySQL.
+                Execute esta migração <strong>apenas uma vez</strong> para importar suas localizações existentes.
+            </p>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="statLocations">-</div>
+                <div class="stat-label">Localizações</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="statHotspots">-</div>
+                <div class="stat-label">Hotspots</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="statConnections">-</div>
+                <div class="stat-label">Conexões</div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" id="migrateBtn" onclick="startMigration()">
+            🚀 Iniciar Migração
+        </button>
+
+        <div class="status" id="statusBox" style="display: none;">
+            <h3 style="color: #f0a500; margin-bottom: 10px;">Status:</h3>
+            <div id="statusContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check if GAME_MAP is loaded
+        if (typeof GAME_MAP === 'undefined') {
+            alert('❌ Erro: map.js não foi carregado corretamente!');
+        } else {
+            // Calculate stats
+            const locationCount = Object.keys(GAME_MAP).length;
+            let hotspotCount = 0;
+            let connectionCount = 0;
+
+            for (const locationId in GAME_MAP) {
+                const location = GAME_MAP[locationId];
+                if (location.hotspots) {
+                    hotspotCount += location.hotspots.length;
+                }
+                if (location.connections) {
+                    connectionCount += location.connections.length;
+                }
+            }
+
+            document.getElementById('statLocations').textContent = locationCount;
+            document.getElementById('statHotspots').textContent = hotspotCount;
+            document.getElementById('statConnections').textContent = connectionCount;
+        }
+
+        async function startMigration() {
+            const btn = document.getElementById('migrateBtn');
+            const statusBox = document.getElementById('statusBox');
+            const statusContent = document.getElementById('statusContent');
+
+            // Disable button
+            btn.disabled = true;
+            btn.textContent = '⏳ Migrando...';
+
+            // Show status
+            statusBox.style.display = 'block';
+            statusContent.innerHTML = '<div class="spinner"></div><p style="text-align: center; color: #999;">Enviando dados para o servidor...</p>';
+
+            try {
+                // Convert GAME_MAP to array format
+                const locations = Object.keys(GAME_MAP).map(id => ({
+                    id: id,
+                    ...GAME_MAP[id]
+                }));
+
+                // Send to API
+                const response = await fetch('api/migrate_from_browser.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ locations })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusContent.innerHTML = `
+                        <div class="status-item success">✓ Migração concluída com sucesso!</div>
+                        <div class="status-item">📍 Localizações: ${result.stats.locations}</div>
+                        <div class="status-item">🎯 Hotspots: ${result.stats.hotspots}</div>
+                        <div class="status-item">🔗 Conexões: ${result.stats.connections}</div>
+                        <div class="status-item" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                            <a href="location-editor-v2.html" style="color: #4CAF50;">→ Abrir Editor v2</a> |
+                            <a href="game-phaser.html" style="color: #2196F3;">→ Testar Jogo</a>
+                        </div>
+                    `;
+                    btn.textContent = '✓ Migração Concluída';
+                    btn.style.background = '#4CAF50';
+                } else {
+                    statusContent.innerHTML = `
+                        <div class="status-item error">✗ Erro na migração</div>
+                        <div class="status-item">${result.message}</div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Tentar Novamente';
+                }
+
+            } catch (error) {
+                statusContent.innerHTML = `
+                    <div class="status-item error">✗ Erro de conexão</div>
+                    <div class="status-item">${error.message}</div>
+                    <div class="status-item warning">⚠️ Verifique se o banco de dados está configurado em api/config.php</div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🔄 Tentar Novamente';
+            }
+        }
+    </script>
+</body>
+</html>

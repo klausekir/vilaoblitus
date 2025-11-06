@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vila Abandonada - Phaser Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <!-- Phaser 3 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+
+    <!-- Game Map Data (fallback if database fails) -->
+    <script src="js/map.js"></script>
+
+    <!-- Phaser Game Managers -->
+    <script src="js/phaser/managers/DatabaseLoader.js?v=1762345846"></script>
+    <script src="js/phaser/managers/GameStateManager.js?v=1762345846"></script>
+    <script src="js/phaser/managers/UIManager.js?v=1762345846"></script>
+
+    <!-- Phaser Scenes -->
+    <script src="js/phaser/scenes/BootScene.js?v=1762345846"></script>
+    <script src="js/phaser/scenes/LocationScene.js?v=1762345846"></script>
+
+    <!-- Authentication Check -->
+    <script>
+        // Check if user is logged in
+        const sessionToken = localStorage.getItem('session_token');
+        const username = localStorage.getItem('username');
+
+        if (!sessionToken) {
+            // Not logged in, redirect to login page
+            window.location.href = 'index.php';
+        } else {
+            // Show username in console
+            console.log('✓ Logged in as:', username);
+        }
+    </script>
+
+    <!-- Phaser Config & Start -->
+    <script src="js/phaser/config.js"></script>
+</body>
+</html>

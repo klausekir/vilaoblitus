@@ -1,0 +1,108 @@
+=================================================================
+COMANDOS PARA ATUALIZAR NO HOSTINGER
+=================================================================
+
+OPÇÃO 1 - SSH (MAIS RÁPIDO):
+-----------------------------
+
+1. Acesse: Painel Hostinger → Advanced → SSH Access
+2. Cole estes comandos:
+
+cd ~/public_html
+git pull origin main
+
+3. Se der erro "not a git repository", use:
+
+cd ~/public_html
+git init
+git remote add origin https://github.com/klausedu/explorandoavilaoblitus.kirner.com.br.git
+git fetch origin
+git reset --hard origin/main
+
+4. Ajustar permissões:
+
+chmod 755 .
+chmod 644 *.php *.html
+chmod 755 api
+chmod 644 api/*.php
+
+=================================================================
+
+OPÇÃO 2 - FILE MANAGER (VISUAL):
+---------------------------------
+
+1. Painel Hostinger → Files → File Manager
+2. Navegue até: public_html
+3. Faça upload (substituir) destes arquivos:
+
+   PRIORIDADE 1 (Autenticação):
+   ✅ index.php
+   ✅ admin-panel.html
+   ✅ api/config.php (configure com suas credenciais!)
+   ✅ api/login.php
+   ✅ api/register.php
+   ✅ api/save-progress.php
+   ✅ api/load-progress.php
+
+   PRIORIDADE 2 (Interface do Jogo):
+   ✅ game-phaser.html
+   ✅ js/phaser/managers/UIManager.js
+   ✅ js/phaser/managers/GameStateManager.js
+
+   PRIORIDADE 3 (Visual):
+   ✅ images/capa.png
+
+4. Depois do upload, configure o banco de dados
+
+=================================================================
+
+CONFIGURAR BANCO DE DADOS:
+---------------------------
+
+1. Painel Hostinger → Databases → phpMyAdmin
+2. Selecione seu banco de dados
+3. Vá na aba SQL
+4. Execute este comando:
+
+ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
+
+5. Se a tabela não existe, execute todo o database.sql
+
+=================================================================
+
+EDITAR api/config.php:
+----------------------
+
+No File Manager, edite api/config.php:
+
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'SEU_BANCO_AQUI');      ⬅️ MUDAR
+define('DB_USER', 'SEU_USUARIO_AQUI');    ⬅️ MUDAR
+define('DB_PASS', 'SUA_SENHA_AQUI');      ⬅️ MUDAR
+
+=================================================================
+
+CRIAR PRIMEIRO ADMIN:
+---------------------
+
+1. Acesse: https://explorandoavilaoblitus.kirner.com.br/index.php
+2. Cadastre uma conta normal
+3. No phpMyAdmin, execute:
+
+UPDATE users SET is_admin = 1 WHERE email = 'seu@email.com';
+
+4. Faça logout e login novamente
+5. Você será redirecionado para admin-panel.html ✅
+
+=================================================================
+
+TESTAR SE FUNCIONOU:
+--------------------
+
+✅ https://seusite.com/index.php → Deve mostrar tela de login
+✅ Cadastrar conta → Deve funcionar
+✅ Login → Deve redirecionar para o jogo
+✅ Tornar admin → Deve redirecionar para painel admin
+✅ Top bar do jogo → Deve mostrar username e botões
+
+=================================================================

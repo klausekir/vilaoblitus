@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Migration: Add Skew Columns</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #ddd; }
+        pre { background: #2d2d2d; padding: 15px; border-radius: 5px; }
+        .success { color: #51cf66; }
+        .error { color: #ff6b6b; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Migration: Add Skew Columns to Hotspots</h1>
+    <p>Esta migração adiciona as colunas <code>skew_x</code> e <code>skew_y</code> na tabela <code>hotspots</code>.</p>
+    <button onclick="runMigration()">▶️ Executar Migração</button>
+    <div id="result"></div>
+
+    <script>
+        async function runMigration() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>⏳ Executando migração...</p>';
+
+            try {
+                const response = await fetch('add-skew-columns.php');
+                const text = await response.text();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `<pre class="success">${text}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<pre class="error">❌ Erro HTTP ${response.status}\n${text}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<pre class="error">❌ Erro: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

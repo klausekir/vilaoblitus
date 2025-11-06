@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Mapa - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .toolbar {
+            width: 300px;
+            background: #0f0f1e;
+            padding: 20px;
+            border-right: 3px solid #f0a500;
+            overflow-y: auto;
+        }
+
+        .toolbar h1 {
+            color: #f0a500;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .toolbar h2 {
+            color: #f0a500;
+            font-size: 1.1em;
+            margin: 20px 0 10px 0;
+            border-bottom: 2px solid #f0a500;
+            padding-bottom: 5px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #16213e;
+        }
+
+        #mapCanvas {
+            display: block;
+            cursor: grab;
+            width: 100%;
+            height: 100%;
+        }
+
+        #mapCanvas.dragging {
+            cursor: grabbing;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(240, 165, 0, 0.2);
+            border: 2px solid #f0a500;
+            border-radius: 5px;
+            color: #f0a500;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(240, 165, 0, 0.4);
+            transform: translateX(5px);
+        }
+
+        .btn.danger {
+            border-color: #F44336;
+            color: #F44336;
+            background: rgba(244, 67, 54, 0.2);
+        }
+
+        .btn.danger:hover {
+            background: rgba(244, 67, 54, 0.4);
+        }
+
+        .btn.success {
+            border-color: #4CAF50;
+            color: #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .btn.success:hover {
+            background: rgba(76, 175, 80, 0.4);
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .mode-btn {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #666;
+            border-radius: 5px;
+            color: #999;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active {
+            border-color: #f0a500;
+            color: #f0a500;
+            background: rgba(240, 165, 0, 0.2);
+            font-weight: bold;
+        }
+
+        .location-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .location-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid #f0a500;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .location-item:hover {
+            background: rgba(240, 165, 0, 0.2);
+            transform: translateX(5px);
+        }
+
+        .location-item.selected {
+            background: rgba(240, 165, 0, 0.3);
+            border-left-width: 5px;
+        }
+
+        .info-box {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .info-box.warning {
+            border-left: 4px solid #ff9800;
+            color: #ffb74d;
+        }
+
+        .info-box.success {
+            border-left: 4px solid #4CAF50;
+            color: #81C784;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .stat {
+            background: rgba(240, 165, 0, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #f0a500;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            color: #f0a500;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            color: #0f0;
+            border: 2px solid #f0a500;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            resize: vertical;
+        }
+
+        .help-text {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #f0a500;
+        }
+
+        .controls h3 {
+            color: #f0a500;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .control-btn {
+            padding: 5px 10px;
+            background: rgba(240, 165, 0, 0.2);
+            border: 1px solid #f0a500;
+            border-radius: 3px;
+            color: #f0a500;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .control-btn:hover {
+            background: rgba(240, 165, 0, 0.4);
+        }
+
+        #coordsDisplay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f0a500;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <a href="admin-panel.html" style="display: inline-block; padding: 8px 15px; background: rgba(240, 165, 0, 0.2); border: 2px solid #f0a500; color: #f0a500; text-decoration: none; border-radius: 6px; margin-bottom: 15px; font-size: 14px; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='rgba(240,165,0,0.4)'" onmouseout="this.style.background='rgba(240,165,0,0.2)'">← Painel Admin</a>
+
+            <h1>🗺️ Editor de Mapa</h1>
+            <p style="font-size: 0.85em; color: #999; margin-bottom: 20px;">
+                Arraste os locais e conecte as cenas visualmente
+            </p>
+
+            <!-- Modo de Edição -->
+            <h2>Modo de Edição</h2>
+            <div class="mode-selector">
+                <div class="mode-btn active" data-mode="move">
+                    🖐️ Mover
+                </div>
+                <div class="mode-btn" data-mode="connect">
+                    🔗 Conectar
+                </div>
+            </div>
+            <div class="info-box warning">
+                <strong>🖐️ Modo Mover:</strong> Arraste os locais para reposicionar<br>
+                <strong>🔗 Modo Conectar:</strong> Clique em 2 locais para conectar/desconectar
+            </div>
+
+            <!-- Estatísticas -->
+            <h2>Estatísticas</h2>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="statLocations">15</div>
+                    <div class="stat-label">Locais</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statConnections">0</div>
+                    <div class="stat-label">Conexões</div>
+                </div>
+            </div>
+
+            <!-- Lista de Locais -->
+            <h2>Locais</h2>
+            <div class="location-list" id="locationList"></div>
+
+            <!-- Ações -->
+            <h2>Ações</h2>
+            <button class="btn" onclick="centerView()">📍 Centralizar Câmera</button>
+            <button class="btn" onclick="autoArrange()">🎯 Auto-Organizar</button>
+            <button class="btn" onclick="exportCode()">💾 Exportar Código JS</button>
+            <button class="btn success" onclick="saveLayout()">💾 Salvar Layout</button>
+            <button class="btn" onclick="loadLayout()">📂 Carregar Layout</button>
+            <button class="btn danger" onclick="clearConnections()">🗑️ Limpar Conexões</button>
+
+            <!-- Código Exportado -->
+            <h2>Código Exportado</h2>
+            <textarea id="exportedCode" placeholder="O código JavaScript aparecerá aqui..."></textarea>
+            <p class="help-text">
+                Copie este código e cole no arquivo js/map.js substituindo as posições dos locais.
+            </p>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-container">
+            <canvas id="mapCanvas"></canvas>
+
+            <div class="controls">
+                <h3>⌨️ Atalhos</h3>
+                <div style="font-size: 0.8em; line-height: 1.8;">
+                    <strong>M</strong> - Modo Mover<br>
+                    <strong>C</strong> - Modo Conectar<br>
+                    <strong>Space</strong> - Pan (arrastar câmera)<br>
+                    <strong>+/-</strong> - Zoom<br>
+                    <strong>R</strong> - Resetar Zoom<br>
+                    <strong>Delete</strong> - Remover conexão selecionada
+                </div>
+            </div>
+
+            <div id="coordsDisplay">
+                Mouse: (0, 0) | Zoom: 100%
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados dos locais
+        const locations = {
+            forest_entrance: { name: 'Entrada da Floresta', x: 200, y: 400, connections: [], color: '#2196F3', size: 35 },
+            village_gate: { name: 'Portão da Vila', x: 400, y: 400, connections: [], color: '#F44336', size: 35 },
+            main_square: { name: 'Praça Central', x: 800, y: 400, connections: [], color: '#4CAF50', size: 50 },
+            old_church: { name: 'Igreja Antiga', x: 600, y: 200, connections: [], color: '#9C27B0', size: 40 },
+            church_tower: { name: 'Torre do Sino', x: 500, y: 100, connections: [], color: '#9C27B0', size: 30 },
+            cemetery: { name: 'Cemitério', x: 700, y: 100, connections: [], color: '#9C27B0', size: 32 },
+            abandoned_house: { name: 'Casa - Térreo', x: 1000, y: 300, connections: [], color: '#FF9800', size: 35 },
+            house_second_floor: { name: 'Casa - 2º Andar', x: 1100, y: 200, connections: [], color: '#FF9800', size: 30 },
+            house_attic: { name: 'Casa - Sótão', x: 1200, y: 100, connections: [], color: '#FF9800', size: 30 },
+            town_hall: { name: 'Prefeitura', x: 900, y: 200, connections: [], color: '#03A9F4', size: 40 },
+            mayors_office: { name: 'Gabinete', x: 1000, y: 100, connections: [], color: '#03A9F4', size: 32 },
+            library: { name: 'Biblioteca', x: 1100, y: 50, connections: [], color: '#03A9F4', size: 32 },
+            old_well: { name: 'Poço', x: 800, y: 550, connections: [], color: '#795548', size: 32 },
+            abandoned_shop: { name: 'Loja', x: 950, y: 500, connections: [], color: '#FFC107', size: 35 },
+            blacksmith: { name: 'Ferreiro', x: 1100, y: 550, connections: [], color: '#FFC107', size: 35 }
+        };
+
+        // Estado do editor
+        let editorState = {
+            mode: 'move', // 'move' or 'connect'
+            selectedLocation: null,
+            draggingLocation: null,
+            firstConnectionPoint: null,
+            camera: { x: 0, y: 0, zoom: 1 },
+            isDraggingCamera: false,
+            dragStartPos: { x: 0, y: 0 }
+        };
+
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            render();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Render
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(editorState.camera.x, editorState.camera.y);
+            ctx.scale(editorState.camera.zoom, editorState.camera.zoom);
+
+            // Draw connections
+            ctx.strokeStyle = 'rgba(240, 165, 0, 0.5)';
+            ctx.lineWidth = 3;
+            Object.keys(locations).forEach(fromId => {
+                const from = locations[fromId];
+                from.connections.forEach(toId => {
+                    const to = locations[toId];
+                    if (to) {
+                        ctx.beginPath();
+                        ctx.moveTo(from.x, from.y);
+                        ctx.lineTo(to.x, to.y);
+                        ctx.stroke();
+
+                        // Arrow
+                        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+                        const arrowX = (from.x + to.x) / 2;
+                        const arrowY = (from.y + to.y) / 2;
+                        ctx.save();
+                        ctx.translate(arrowX, arrowY);
+                        ctx.rotate(angle);
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(-10, -5);
+                        ctx.lineTo(-10, 5);
+                        ctx.closePath();
+                        ctx.fillStyle = '#f0a500';
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                });
+            });
+
+            // Draw locations
+            Object.keys(locations).forEach(id => {
+                const loc = locations[id];
+                const isSelected = editorState.selectedLocation === id;
+
+                // Circle
+                ctx.fillStyle = loc.color;
+                ctx.beginPath();
+                ctx.arc(loc.x, loc.y, loc.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = isSelected ? '#fff' : '#000';
+                ctx.lineWidth = isSelected ? 4 : 2;
+                ctx.stroke();
+
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.strokeText(loc.name, loc.x, loc.y + loc.size + 20);
+                ctx.fillText(loc.name, loc.x, loc.y + loc.size + 20);
+            });
+
+            // Connection preview
+            if (editorState.mode === 'connect' && editorState.firstConnectionPoint) {
+                const from = locations[editorState.firstConnectionPoint];
+                const mousePos = getMousePos(event);
+                ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(from.x, from.y);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            ctx.restore();
+
+            updateStats();
+        }
+
+        // Get mouse position
+        function getMousePos(e) {
+            if (!e) return { x: 0, y: 0 };
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (e.clientX - rect.left - editorState.camera.x) / editorState.camera.zoom,
+                y: (e.clientY - rect.top - editorState.camera.y) / editorState.camera.zoom
+            };
+        }
+
+        // Find location at position
+        function findLocationAt(x, y) {
+            for (let id in locations) {
+                const loc = locations[id];
+                const dist = Math.sqrt((x - loc.x) ** 2 + (y - loc.y) ** 2);
+                if (dist <= loc.size) {
+                    return id;
+                }
+            }
+            return null;
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+            const locId = findLocationAt(pos.x, pos.y);
+
+            if (e.button === 1 || e.shiftKey || e.button === 2) { // Middle click or Shift+click or right click
+                editorState.isDraggingCamera = true;
+                editorState.dragStartPos = { x: e.clientX - editorState.camera.x, y: e.clientY - editorState.camera.y };
+                canvas.style.cursor = 'grabbing';
+                e.preventDefault();
+                return;
+            }
+
+            if (editorState.mode === 'move' && locId) {
+                editorState.draggingLocation = locId;
+                editorState.selectedLocation = locId;
+                updateLocationList();
+            } else if (editorState.mode === 'connect' && locId) {
+                if (!editorState.firstConnectionPoint) {
+                    editorState.firstConnectionPoint = locId;
+                    editorState.selectedLocation = locId;
+                } else if (editorState.firstConnectionPoint !== locId) {
+                    toggleConnection(editorState.firstConnectionPoint, locId);
+                    editorState.firstConnectionPoint = null;
+                    editorState.selectedLocation = null;
+                }
+                updateLocationList();
+            }
+
+            render();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(e);
+
+            // Update coords display
+            document.getElementById('coordsDisplay').textContent =
+                `Mouse: (${Math.round(pos.x)}, ${Math.round(pos.y)}) | Zoom: ${Math.round(editorState.camera.zoom * 100)}%`;
+
+            if (editorState.isDraggingCamera) {
+                editorState.camera.x = e.clientX - editorState.dragStartPos.x;
+                editorState.camera.y = e.clientY - editorState.dragStartPos.y;
+                render();
+                return;
+            }
+
+            if (editorState.draggingLocation) {
+                locations[editorState.draggingLocation].x = pos.x;
+                locations[editorState.draggingLocation].y = pos.y;
+                render();
+            } else if (editorState.mode === 'connect' && editorState.firstConnectionPoint) {
+                render();
+            }
+
+            // Cursor
+            const locId = findLocationAt(pos.x, pos.y);
+            canvas.style.cursor = locId ? 'pointer' : 'grab';
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            editorState.draggingLocation = null;
+            editorState.isDraggingCamera = false;
+            canvas.style.cursor = 'grab';
+        });
+
+        // Prevent context menu
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomSpeed = 0.1;
+            const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
+            editorState.camera.zoom = Math.max(0.1, Math.min(3, editorState.camera.zoom + delta));
+            render();
+        });
+
+        // Toggle connection
+        function toggleConnection(fromId, toId) {
+            const from = locations[fromId];
+            const to = locations[toId];
+
+            if (from.connections.includes(toId)) {
+                // Remove connection
+                from.connections = from.connections.filter(id => id !== toId);
+                to.connections = to.connections.filter(id => id !== fromId);
+            } else {
+                // Add connection
+                from.connections.push(toId);
+                to.connections.push(fromId);
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            let totalConnections = 0;
+            Object.values(locations).forEach(loc => {
+                totalConnections += loc.connections.length;
+            });
+            document.getElementById('statLocations').textContent = Object.keys(locations).length;
+            document.getElementById('statConnections').textContent = totalConnections / 2; // Divide by 2 because bidirectional
+        }
+
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                editorState.mode = btn.dataset.mode;
+                editorState.firstConnectionPoint = null;
+                render();
+            });
+        });
+
+        // Update location list
+        function updateLocationList() {
+            const list = document.getElementById('locationList');
+            list.innerHTML = '';
+
+            Object.keys(locations).forEach(id => {
+                const loc = locations[id];
+                const div = document.createElement('div');
+                div.className = 'location-item';
+                if (editorState.selectedLocation === id) {
+                    div.classList.add('selected');
+                }
+                div.innerHTML = `
+                    <strong>${loc.name}</strong><br>
+                    <small style="color: #666;">Conexões: ${loc.connections.length}</small>
+                `;
+                div.addEventListener('click', () => {
+                    editorState.selectedLocation = id;
+                    updateLocationList();
+                    render();
+                });
+                list.appendChild(div);
+            });
+        }
+
+        // Center view
+        function centerView() {
+            editorState.camera = { x: canvas.width / 2 - 600, y: canvas.height / 2 - 300, zoom: 1 };
+            render();
+        }
+
+        // Auto arrange
+        function autoArrange() {
+            const centerX = 600;
+            const centerY = 400;
+            const radius = 300;
+            const keys = Object.keys(locations);
+
+            keys.forEach((id, i) => {
+                const angle = (i / keys.length) * Math.PI * 2;
+                locations[id].x = centerX + Math.cos(angle) * radius;
+                locations[id].y = centerY + Math.sin(angle) * radius;
+            });
+
+            render();
+        }
+
+        // Export code
+        function exportCode() {
+            let code = '// Posições dos locais (Cole em js/map.js)\n\n';
+            code += 'const mapPositions = {\n';
+
+            Object.keys(locations).forEach(id => {
+                const loc = locations[id];
+                code += `    ${id}: { x: ${Math.round(loc.x)}, y: ${Math.round(loc.y)} },\n`;
+            });
+
+            code += '};\n\n';
+            code += '// Conexões (Cole em js/map.js)\n\n';
+
+            Object.keys(locations).forEach(id => {
+                const loc = locations[id];
+                if (loc.connections.length > 0) {
+                    code += `${id}: ['${loc.connections.join("', '")}'],\n`;
+                }
+            });
+
+            document.getElementById('exportedCode').value = code;
+            document.getElementById('exportedCode').select();
+        }
+
+        // Save layout
+        function saveLayout() {
+            const data = JSON.stringify(locations, null, 2);
+            localStorage.setItem('vila_abandonada_map_layout', data);
+            alert('Layout salvo com sucesso!');
+        }
+
+        // Load layout
+        function loadLayout() {
+            const data = localStorage.getItem('vila_abandonada_map_layout');
+            if (data) {
+                const loaded = JSON.parse(data);
+                Object.keys(loaded).forEach(id => {
+                    if (locations[id]) {
+                        locations[id].x = loaded[id].x;
+                        locations[id].y = loaded[id].y;
+                        locations[id].connections = loaded[id].connections || [];
+                    }
+                });
+                render();
+                updateLocationList();
+                alert('Layout carregado com sucesso!');
+            } else {
+                alert('Nenhum layout salvo encontrado.');
+            }
+        }
+
+        // Clear connections
+        function clearConnections() {
+            if (confirm('Tem certeza que deseja remover TODAS as conexões?')) {
+                Object.values(locations).forEach(loc => {
+                    loc.connections = [];
+                });
+                render();
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'm' || e.key === 'M') {
+                document.querySelector('.mode-btn[data-mode="move"]').click();
+            } else if (e.key === 'c' || e.key === 'C') {
+                document.querySelector('.mode-btn[data-mode="connect"]').click();
+            } else if (e.key === 'r' || e.key === 'R') {
+                centerView();
+            } else if (e.key === '+' || e.key === '=') {
+                editorState.camera.zoom = Math.min(3, editorState.camera.zoom + 0.1);
+                render();
+            } else if (e.key === '-' || e.key === '_') {
+                editorState.camera.zoom = Math.max(0.1, editorState.camera.zoom - 0.1);
+                render();
+            } else if (e.key === 'Delete' && editorState.selectedLocation) {
+                locations[editorState.selectedLocation].connections = [];
+                render();
+            }
+        });
+
+        // Initial render
+        updateLocationList();
+        centerView();
+    </script>
+</body>
+</html>

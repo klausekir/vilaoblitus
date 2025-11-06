@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Migrações de Banco de Dados</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #f0a500;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #999;
+            margin-bottom: 40px;
+        }
+        .migration-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .migration-card h2 {
+            color: #f0a500;
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .migration-card p {
+            margin: 10px 0;
+            color: #ccc;
+        }
+        button {
+            background: rgba(240, 165, 0, 0.2);
+            border: 2px solid #f0a500;
+            color: #f0a500;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: rgba(240, 165, 0, 0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        iframe {
+            width: 100%;
+            border: none;
+            background: #000;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Migrações de Banco de Dados</h1>
+    <p class="subtitle">Vila Abandonada - Editor de Localizações</p>
+
+    <div class="migration-card">
+        <h2>1️⃣ Verificar Colunas de Transformação</h2>
+        <p>Verifica quais colunas de transformação (rotation, rotate_x, scale_x, skew_x, etc) existem na tabela <code>hotspots</code>.</p>
+        <button onclick="checkColumns()">🔍 Verificar Colunas</button>
+        <div id="check-result" class="result"></div>
+    </div>
+
+    <div class="migration-card">
+        <h2>2️⃣ Adicionar Todas as Colunas de Transformação</h2>
+        <p>Adiciona TODAS as colunas de transformação necessárias para salvar: rotação, perspectiva 3D, escala, skew e opacidade.</p>
+        <p><strong>Colunas que serão adicionadas:</strong></p>
+        <ul style="color: #999; font-size: 13px;">
+            <li>rotation - Rotação Z (0-360°)</li>
+            <li>rotate_x - Rotação X (perspectiva 3D)</li>
+            <li>rotate_y - Rotação Y (perspectiva 3D)</li>
+            <li>scale_x - Escala horizontal</li>
+            <li>scale_y - Escala vertical</li>
+            <li>skew_x - Inclinação horizontal</li>
+            <li>skew_y - Inclinação vertical</li>
+            <li>opacity - Opacidade (0-1)</li>
+        </ul>
+        <button onclick="runMigration()">▶️ Executar Migração</button>
+        <div id="migration-result" class="result"></div>
+    </div>
+
+    <div class="migration-card">
+        <h2>3️⃣ Adicionar Colunas de Flip e Shadow</h2>
+        <p>Adiciona as colunas para suportar flip (espelhamento) e sombras nos items.</p>
+        <p><strong>Colunas que serão adicionadas:</strong></p>
+        <ul style="color: #999; font-size: 13px;">
+            <li>flip_x - Espelhamento horizontal (boolean)</li>
+            <li>flip_y - Espelhamento vertical (boolean)</li>
+            <li>shadow_blur - Desfoque da sombra (pixels)</li>
+            <li>shadow_offset_x - Deslocamento X da sombra (pixels)</li>
+            <li>shadow_offset_y - Deslocamento Y da sombra (pixels)</li>
+        </ul>
+        <button onclick="runFlipShadowMigration()">▶️ Executar Migração</button>
+        <div id="flip-shadow-result" class="result"></div>
+    </div>
+
+    <script>
+        async function checkColumns() {
+            const resultDiv = document.getElementById('check-result');
+            resultDiv.classList.add('show');
+            resultDiv.innerHTML = '<p>⏳ Verificando...</p>';
+
+            try {
+                const response = await fetch('check-transform-columns.php');
+                const text = await response.text();
+                resultDiv.innerHTML = text;
+            } catch (error) {
+                resultDiv.innerHTML = `<pre class="error">❌ Erro: ${error.message}</pre>`;
+            }
+        }
+
+        async function runMigration() {
+            const resultDiv = document.getElementById('migration-result');
+            resultDiv.classList.add('show');
+            resultDiv.innerHTML = '<p>⏳ Executando migração...</p>';
+
+            try {
+                const response = await fetch('add-all-transform-columns.php');
+                const text = await response.text();
+                resultDiv.innerHTML = text;
+
+                // Auto-check columns after migration
+                setTimeout(() => {
+                    checkColumns();
+                }, 1000);
+            } catch (error) {
+                resultDiv.innerHTML = `<pre class="error">❌ Erro: ${error.message}</pre>`;
+            }
+        }
+
+        async function runFlipShadowMigration() {
+            const resultDiv = document.getElementById('flip-shadow-result');
+            resultDiv.classList.add('show');
+            resultDiv.innerHTML = '<p>⏳ Executando migração...</p>';
+
+            try {
+                const response = await fetch('add-flip-shadow-columns.php');
+                const text = await response.text();
+                resultDiv.innerHTML = text;
+
+                // Auto-check columns after migration
+                setTimeout(() => {
+                    checkColumns();
+                }, 1000);
+            } catch (error) {
+                resultDiv.innerHTML = `<pre class="error">❌ Erro: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

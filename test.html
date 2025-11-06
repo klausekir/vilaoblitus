@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perspective Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+</head>
+<body>
+    <script>
+        class PerspectiveTest extends Phaser.Scene {
+            preload() {
+                this.load.image('mapa_antigo', 'images/items/mapa_antigo.png');
+            }
+
+            create() {
+                const sprite = this.add.sprite(400, 300, 'mapa_antigo');
+
+                const rotateX = -39;
+
+                const angleRad = rotateX * Math.PI / 180;
+                const perspectiveFactor = Math.pow(Math.cos(angleRad), 1.5);
+                sprite.scaleY *= perspectiveFactor;
+                const verticalShift = Math.sin(angleRad) * (sprite.height / 2);
+                sprite.y += verticalShift;
+            }
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            scene: PerspectiveTest
+        };
+
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>

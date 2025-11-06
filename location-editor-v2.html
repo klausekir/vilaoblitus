@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Localizações v2 - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 350px;
+            background: #0f0f1e;
+            border-right: 3px solid #f0a500;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .sidebar h1 {
+            color: #f0a500;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(240, 165, 0, 0.2);
+            border: 2px solid #f0a500;
+            border-radius: 6px;
+            color: #f0a500;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(240, 165, 0, 0.4);
+            transform: translateX(5px);
+        }
+
+        .btn.primary {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .btn.danger {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: #f44336;
+            color: #f44336;
+        }
+
+        .location-list {
+            margin: 20px 0;
+        }
+
+        .location-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 4px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .location-item:hover {
+            background: rgba(240, 165, 0, 0.2);
+            border-color: #f0a500;
+        }
+
+        .location-item.active {
+            background: rgba(240, 165, 0, 0.3);
+            border-color: #f0a500;
+        }
+
+        .location-item strong {
+            color: #f0a500;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .location-item small {
+            color: #999;
+            font-size: 11px;
+        }
+
+        /* Main Editor Area */
+        .editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            background: #0f0f1e;
+            padding: 15px 20px;
+            border-bottom: 2px solid #f0a500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-header h2 {
+            color: #f0a500;
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #f0a500;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #333;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #f0a500;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .hotspot-list {
+            margin-top: 10px;
+        }
+
+        .hotspot-item {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 4px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hotspot-item .info {
+            flex: 1;
+        }
+
+        .hotspot-item .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: rgba(33, 150, 243, 0.2);
+            border-color: #2196F3;
+            color: #2196F3;
+        }
+
+        .btn-delete {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: #f44336;
+            color: #f44336;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 6px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .message.error {
+            background: #f44336;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 3px solid rgba(240, 165, 0, 0.3);
+            border-top: 3px solid #f0a500;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Check -->
+    <script>
+        const isAdmin = localStorage.getItem('is_admin') === 'true';
+        if (!isAdmin) {
+            alert('❌ Acesso Negado\n\nApenas administradores podem acessar o Editor.');
+            window.location.href = 'game-phaser.html';
+        }
+    </script>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a href="admin-panel.html" class="btn" style="text-decoration: none; display: block; text-align: center; margin-bottom: 20px;">← Painel Admin</a>
+
+            <h1>🛠️ Editor v2.0</h1>
+
+            <button class="btn primary" onclick="createNewLocation()">➕ Nova Localização</button>
+            <button class="btn" onclick="loadLocations()">🔄 Recarregar Lista</button>
+
+            <div class="location-list" id="locationList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando localizações...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Area -->
+        <div class="editor">
+            <div class="editor-header">
+                <h2 id="editorTitle">Selecione uma localização</h2>
+                <div>
+                    <button class="btn primary" onclick="saveLocation()" style="width: auto; padding: 10px 20px; display: inline-block;">💾 Salvar</button>
+                </div>
+            </div>
+
+            <div class="editor-content" id="editorContent">
+                <div class="empty-state">
+                    <h3>👈 Selecione uma localização</h3>
+                    <p>Ou crie uma nova para começar a editar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLocation = null;
+        let allLocations = [];
+
+        // Load locations on startup
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocations();
+        });
+
+        async function loadLocations() {
+            const listEl = document.getElementById('locationList');
+
+            try {
+                const response = await fetch('api/locations/list.php');
+
+                // Check if response is ok
+                if (!response.ok) {
+                    const text = await response.text();
+                    listEl.innerHTML = `
+                        <div class="empty-state" style="color: #f44336;">
+                            <h3>❌ Erro HTTP ${response.status}</h3>
+                            <p style="font-size: 12px; margin-top: 10px;">${text.substring(0, 200)}</p>
+                            <p style="margin-top: 15px; font-size: 13px;">
+                                <strong>Verifique:</strong><br>
+                                1. Banco de dados configurado em api/config.php<br>
+                                2. Tabelas criadas (execute database.sql)<br>
+                                3. Execute a migração: <a href="migrate-ui.html" style="color: #4CAF50;">migrate-ui.html</a>
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const text = await response.text();
+
+                // Try to parse JSON
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    listEl.innerHTML = `
+                        <div class="empty-state" style="color: #f44336;">
+                            <h3>❌ Resposta inválida da API</h3>
+                            <p style="font-size: 12px; margin-top: 10px;">A API não retornou JSON válido</p>
+                            <details style="margin-top: 10px; text-align: left;">
+                                <summary style="cursor: pointer; color: #f0a500;">Ver resposta completa</summary>
+                                <pre style="font-size: 10px; background: #000; padding: 10px; overflow: auto; max-height: 200px; margin-top: 5px;">${text.substring(0, 500)}</pre>
+                            </details>
+                            <p style="margin-top: 15px; font-size: 13px;">
+                                <strong>Verifique:</strong><br>
+                                1. Banco de dados configurado em api/config.php<br>
+                                2. Tabelas criadas (execute database.sql)<br>
+                                3. Execute a migração: <a href="migrate-ui.html" style="color: #4CAF50;">migrate-ui.html</a>
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (data.success) {
+                    allLocations = data.data.locations;
+                    renderLocationList();
+                } else {
+                    showMessage('Erro ao carregar localizações: ' + data.message, 'error');
+                    listEl.innerHTML = `
+                        <div class="empty-state" style="color: #ff9800;">
+                            <h3>⚠️ ${data.message}</h3>
+                            <p style="margin-top: 15px;">Execute a migração para importar dados do map.js</p>
+                            <a href="migrate-ui.html" style="color: #4CAF50; text-decoration: underline;">→ Ir para Migração</a>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showMessage('Erro de conexão: ' + error.message, 'error');
+                listEl.innerHTML = `
+                    <div class="empty-state" style="color: #f44336;">
+                        <h3>❌ Erro de Conexão</h3>
+                        <p style="margin-top: 10px;">${error.message}</p>
+                        <p style="margin-top: 15px; font-size: 13px;">
+                            Verifique se o servidor está rodando e se o banco está configurado.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderLocationList() {
+            const listEl = document.getElementById('locationList');
+
+            if (allLocations.length === 0) {
+                listEl.innerHTML = '<div class="empty-state"><p>Nenhuma localização encontrada<br><small>Clique em "Nova Localização" para criar</small></p></div>';
+                return;
+            }
+
+            listEl.innerHTML = allLocations.map(loc => `
+                <div class="location-item ${currentLocation && currentLocation.id === loc.id ? 'active' : ''}"
+                     onclick="editLocation('${loc.id}')">
+                    <strong>${loc.name}</strong>
+                    <small>${loc.id} • ${loc.hotspots.length} hotspots</small>
+                </div>
+            `).join('');
+        }
+
+        function createNewLocation() {
+            const id = prompt('ID da nova localização (ex: casa_01):');
+            if (!id) return;
+
+            currentLocation = {
+                id: id,
+                name: '',
+                description: '',
+                background_image: '',
+                hotspots: []
+            };
+
+            renderEditor();
+        }
+
+        function editLocation(locationId) {
+            currentLocation = allLocations.find(loc => loc.id === locationId);
+            renderEditor();
+            renderLocationList();
+        }
+
+        function renderEditor() {
+            if (!currentLocation) return;
+
+            document.getElementById('editorTitle').textContent = `Editando: ${currentLocation.name || currentLocation.id}`;
+
+            const editorContent = document.getElementById('editorContent');
+            editorContent.innerHTML = `
+                <div class="form-group">
+                    <label>ID da Localização</label>
+                    <input type="text" id="locationId" value="${currentLocation.id}" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="locationName" value="${currentLocation.name || ''}" placeholder="Ex: Floresta Escura">
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="locationDescription" placeholder="Descrição da localização...">${currentLocation.description || ''}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Imagem de Fundo</label>
+                    <input type="text" id="locationBackground" value="${currentLocation.background_image || ''}" placeholder="images/floresta.jpg">
+                </div>
+
+                <div class="form-group">
+                    <label>Hotspots (${currentLocation.hotspots.length})</label>
+                    <button class="btn" onclick="addHotspot()">➕ Adicionar Hotspot</button>
+                    <div class="hotspot-list" id="hotspotList"></div>
+                </div>
+            `;
+
+            renderHotspots();
+        }
+
+        function renderHotspots() {
+            const hotspotList = document.getElementById('hotspotList');
+            if (!currentLocation || currentLocation.hotspots.length === 0) {
+                hotspotList.innerHTML = '<p style="color:#666; padding:10px;">Nenhum hotspot adicionado</p>';
+                return;
+            }
+
+            hotspotList.innerHTML = currentLocation.hotspots.map((h, index) => `
+                <div class="hotspot-item">
+                    <div class="info">
+                        <strong>${h.label || 'Hotspot ' + (index + 1)}</strong><br>
+                        <small>${h.type} • (${h.x}, ${h.y}) ${h.target_location || ''}</small>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-small btn-edit" onclick="editHotspot(${index})">✏️</button>
+                        <button class="btn-small btn-delete" onclick="deleteHotspot(${index})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addHotspot() {
+            const hotspot = {
+                type: 'navigation',
+                x: 50,
+                y: 50,
+                width: 10,
+                height: 10,
+                label: 'Novo Hotspot',
+                target_location: ''
+            };
+            currentLocation.hotspots.push(hotspot);
+            renderHotspots();
+        }
+
+        function editHotspot(index) {
+            const h = currentLocation.hotspots[index];
+            const label = prompt('Label:', h.label);
+            if (label === null) return;
+
+            const type = prompt('Tipo (navigation/item/interaction):', h.type);
+            const target = prompt('Target Location:', h.target_location || '');
+            const x = parseFloat(prompt('X:', h.x));
+            const y = parseFloat(prompt('Y:', h.y));
+            const rotateX = parseFloat(prompt('Rotate X:', h.rotate_x || 0));
+            const rotateY = parseFloat(prompt('Rotate Y:', h.rotate_y || 0));
+            const rotation = parseFloat(prompt('Rotation (2D):', h.rotation || 0));
+            const scaleX = parseFloat(prompt('Scale X:', h.scale_x || 1));
+            const scaleY = parseFloat(prompt('Scale Y:', h.scale_y || 1));
+            const opacity = parseFloat(prompt('Opacity:', h.opacity || 1));
+
+            h.label = label;
+            h.type = type || 'navigation';
+            h.target_location = target;
+            h.x = isNaN(x) ? h.x : x;
+            h.y = isNaN(y) ? h.y : y;
+            h.rotate_x = isNaN(rotateX) ? h.rotate_x : rotateX;
+            h.rotate_y = isNaN(rotateY) ? h.rotate_y : rotateY;
+            h.rotation = isNaN(rotation) ? h.rotation : rotation;
+            h.scale_x = isNaN(scaleX) ? h.scale_x : scaleX;
+            h.scale_y = isNaN(scaleY) ? h.scale_y : scaleY;
+            h.opacity = isNaN(opacity) ? h.opacity : opacity;
+
+            renderHotspots();
+        }
+
+        function deleteHotspot(index) {
+            if (!confirm('Deletar este hotspot?')) return;
+            currentLocation.hotspots.splice(index, 1);
+            renderHotspots();
+        }
+
+        async function saveLocation() {
+            if (!currentLocation) {
+                showMessage('Nenhuma localização selecionada', 'error');
+                return;
+            }
+
+            // Get form values
+            currentLocation.name = document.getElementById('locationName').value;
+            currentLocation.description = document.getElementById('locationDescription').value;
+            currentLocation.background_image = document.getElementById('locationBackground').value;
+
+            if (!currentLocation.name || !currentLocation.description || !currentLocation.background_image) {
+                showMessage('Preencha todos os campos obrigatórios', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('api/locations/save.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentLocation)
+                });
+
+                // Check response status
+                if (!response.ok) {
+                    const text = await response.text();
+                    showMessage(`Erro HTTP ${response.status}: ${text.substring(0, 100)}`, 'error');
+                    console.error('Response:', text);
+                    return;
+                }
+
+                const text = await response.text();
+                let data;
+
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    showMessage('Erro: API retornou resposta inválida', 'error');
+                    console.error('Invalid JSON:', text);
+                    return;
+                }
+
+                if (data.success) {
+                    showMessage('✓ Localização salva com sucesso!', 'success');
+                    await loadLocations();
+                } else {
+                    showMessage('Erro ao salvar: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Erro de conexão: ' + error.message, 'error');
+                console.error('Save error:', error);
+            }
+        }
+
+        function showMessage(message, type = 'success') {
+            const msgEl = document.createElement('div');
+            msgEl.className = `message ${type}`;
+            msgEl.textContent = message;
+            document.body.appendChild(msgEl);
+
+            setTimeout(() => {
+                msgEl.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

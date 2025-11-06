@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Conexões - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #f0a500;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: rgba(240, 165, 0, 0.2);
+            border: 2px solid #f0a500;
+            border-radius: 8px;
+            color: #f0a500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+
+        .btn:hover {
+            background: rgba(240, 165, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn.active {
+            background: #f0a500;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .graph-container {
+            background: rgba(30, 30, 46, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid #f0a500;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+            position: relative;
+            min-height: 700px;
+        }
+
+        svg {
+            width: 100%;
+            height: 700px;
+            display: block;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .node circle {
+            fill: #f0a500;
+            stroke: #1a1a2e;
+            stroke-width: 3;
+        }
+
+        .node:hover circle {
+            fill: #ffb520;
+            r: 25;
+        }
+
+        .node.hub circle {
+            fill: #4CAF50;
+            r: 30;
+        }
+
+        .node.start circle {
+            fill: #2196F3;
+        }
+
+        .node.end circle {
+            fill: #F44336;
+        }
+
+        .node.selected circle {
+            fill: #ff0;
+            stroke-width: 5;
+            stroke: #fff;
+        }
+
+        .node text {
+            fill: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .link {
+            stroke: rgba(240, 165, 0, 0.4);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .link.highlighted {
+            stroke: #f0a500;
+            stroke-width: 4;
+            animation: pulse-line 1s infinite;
+        }
+
+        @keyframes pulse-line {
+            0%, 100% { stroke-opacity: 1; }
+            50% { stroke-opacity: 0.5; }
+        }
+
+        .marker {
+            fill: rgba(240, 165, 0, 0.6);
+        }
+
+        .info-panel {
+            background: rgba(20, 20, 30, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #f0a500;
+        }
+
+        .info-panel h2 {
+            color: #f0a500;
+            margin-bottom: 15px;
+        }
+
+        .info-panel p {
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .connection-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .connection-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #f0a500;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(20, 20, 30, 0.8);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #1a1a2e;
+        }
+
+        .legend-dot.hub { background: #4CAF50; }
+        .legend-dot.start { background: #2196F3; }
+        .legend-dot.end { background: #F44336; }
+        .legend-dot.normal { background: #f0a500; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(240, 165, 0, 0.1);
+            border: 2px solid #f0a500;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            color: #f0a500;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Visualizador de Conexões</h1>
+        <p class="subtitle">Vila Abandonada - Mapa Interativo de Locais</p>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">15</div>
+                <div class="stat-label">Locais Totais</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">30</div>
+                <div class="stat-label">Conexões</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Hubs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Becos sem Saída</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn active" onclick="showAllConnections()">Todas as Conexões</button>
+            <button class="btn" onclick="highlightHub()">Destacar Hubs</button>
+            <button class="btn" onclick="showPath()">Caminho para Vitória</button>
+            <button class="btn" onclick="resetGraph()">Resetar</button>
+        </div>
+
+        <div class="graph-container">
+            <svg id="graph"></svg>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot start"></div>
+                <span>Início (Floresta)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot hub"></div>
+                <span>Hub (Praça, Igreja, Prefeitura)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot normal"></div>
+                <span>Local Normal</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot end"></div>
+                <span>Fim (Portão)</span>
+            </div>
+        </div>
+
+        <div class="info-panel" id="infoPanel">
+            <h2>Informações</h2>
+            <p>Clique em um local no grafo para ver suas conexões.</p>
+            <p><strong>Dica:</strong> A Praça Central é o hub principal com 6 conexões!</p>
+        </div>
+    </div>
+
+    <script>
+        // Game map data
+        const locations = {
+            forest_entrance: { name: 'Entrada da Floresta', connections: ['village_gate'], type: 'start' },
+            village_gate: { name: 'Portão da Vila', connections: ['forest_entrance', 'main_square'], type: 'end' },
+            main_square: { name: 'Praça Central', connections: ['village_gate', 'old_church', 'abandoned_house', 'town_hall', 'old_well', 'abandoned_shop'], type: 'hub' },
+            old_church: { name: 'Igreja Antiga', connections: ['main_square', 'church_tower', 'cemetery'], type: 'hub' },
+            church_tower: { name: 'Torre do Sino', connections: ['old_church'], type: 'normal' },
+            cemetery: { name: 'Cemitério', connections: ['old_church'], type: 'normal' },
+            abandoned_house: { name: 'Casa - Térreo', connections: ['main_square', 'house_second_floor'], type: 'normal' },
+            house_second_floor: { name: 'Casa - 2º Andar', connections: ['abandoned_house', 'house_attic'], type: 'normal' },
+            house_attic: { name: 'Casa - Sótão', connections: ['house_second_floor'], type: 'normal' },
+            town_hall: { name: 'Prefeitura', connections: ['main_square', 'mayors_office', 'library'], type: 'hub' },
+            mayors_office: { name: 'Gabinete do Prefeito', connections: ['town_hall'], type: 'normal' },
+            library: { name: 'Biblioteca', connections: ['town_hall'], type: 'normal' },
+            old_well: { name: 'Poço Antigo', connections: ['main_square'], type: 'normal' },
+            abandoned_shop: { name: 'Loja Abandonada', connections: ['main_square', 'blacksmith'], type: 'normal' },
+            blacksmith: { name: 'Oficina do Ferreiro', connections: ['abandoned_shop'], type: 'normal' }
+        };
+
+        // Positions for layout (force-directed simulation)
+        const positions = {
+            forest_entrance: { x: 100, y: 350 },
+            village_gate: { x: 250, y: 350 },
+            main_square: { x: 500, y: 350 },
+            old_church: { x: 400, y: 150 },
+            church_tower: { x: 300, y: 50 },
+            cemetery: { x: 500, y: 50 },
+            abandoned_house: { x: 700, y: 250 },
+            house_second_floor: { x: 800, y: 200 },
+            house_attic: { x: 900, y: 150 },
+            town_hall: { x: 600, y: 150 },
+            mayors_office: { x: 700, y: 50 },
+            library: { x: 750, y: 100 },
+            old_well: { x: 500, y: 500 },
+            abandoned_shop: { x: 650, y: 450 },
+            blacksmith: { x: 800, y: 500 }
+        };
+
+        const svg = document.getElementById('graph');
+        const infoPanel = document.getElementById('infoPanel');
+
+        // Create arrow marker
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'arrowhead');
+        marker.setAttribute('markerWidth', '10');
+        marker.setAttribute('markerHeight', '7');
+        marker.setAttribute('refX', '9');
+        marker.setAttribute('refY', '3.5');
+        marker.setAttribute('orient', 'auto');
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+        polygon.setAttribute('class', 'marker');
+        marker.appendChild(polygon);
+        defs.appendChild(marker);
+        svg.appendChild(defs);
+
+        // Draw connections
+        const linksGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        svg.appendChild(linksGroup);
+
+        function drawConnections() {
+            linksGroup.innerHTML = '';
+            Object.keys(locations).forEach(locId => {
+                const from = positions[locId];
+                locations[locId].connections.forEach(targetId => {
+                    const to = positions[targetId];
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', from.x);
+                    line.setAttribute('y1', from.y);
+                    line.setAttribute('x2', to.x);
+                    line.setAttribute('y2', to.y);
+                    line.setAttribute('class', 'link');
+                    line.setAttribute('data-from', locId);
+                    line.setAttribute('data-to', targetId);
+                    line.setAttribute('marker-end', 'url(#arrowhead)');
+                    linksGroup.appendChild(line);
+                });
+            });
+        }
+
+        // Draw nodes
+        const nodesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        svg.appendChild(nodesGroup);
+
+        function drawNodes() {
+            nodesGroup.innerHTML = '';
+            Object.keys(locations).forEach(locId => {
+                const loc = locations[locId];
+                const pos = positions[locId];
+
+                const node = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                node.setAttribute('class', `node ${loc.type}`);
+                node.setAttribute('data-id', locId);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pos.x);
+                circle.setAttribute('cy', pos.y);
+                circle.setAttribute('r', loc.type === 'hub' ? 25 : 20);
+                node.appendChild(circle);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pos.x);
+                text.setAttribute('y', pos.y + 40);
+                text.textContent = loc.name;
+                node.appendChild(text);
+
+                node.addEventListener('click', () => selectNode(locId));
+                nodesGroup.appendChild(node);
+            });
+        }
+
+        function selectNode(locId) {
+            // Remove previous selection
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
+            document.querySelectorAll('.link').forEach(l => l.classList.remove('highlighted'));
+
+            // Select node
+            const node = document.querySelector(`.node[data-id="${locId}"]`);
+            node.classList.add('selected');
+
+            // Highlight connections
+            const loc = locations[locId];
+            loc.connections.forEach(targetId => {
+                const link = document.querySelector(`.link[data-from="${locId}"][data-to="${targetId}"]`);
+                if (link) link.classList.add('highlighted');
+            });
+
+            // Show info
+            const connectionList = loc.connections.map(id =>
+                `<div class="connection-item">➡️ ${locations[id].name}</div>`
+            ).join('');
+
+            infoPanel.innerHTML = `
+                <h2>${loc.name}</h2>
+                <p><strong>Tipo:</strong> ${
+                    loc.type === 'start' ? 'Início do Jogo' :
+                    loc.type === 'end' ? 'Saída/Fim' :
+                    loc.type === 'hub' ? 'Hub (Centro de Conexões)' :
+                    'Local Normal'
+                }</p>
+                <p><strong>Número de Conexões:</strong> ${loc.connections.length}</p>
+                <h3>Conecta com:</h3>
+                <div class="connection-list">${connectionList}</div>
+            `;
+        }
+
+        function showAllConnections() {
+            resetGraph();
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function highlightHub() {
+            resetGraph();
+            ['main_square', 'old_church', 'town_hall'].forEach(id => {
+                selectNode(id);
+            });
+            infoPanel.innerHTML = `
+                <h2>Hubs Destacados</h2>
+                <p><strong>Praça Central:</strong> 6 conexões (Hub Principal)</p>
+                <p><strong>Igreja Antiga:</strong> 3 conexões (Sub-hub)</p>
+                <p><strong>Prefeitura:</strong> 3 conexões (Sub-hub)</p>
+                <p>Estes são os locais mais conectados do jogo!</p>
+            `;
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function showPath() {
+            resetGraph();
+            const path = [
+                'forest_entrance', 'village_gate', 'main_square', 'old_church',
+                'abandoned_house', 'town_hall', 'mayors_office', 'village_gate'
+            ];
+
+            path.forEach((locId, index) => {
+                if (index < path.length - 1) {
+                    const link = document.querySelector(`.link[data-from="${locId}"][data-to="${path[index + 1]}"]`) ||
+                                 document.querySelector(`.link[data-from="${path[index + 1]}"][data-to="${locId}"]`);
+                    if (link) link.classList.add('highlighted');
+                }
+            });
+
+            infoPanel.innerHTML = `
+                <h2>Caminho para Vitória</h2>
+                <p>Exemplo de caminho linear para completar o jogo:</p>
+                <ol>
+                    <li>Entrada da Floresta</li>
+                    <li>Portão (ver que está trancado)</li>
+                    <li>Praça Central (hub)</li>
+                    <li>Explorar Igreja, Casa, Prefeitura, etc.</li>
+                    <li>Coletar 7 itens obrigatórios</li>
+                    <li>Ir ao Gabinete do Prefeito</li>
+                    <li>Pegar Chave Mestra</li>
+                    <li>Voltar ao Portão</li>
+                    <li>🎉 VITÓRIA!</li>
+                </ol>
+            `;
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function resetGraph() {
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
+            document.querySelectorAll('.link').forEach(l => l.classList.remove('highlighted'));
+            infoPanel.innerHTML = `
+                <h2>Informações</h2>
+                <p>Clique em um local no grafo para ver suas conexões.</p>
+                <p><strong>Dica:</strong> A Praça Central é o hub principal com 6 conexões!</p>
+            `;
+        }
+
+        // Initialize
+        drawConnections();
+        drawNodes();
+    </script>
+</body>
+</html>

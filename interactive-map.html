@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Interativo - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .map-panel {
+            flex: 1;
+            position: relative;
+            background: #1a1a2e;
+            border-right: 3px solid #f0a500;
+            overflow: hidden;
+        }
+
+        .preview-panel {
+            width: 600px;
+            background: rgba(30, 30, 46, 0.95);
+            padding: 30px;
+            overflow-y: auto;
+            border-left: 3px solid #f0a500;
+        }
+
+        .title {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid #f0a500;
+        }
+
+        .title h1 {
+            color: #f0a500;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .title p {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        #mapCanvas {
+            display: block;
+            margin: 20px auto;
+            cursor: crosshair;
+            border: 2px solid #f0a500;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .preview-content h2 {
+            color: #f0a500;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .location-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid #f0a500;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .location-info {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #f0a500;
+            margin-bottom: 20px;
+        }
+
+        .location-info h3 {
+            color: #f0a500;
+            margin-bottom: 10px;
+        }
+
+        .location-info p {
+            line-height: 1.6;
+            color: #b0b0b0;
+            margin-bottom: 15px;
+        }
+
+        .connections-list {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .connections-list h4 {
+            color: #f0a500;
+            margin-bottom: 10px;
+        }
+
+        .connection-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: rgba(240, 165, 0, 0.1);
+            border-left: 3px solid #f0a500;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .connection-item:hover {
+            background: rgba(240, 165, 0, 0.3);
+            transform: translateX(5px);
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .welcome-message h2 {
+            color: #f0a500;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(240, 165, 0, 0.1);
+            border: 2px solid #f0a500;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            color: #f0a500;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 0.9em;
+        }
+
+        .image-error {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 3px dashed #666;
+            margin-bottom: 20px;
+            color: #999;
+            flex-direction: column;
+        }
+
+        .image-error .icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .puzzle-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            border-radius: 5px;
+            color: #4CAF50;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .no-puzzle {
+            background: rgba(158, 158, 158, 0.2);
+            border-color: #9e9e9e;
+            color: #9e9e9e;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .preview-panel {
+                width: 100%;
+                height: 50vh;
+            }
+
+            .map-panel {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="map-panel">
+            <div class="title">
+                <h1>🗺️ Mapa Interativo</h1>
+                <p>Clique em um local no mapa para ver a imagem e informações</p>
+            </div>
+            <canvas id="mapCanvas" width="1200" height="800"></canvas>
+        </div>
+
+        <div class="preview-panel">
+            <div id="previewContent" class="preview-content">
+                <div class="welcome-message">
+                    <h2>Bem-vindo ao Mapa da Vila Abandonada</h2>
+                    <p>Este mapa interativo mostra todos os 15 locais do jogo.</p>
+                    <p><strong>👆 Clique em qualquer círculo no mapa</strong> para ver:</p>
+                    <ul style="text-align: left; margin: 20px auto; max-width: 400px; line-height: 2;">
+                        <li>📸 Imagem real do local</li>
+                        <li>📝 Descrição detalhada</li>
+                        <li>🔗 Conexões com outros locais</li>
+                        <li>🎮 Informações sobre puzzles</li>
+                    </ul>
+
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-number">15</div>
+                            <div class="stat-label">Locais</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">30</div>
+                            <div class="stat-label">Conexões</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">12</div>
+                            <div class="stat-label">Puzzles</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">15</div>
+                            <div class="stat-label">Itens</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados dos locais com imagens
+        const locations = {
+            forest_entrance: {
+                name: 'Entrada da Floresta',
+                image: 'images/forest_entrance.jpg',
+                description: 'Você está perdido na floresta. À frente, você vê uma vila abandonada coberta de névoa. Este é o ponto inicial da sua jornada.',
+                connections: ['village_gate'],
+                x: 150, y: 400,
+                size: 35,
+                color: '#2196F3',
+                hasPuzzle: false,
+                items: ['Mapa Rasgado']
+            },
+            village_gate: {
+                name: 'Portão da Vila',
+                image: 'images/village_gate.jpg',
+                description: 'Um grande portão de ferro enferrujado bloqueia a saída. Você precisa da Chave Mestra para escapar. Este é o objetivo final do jogo!',
+                connections: ['forest_entrance', 'main_square'],
+                x: 300, y: 400,
+                size: 35,
+                color: '#F44336',
+                hasPuzzle: true,
+                puzzleType: 'Verificação de Chave Mestra',
+                items: []
+            },
+            main_square: {
+                name: 'Praça Central',
+                image: 'images/main_square.jpg',
+                description: 'A praça central da vila. Uma fonte seca está no centro. Este é o HUB principal - daqui você pode acessar 6 diferentes locais!',
+                connections: ['village_gate', 'old_church', 'abandoned_house', 'town_hall', 'old_well', 'abandoned_shop'],
+                x: 600, y: 400,
+                size: 50,
+                color: '#4CAF50',
+                hasPuzzle: true,
+                puzzleType: 'Enigma da Fonte (Direções)',
+                items: ['Chave da Fonte']
+            },
+            old_church: {
+                name: 'Igreja Antiga',
+                image: 'images/old_church.jpg',
+                description: 'Uma igreja em ruínas. Vitrais quebrados deixam a luz entrar. Há uma escada para o sino e uma porta para o cemitério.',
+                connections: ['main_square', 'church_tower', 'cemetery'],
+                x: 450, y: 220,
+                size: 40,
+                color: '#9C27B0',
+                hasPuzzle: true,
+                puzzleType: 'Enigma das Velas (Sequência)',
+                items: ['Símbolo Sagrado ⭐']
+            },
+            church_tower: {
+                name: 'Torre do Sino',
+                image: 'images/church_tower.jpg',
+                description: 'No alto da torre, você tem uma vista da vila inteira. O sino está quebrado, mas há um badalo que pode ser coletado.',
+                connections: ['old_church'],
+                x: 350, y: 120,
+                size: 30,
+                color: '#9C27B0',
+                hasPuzzle: false,
+                items: ['Badalo do Sino']
+            },
+            cemetery: {
+                name: 'Cemitério da Vila',
+                image: 'images/cemetery.jpg',
+                description: 'Um cemitério sombrio atrás da igreja. Lápides antigas e uma cripta no centro. Um dos novos locais adicionados!',
+                connections: ['old_church'],
+                x: 550, y: 120,
+                size: 32,
+                color: '#9C27B0',
+                hasPuzzle: true,
+                puzzleType: 'Enigma da Cripta (Matemática)',
+                items: ['Medalhão Antigo ⭐']
+            },
+            abandoned_house: {
+                name: 'Casa Abandonada - Térreo',
+                image: 'images/house_floor1.jpg',
+                description: 'Uma casa velha e empoeirada. Móveis cobertos por lençóis. Há uma escada para o andar de cima. Primeiro andar de 3.',
+                connections: ['main_square', 'house_second_floor'],
+                x: 800, y: 300,
+                size: 35,
+                color: '#FF9800',
+                hasPuzzle: true,
+                puzzleType: 'Enigma dos Livros (Cores)',
+                items: ['Fragmento de Chave 1 ⭐']
+            },
+            house_second_floor: {
+                name: 'Casa - 2º Andar',
+                image: 'images/house_floor2.jpg',
+                description: 'Quartos vazios e um corredor escuro. Há outra escada para o sótão. Segundo andar da casa.',
+                connections: ['abandoned_house', 'house_attic'],
+                x: 900, y: 240,
+                size: 30,
+                color: '#FF9800',
+                hasPuzzle: false,
+                items: ['Diário Antigo']
+            },
+            house_attic: {
+                name: 'Casa - Sótão',
+                image: 'images/house_attic.jpg',
+                description: 'Um sótão cheio de caixas velhas e teias de aranha. Há um baú trancado com um enigma matemático.',
+                connections: ['house_second_floor'],
+                x: 1000, y: 180,
+                size: 30,
+                color: '#FF9800',
+                hasPuzzle: true,
+                puzzleType: 'Baú Trancado (Matemática)',
+                items: ['Fragmento de Chave 2 ⭐']
+            },
+            town_hall: {
+                name: 'Prefeitura',
+                image: 'images/town_hall.jpg',
+                description: 'O prédio administrativo da vila. Papéis espalhados pelo chão. Um cofre na parede. Conecta ao Gabinete e Biblioteca.',
+                connections: ['main_square', 'mayors_office', 'library'],
+                x: 700, y: 220,
+                size: 40,
+                color: '#03A9F4',
+                hasPuzzle: true,
+                puzzleType: 'Cofre (Código)',
+                items: ['Selo da Vila ⭐']
+            },
+            mayors_office: {
+                name: 'Gabinete do Prefeito',
+                image: 'images/mayors_office.jpg',
+                description: 'O escritório do prefeito. Mesa grande com documentos. AQUI você combina os 7 itens obrigatórios para obter a Chave Mestra!',
+                connections: ['town_hall'],
+                x: 820, y: 140,
+                size: 32,
+                color: '#03A9F4',
+                hasPuzzle: true,
+                puzzleType: 'Enigma Final (7 Itens)',
+                items: ['CHAVE MESTRA ⭐⭐⭐']
+            },
+            library: {
+                name: 'Biblioteca da Vila',
+                image: 'images/library.jpg',
+                description: 'Biblioteca municipal com estantes altas cheias de livros empoeirados. Local novo adicionado! Tem o enigma RGB.',
+                connections: ['town_hall'],
+                x: 900, y: 100,
+                size: 32,
+                color: '#03A9F4',
+                hasPuzzle: true,
+                puzzleType: 'Enigma RGB (Riddle)',
+                items: ['Livro das Sombras ⭐', 'Óculos de Leitura']
+            },
+            old_well: {
+                name: 'Poço Antigo',
+                image: 'images/old_well.jpg',
+                description: 'Um poço profundo e escuro. Há uma corda velha e uma manivela enferrujada. Local novo adicionado ao sul da praça.',
+                connections: ['main_square'],
+                x: 600, y: 550,
+                size: 32,
+                color: '#795548',
+                hasPuzzle: true,
+                puzzleType: 'Enigma do Poço (Matemática)',
+                items: ['Balde Enferrujado']
+            },
+            abandoned_shop: {
+                name: 'Loja Abandonada',
+                image: 'images/abandoned_shop.jpg',
+                description: 'Antiga mercearia da vila. Prateleiras vazias e caixa registradora quebrada. Conecta à Oficina do Ferreiro.',
+                connections: ['main_square', 'blacksmith'],
+                x: 750, y: 520,
+                size: 35,
+                color: '#FFC107',
+                hasPuzzle: true,
+                puzzleType: 'Caixa Registradora (Símbolos)',
+                items: ['Chave da Loja', 'Moeda Antiga']
+            },
+            blacksmith: {
+                name: 'Oficina do Ferreiro',
+                image: 'images/blacksmith.jpg',
+                description: 'Antiga forja com ferramentas enferrujadas. A bigorna ainda está no centro. Local novo com o enigma de geometria!',
+                connections: ['abandoned_shop'],
+                x: 900, y: 580,
+                size: 35,
+                color: '#FFC107',
+                hasPuzzle: true,
+                puzzleType: 'Enigma das Ferramentas (Geometria)',
+                items: ['Runa de Ferro ⭐']
+            }
+        };
+
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let selectedLocation = null;
+
+        // Desenhar fundo
+        function drawBackground() {
+            const gradient = ctx.createRadialGradient(600, 400, 100, 600, 400, 600);
+            gradient.addColorStop(0, '#2a2a3e');
+            gradient.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Desenhar conexões
+        function drawConnections() {
+            ctx.strokeStyle = 'rgba(240, 165, 0, 0.3)';
+            ctx.lineWidth = 3;
+
+            Object.keys(locations).forEach(id => {
+                const from = locations[id];
+                from.connections.forEach(targetId => {
+                    const to = locations[targetId];
+                    if (to) {
+                        ctx.beginPath();
+                        ctx.moveTo(from.x, from.y);
+                        ctx.lineTo(to.x, to.y);
+                        ctx.stroke();
+                    }
+                });
+            });
+        }
+
+        // Desenhar local
+        function drawLocation(id, loc) {
+            const isSelected = selectedLocation === id;
+
+            // Círculo
+            ctx.fillStyle = loc.color;
+            ctx.beginPath();
+            ctx.arc(loc.x, loc.y, loc.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Borda
+            ctx.strokeStyle = isSelected ? '#fff' : '#000';
+            ctx.lineWidth = isSelected ? 4 : 2;
+            ctx.stroke();
+
+            // Borda interna
+            if (isSelected) {
+                ctx.strokeStyle = '#f0a500';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(loc.x, loc.y, loc.size - 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Nome
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.font = 'bold 14px Georgia';
+            ctx.textAlign = 'center';
+            ctx.strokeText(loc.name, loc.x, loc.y + loc.size + 20);
+            ctx.fillText(loc.name, loc.x, loc.y + loc.size + 20);
+
+            // Ícone de puzzle
+            if (loc.hasPuzzle) {
+                ctx.font = '18px Arial';
+                ctx.fillText('🧩', loc.x, loc.y - loc.size - 10);
+            }
+        }
+
+        // Renderizar mapa
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawConnections();
+
+            Object.keys(locations).forEach(id => {
+                drawLocation(id, locations[id]);
+            });
+        }
+
+        // Mostrar preview do local
+        function showLocationPreview(locationId) {
+            const loc = locations[locationId];
+            selectedLocation = locationId;
+            render();
+
+            const connectionsHTML = loc.connections.map(connId => {
+                const connLoc = locations[connId];
+                return `
+                    <div class="connection-item" onclick="showLocationPreview('${connId}')">
+                        ➡️ ${connLoc.name}
+                    </div>
+                `;
+            }).join('');
+
+            const itemsHTML = loc.items.length > 0
+                ? `<p><strong>🎒 Itens:</strong> ${loc.items.join(', ')}</p>`
+                : '<p><strong>🎒 Itens:</strong> Nenhum</p>';
+
+            const puzzleHTML = loc.hasPuzzle
+                ? `<span class="puzzle-badge">🧩 Puzzle: ${loc.puzzleType}</span>`
+                : '<span class="puzzle-badge no-puzzle">Sem puzzle</span>';
+
+            document.getElementById('previewContent').innerHTML = `
+                <h2>${loc.name}</h2>
+
+                <img src="${loc.image}"
+                     class="location-image"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                     alt="${loc.name}">
+
+                <div class="image-error" style="display: none;">
+                    <div class="icon">📸</div>
+                    <div>Imagem não encontrada</div>
+                    <div style="font-size: 0.8em; margin-top: 10px;">${loc.image}</div>
+                </div>
+
+                <div class="location-info">
+                    <h3>📍 Informações</h3>
+                    <p>${loc.description}</p>
+                    ${itemsHTML}
+                    ${puzzleHTML}
+                </div>
+
+                <div class="connections-list">
+                    <h4>🔗 Conexões (${loc.connections.length})</h4>
+                    <p style="color: #999; font-size: 0.9em; margin-bottom: 10px;">
+                        Clique para navegar:
+                    </p>
+                    ${connectionsHTML}
+                </div>
+            `;
+        }
+
+        // Click no canvas
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            Object.keys(locations).forEach(id => {
+                const loc = locations[id];
+                const dist = Math.sqrt((x - loc.x) ** 2 + (y - loc.y) ** 2);
+                if (dist <= loc.size) {
+                    showLocationPreview(id);
+                }
+            });
+        });
+
+        // Hover effect
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            let isOverLocation = false;
+
+            Object.keys(locations).forEach(id => {
+                const loc = locations[id];
+                const dist = Math.sqrt((x - loc.x) ** 2 + (y - loc.y) ** 2);
+                if (dist <= loc.size) {
+                    isOverLocation = true;
+                }
+            });
+
+            canvas.style.cursor = isOverLocation ? 'pointer' : 'crosshair';
+        });
+
+        // Render inicial
+        render();
+    </script>
+</body>
+</html>

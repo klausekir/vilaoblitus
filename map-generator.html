@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Mapa - Vila Abandonada</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #2c2416;
+            font-family: 'Georgia', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .instructions {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #f0a500;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            z-index: 1000;
+            border: 2px solid #f0a500;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #f0a500;
+        }
+
+        .instructions button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #f0a500;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #000;
+            font-weight: bold;
+        }
+
+        #mapCanvas {
+            border: 3px solid #000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            background: linear-gradient(135deg, #3d3020 0%, #4a3d2a 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions" id="instructions">
+        <h3>📸 Como Salvar o Mapa</h3>
+        <p><strong>1.</strong> Clique no botão abaixo para ocultar estas instruções</p>
+        <p><strong>2.</strong> Tire um screenshot/print da tela (tecla Print Screen)</p>
+        <p><strong>3.</strong> Cole em um editor (Paint, Photoshop, etc.)</p>
+        <p><strong>4.</strong> Recorte apenas o mapa</p>
+        <p><strong>5.</strong> Salve como: <code>village_map.jpg</code></p>
+        <button onclick="document.getElementById('instructions').style.display='none'">Ocultar Instruções</button>
+    </div>
+
+    <canvas id="mapCanvas" width="1920" height="1080"></canvas>
+
+    <script>
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Textura de pergaminho/papel velho
+        function drawBackground() {
+            // Fundo base
+            const gradient = ctx.createRadialGradient(960, 540, 100, 960, 540, 800);
+            gradient.addColorStop(0, '#5a4a3a');
+            gradient.addColorStop(1, '#3a2f1e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Textura de papel
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            for (let i = 0; i < 3000; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 2;
+                ctx.fillRect(x, y, size, size);
+            }
+
+            // Borda envelhecida
+            ctx.strokeStyle = '#2a1f0f';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+        }
+
+        // Locais do mapa com posições
+        const locations = {
+            forest_entrance: { x: 200, y: 540, name: 'Entrada da\nFloresta', size: 50, color: '#2196F3' },
+            village_gate: { x: 400, y: 540, name: 'Portão\nda Vila', size: 55, color: '#F44336' },
+            main_square: { x: 960, y: 540, name: 'PRAÇA\nCENTRAL', size: 80, color: '#4CAF50' },
+            old_church: { x: 750, y: 280, name: 'Igreja\nAntiga', size: 65, color: '#9C27B0' },
+            church_tower: { x: 650, y: 150, name: 'Torre', size: 45, color: '#9C27B0' },
+            cemetery: { x: 900, y: 150, name: 'Cemitério', size: 50, color: '#9C27B0' },
+            abandoned_house: { x: 1200, y: 400, name: 'Casa', size: 55, color: '#FF9800' },
+            house_second_floor: { x: 1320, y: 320, name: '2º Andar', size: 45, color: '#FF9800' },
+            house_attic: { x: 1440, y: 240, name: 'Sótão', size: 45, color: '#FF9800' },
+            town_hall: { x: 1050, y: 280, name: 'Prefeitura', size: 65, color: '#03A9F4' },
+            mayors_office: { x: 1180, y: 180, name: 'Gabinete', size: 50, color: '#03A9F4' },
+            library: { x: 1280, y: 120, name: 'Biblioteca', size: 50, color: '#03A9F4' },
+            old_well: { x: 960, y: 720, name: 'Poço', size: 50, color: '#795548' },
+            abandoned_shop: { x: 1150, y: 680, name: 'Loja', size: 55, color: '#FFC107' },
+            blacksmith: { x: 1300, y: 780, name: 'Ferreiro', size: 55, color: '#FFC107' }
+        };
+
+        // Conexões (caminhos)
+        const connections = [
+            ['forest_entrance', 'village_gate'],
+            ['village_gate', 'main_square'],
+            ['main_square', 'old_church'],
+            ['main_square', 'abandoned_house'],
+            ['main_square', 'town_hall'],
+            ['main_square', 'old_well'],
+            ['main_square', 'abandoned_shop'],
+            ['old_church', 'church_tower'],
+            ['old_church', 'cemetery'],
+            ['abandoned_house', 'house_second_floor'],
+            ['house_second_floor', 'house_attic'],
+            ['town_hall', 'mayors_office'],
+            ['town_hall', 'library'],
+            ['abandoned_shop', 'blacksmith']
+        ];
+
+        // Desenhar caminho (estrada)
+        function drawPath(from, to, isDashed = false) {
+            const loc1 = locations[from];
+            const loc2 = locations[to];
+
+            ctx.strokeStyle = '#8d7456';
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+
+            // Sombra do caminho
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            if (isDashed) {
+                ctx.setLineDash([10, 10]);
+            } else {
+                ctx.setLineDash([]);
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(loc1.x, loc1.y);
+            ctx.lineTo(loc2.x, loc2.y);
+            ctx.stroke();
+
+            // Linha mais clara no centro
+            ctx.strokeStyle = '#b39676';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(loc1.x, loc1.y);
+            ctx.lineTo(loc2.x, loc2.y);
+            ctx.stroke();
+
+            ctx.shadowColor = 'transparent';
+            ctx.setLineDash([]);
+        }
+
+        // Desenhar local (edifício/ponto)
+        function drawLocation(id, data) {
+            const { x, y, name, size, color } = data;
+
+            // Sombra
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetX = 4;
+            ctx.shadowOffsetY = 4;
+
+            // Círculo principal
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Borda
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Borda interna dourada
+            ctx.strokeStyle = '#f0a500';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, size - 5, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.shadowColor = 'transparent';
+
+            // Nome do local
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 4;
+            ctx.font = 'bold 18px Georgia';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const lines = name.split('\n');
+            lines.forEach((line, i) => {
+                const yOffset = (i - (lines.length - 1) / 2) * 22;
+                ctx.strokeText(line, x, y + yOffset);
+                ctx.fillText(line, x, y + yOffset);
+            });
+        }
+
+        // Desenhar título
+        function drawTitle() {
+            ctx.font = 'bold 72px Georgia';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillText('VILA ABANDONADA', 960, 80);
+
+            ctx.fillStyle = '#f0a500';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeText('VILA ABANDONADA', 960, 80);
+            ctx.fillText('VILA ABANDONADA', 960, 80);
+
+            ctx.font = '24px Georgia';
+            ctx.fillStyle = '#8d7456';
+            ctx.fillText('Mapa dos 15 Locais', 960, 120);
+        }
+
+        // Desenhar legenda
+        function drawLegend() {
+            const legendX = 1600;
+            const legendY = 800;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(legendX - 20, legendY - 20, 280, 220);
+
+            ctx.strokeStyle = '#f0a500';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(legendX - 20, legendY - 20, 280, 220);
+
+            ctx.font = 'bold 20px Georgia';
+            ctx.fillStyle = '#f0a500';
+            ctx.textAlign = 'left';
+            ctx.fillText('LEGENDA', legendX, legendY);
+
+            const items = [
+                { color: '#2196F3', text: 'Início (Floresta)' },
+                { color: '#F44336', text: 'Fim (Portão Saída)' },
+                { color: '#4CAF50', text: 'Hub Principal' },
+                { color: '#9C27B0', text: 'Igreja e Cemitério' },
+                { color: '#FF9800', text: 'Casa (3 andares)' },
+                { color: '#03A9F4', text: 'Prefeitura e Biblioteca' },
+                { color: '#795548', text: 'Poço' },
+                { color: '#FFC107', text: 'Loja e Ferreiro' }
+            ];
+
+            ctx.font = '16px Georgia';
+            items.forEach((item, i) => {
+                const yPos = legendY + 35 + i * 22;
+
+                ctx.fillStyle = item.color;
+                ctx.beginPath();
+                ctx.arc(legendX + 10, yPos, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(item.text, legendX + 30, yPos + 5);
+            });
+        }
+
+        // Desenhar marca d'água
+        function drawWatermark() {
+            ctx.font = '16px Georgia';
+            ctx.fillStyle = 'rgba(240, 165, 0, 0.4)';
+            ctx.textAlign = 'center';
+            ctx.fillText('Vila Abandonada © 2024', 960, 1050);
+        }
+
+        // Renderizar tudo
+        function render() {
+            // 1. Fundo
+            drawBackground();
+
+            // 2. Título
+            drawTitle();
+
+            // 3. Caminhos/Conexões
+            connections.forEach(([from, to]) => {
+                drawPath(from, to);
+            });
+
+            // 4. Locais
+            Object.keys(locations).forEach(id => {
+                drawLocation(id, locations[id]);
+            });
+
+            // 5. Legenda
+            drawLegend();
+
+            // 6. Marca d'água
+            drawWatermark();
+
+            // 7. Número de locais
+            ctx.font = 'bold 24px Georgia';
+            ctx.fillStyle = '#f0a500';
+            ctx.textAlign = 'left';
+            ctx.fillText('15 LOCAIS | 30 CONEXÕES', 50, 1050);
+        }
+
+        // Executar
+        render();
+
+        // Botão para baixar
+        setTimeout(() => {
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = '💾 Baixar Mapa como Imagem';
+            downloadBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 15px 30px;
+                background: #4CAF50;
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 18px;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+                z-index: 1001;
+            `;
+            downloadBtn.onclick = () => {
+                const link = document.createElement('a');
+                link.download = 'village_map.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            };
+            document.body.appendChild(downloadBtn);
+        }, 500);
+    </script>
+</body>
+</html>

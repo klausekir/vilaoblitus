@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info .avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .user-info .details {
+            flex: 1;
+        }
+
+        .user-info .details .name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .user-info .details .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: grid;
+            gap: 15px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-btn .icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .action-btn .content {
+            flex: 1;
+        }
+
+        .action-btn .content .title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .action-btn .content .description {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .action-btn.editor .icon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .action-btn.logout {
+            margin-top: 20px;
+            background: rgba(244, 67, 54, 0.1);
+            border-color: rgba(244, 67, 54, 0.3);
+        }
+
+        .action-btn.logout:hover {
+            background: rgba(244, 67, 54, 0.2);
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+
+        .action-btn.logout .icon {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Painel Admin</h1>
+            <p>Vila Abandonada - Área Administrativa</p>
+        </div>
+
+        <div class="user-info">
+            <div class="avatar">👤</div>
+            <div class="details">
+                <div class="name" id="admin-username"></div>
+                <span class="badge">🔑 ADMINISTRADOR</span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="game-phaser.html" class="action-btn">
+                <div class="icon">🎮</div>
+                <div class="content">
+                    <div class="title">Jogar Game</div>
+                    <div class="description">Acessar o jogo Vila Abandonada</div>
+                </div>
+            </a>
+
+            <a href="location-editor-db.html" class="action-btn editor">
+                <div class="icon">🛠️</div>
+                <div class="content">
+                    <div class="title">Editor de Localizações</div>
+                    <div class="description">Criar e editar locais, hotspots e itens</div>
+                </div>
+            </a>
+
+            <a href="map-editor.html" class="action-btn editor">
+                <div class="icon">🗺️</div>
+                <div class="content">
+                    <div class="title">Editor de Mapa</div>
+                    <div class="description">Visualizar conexões entre locais</div>
+                </div>
+            </a>
+
+            <a href="javascript:void(0)" onclick="logout()" class="action-btn logout">
+                <div class="icon">🚪</div>
+                <div class="content">
+                    <div class="title">Sair</div>
+                    <div class="description">Fazer logout do painel admin</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is admin
+        const isAdmin = localStorage.getItem('is_admin') === 'true';
+        const username = localStorage.getItem('username');
+
+        if (!isAdmin) {
+            // Not admin, redirect to game
+            alert('Acesso negado. Apenas administradores podem acessar este painel.');
+            window.location.href = 'game-phaser.html';
+        } else {
+            // Display username
+            document.getElementById('admin-username').textContent = username;
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Deseja realmente sair do painel admin?')) {
+                localStorage.removeItem('session_token');
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('username');
+                localStorage.removeItem('email');
+                localStorage.removeItem('is_admin');
+                window.location.href = 'index.php';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de APIs - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #f0a500;
+            margin-bottom: 20px;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #f0a500;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        button {
+            background: rgba(240, 165, 0, 0.2);
+            border: 2px solid #f0a500;
+            color: #f0a500;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: rgba(240, 165, 0, 0.4);
+        }
+
+        .result {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        .info { color: #2196F3; }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status.ok {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .status.fail {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste de APIs - Sistema v2.0</h1>
+        <p style="color: #999; margin-bottom: 30px;">Use esta página para verificar se as APIs estão funcionando corretamente.</p>
+
+        <div class="test-section">
+            <h2>1. Teste de Conexão com Banco de Dados</h2>
+            <button onclick="testDatabaseConnection()">🔌 Testar Conexão</button>
+            <div id="db-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. API de Localizações</h2>
+            <button onclick="testListLocations()">📋 Listar Localizações</button>
+            <button onclick="testGetLocation()">🔍 Buscar Localização</button>
+            <div id="locations-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. API de Itens</h2>
+            <button onclick="testListItems()">📋 Listar Itens</button>
+            <div id="items-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Teste Completo do Sistema</h2>
+            <button onclick="runAllTests()">▶️ Executar Todos os Testes</button>
+            <div id="all-results" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testDatabaseConnection() {
+            const resultEl = document.getElementById('db-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span class="info">⏳ Testando conexão...</span>';
+
+            try {
+                const response = await fetch('api/locations/list.php');
+                const text = await response.text();
+
+                resultEl.innerHTML = `
+                    <div class="info">Status HTTP: ${response.status} ${response.statusText}</div>
+                    <div style="margin-top: 10px;">
+                        <strong>Resposta:</strong>
+                        <pre style="margin-top: 5px; white-space: pre-wrap;">${text}</pre>
+                    </div>
+                `;
+
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.success) {
+                            resultEl.innerHTML = `<div class="success">✓ Conexão OK! ${data.data.count} localizações encontradas.</div>`;
+                        } else {
+                            resultEl.innerHTML = `<div class="warning">⚠️ Banco conectado, mas: ${data.message}</div>`;
+                        }
+                    } catch (e) {
+                        resultEl.innerHTML = `<div class="error">✗ API retornou resposta inválida (não é JSON)</div><pre style="margin-top: 10px;">${text.substring(0, 500)}</pre>`;
+                    }
+                } else {
+                    resultEl.innerHTML = `<div class="error">✗ Erro HTTP ${response.status}</div><pre style="margin-top: 10px;">${text.substring(0, 500)}</pre>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="error">✗ Erro de rede: ${error.message}</div>`;
+            }
+        }
+
+        async function testListLocations() {
+            const resultEl = document.getElementById('locations-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span class="info">⏳ Carregando...</span>';
+
+            try {
+                const response = await fetch('api/locations/list.php');
+                const text = await response.text();
+                const data = JSON.parse(text);
+
+                if (data.success) {
+                    resultEl.innerHTML = `
+                        <div class="success">✓ ${data.data.count} localizações carregadas</div>
+                        <pre style="margin-top: 10px;">${JSON.stringify(data.data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultEl.innerHTML = `<div class="error">✗ ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="error">✗ ${error.message}</div>`;
+            }
+        }
+
+        async function testGetLocation() {
+            const locationId = prompt('Digite o ID da localização (ex: floresta):');
+            if (!locationId) return;
+
+            const resultEl = document.getElementById('locations-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span class="info">⏳ Buscando...</span>';
+
+            try {
+                const response = await fetch(`api/locations/get.php?id=${locationId}`);
+                const text = await response.text();
+                const data = JSON.parse(text);
+
+                if (data.success) {
+                    resultEl.innerHTML = `
+                        <div class="success">✓ Localização encontrada</div>
+                        <pre style="margin-top: 10px;">${JSON.stringify(data.data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultEl.innerHTML = `<div class="error">✗ ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="error">✗ ${error.message}</div>`;
+            }
+        }
+
+        async function testListItems() {
+            const resultEl = document.getElementById('items-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span class="info">⏳ Carregando...</span>';
+
+            try {
+                const response = await fetch('api/items/list.php');
+                const text = await response.text();
+                const data = JSON.parse(text);
+
+                if (data.success) {
+                    resultEl.innerHTML = `
+                        <div class="success">✓ ${data.data.count} itens carregados</div>
+                        <pre style="margin-top: 10px;">${JSON.stringify(data.data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultEl.innerHTML = `<div class="error">✗ ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="error">✗ ${error.message}</div>`;
+            }
+        }
+
+        async function runAllTests() {
+            const resultEl = document.getElementById('all-results');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span class="info">⏳ Executando testes...</span>';
+
+            let results = [];
+
+            // Test 1: Connection
+            try {
+                const response = await fetch('api/locations/list.php');
+                const text = await response.text();
+                const data = JSON.parse(text);
+                results.push({
+                    name: 'Conexão com Banco',
+                    status: data.success ? 'ok' : 'fail',
+                    message: data.success ? `${data.data.count} localizações` : data.message
+                });
+            } catch (error) {
+                results.push({
+                    name: 'Conexão com Banco',
+                    status: 'fail',
+                    message: error.message
+                });
+            }
+
+            // Test 2: List Locations API
+            try {
+                const response = await fetch('api/locations/list.php');
+                const data = await response.json();
+                results.push({
+                    name: 'API /locations/list.php',
+                    status: data.success ? 'ok' : 'fail',
+                    message: data.success ? 'Funcionando' : data.message
+                });
+            } catch (error) {
+                results.push({
+                    name: 'API /locations/list.php',
+                    status: 'fail',
+                    message: error.message
+                });
+            }
+
+            // Test 3: List Items API
+            try {
+                const response = await fetch('api/items/list.php');
+                const data = await response.json();
+                results.push({
+                    name: 'API /items/list.php',
+                    status: data.success ? 'ok' : 'fail',
+                    message: data.success ? 'Funcionando' : data.message
+                });
+            } catch (error) {
+                results.push({
+                    name: 'API /items/list.php',
+                    status: 'fail',
+                    message: error.message
+                });
+            }
+
+            // Render results
+            const html = results.map(r => `
+                <div style="padding: 10px; border-bottom: 1px solid #333;">
+                    <span class="status ${r.status}">${r.status === 'ok' ? 'OK' : 'FAIL'}</span>
+                    <strong>${r.name}</strong>: ${r.message}
+                </div>
+            `).join('');
+
+            resultEl.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
