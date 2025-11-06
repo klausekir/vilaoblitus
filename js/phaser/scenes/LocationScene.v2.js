@@ -302,35 +302,151 @@ class LocationScene extends Phaser.Scene {
 
     createDroppedItemSprite(item, worldX, worldY) {
         const size = item.dropSize || item.size || { width: 80, height: 80 };
+        let transform = item.dropTransform || item.transform || null;
+        let renderMode = item.renderMode || (transform ? 'dom' : 'sprite');
+        let imagePath = item.image;
+
+        let definition = null;
+        if (typeof databaseLoader !== 'undefined' && typeof databaseLoader.getItemDefinition === 'function') {
+            definition = databaseLoader.getItemDefinition(item.id);
+        }
+
+        if ((!transform || (typeof transform === 'object' && Object.keys(transform).length === 0)) && definition && definition.transform) {
+            transform = JSON.parse(JSON.stringify(definition.transform));
+            if (!item.renderMode) {
+                renderMode = 'dom';
+            }
+        }
+
+        if (!imagePath && definition && definition.image) {
+            imagePath = definition.image;
+        }
+
+        const useDom = renderMode === 'dom' || (transform && (transform.rotateX || transform.rotateY || transform.skewX || transform.skewY));
 
         let sprite;
 
-        const textureKey = `item_${item.id}`;
-        if (this.textures.exists(textureKey)) {
-            sprite = this.add.image(worldX, worldY, textureKey);
-            sprite.setDisplaySize(size.width, size.height);
-            sprite.setInteractive({ useHandCursor: true });
-            sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
-        } else if (item.image) {
+        if (useDom) {
             const img = document.createElement('img');
-            img.src = item.image;
+            const imgSrc = imagePath || `images/items/${item.id}.png`;
+            img.src = imgSrc;
+            img.alt = item.name || item.id;
             img.style.width = `${size.width}px`;
             img.style.height = `${size.height}px`;
             img.style.pointerEvents = 'auto';
 
             sprite = this.add.dom(worldX, worldY, img);
+            sprite.setOrigin(0.5);
             sprite.addListener('pointerdown');
             sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
+            sprite.setDepth(90);
+
+            const perspective = transform?.perspective || 800;
+            sprite.setPerspective(perspective);
+
+            const rotX = transform?.rotateX || 0;
+            const rotY = transform?.rotateY || 0;
+            if (rotX !== 0 && rotY !== 0) {
+                sprite.rotate3d.set(1, 0, 0, rotX);
+            } else if (rotX !== 0) {
+                sprite.rotate3d.set(1, 0, 0, rotX);
+            } else if (rotY !== 0) {
+                sprite.rotate3d.set(0, 1, 0, rotY);
+            }
+
+            if (transform && typeof transform === 'object' && Object.keys(transform).length > 0) {
+                const transforms = [];
+                const rotation = transform.rotation || 0;
+                if (rotation !== 0) {
+                    transforms.push(`rotate(${rotation}deg)`);
+                }
+
+                const baseScaleX = transform.scaleX ?? 1;
+                const baseScaleY = transform.scaleY ?? 1;
+                const flipX = transform.flipX ? -1 : 1;
+                const flipY = transform.flipY ? -1 : 1;
+                const finalScaleX = baseScaleX * flipX;
+                const finalScaleY = baseScaleY * flipY;
+                transforms.push(`scale(${finalScaleX}, ${finalScaleY})`);
+
+                const skewX = transform.skewX || 0;
+                const skewY = transform.skewY || 0;
+                if (skewX !== 0) transforms.push(`skewX(${skewX}deg)`);
+                if (skewY !== 0) transforms.push(`skewY(${skewY}deg)`);
+
+                img.style.transform = transforms.join(' ') || 'none';
+
+                if (baseScaleX !== 1 || baseScaleY !== 1 || flipX === -1 || flipY === -1) {
+                    sprite.setScale(finalScaleX, finalScaleY);
+                }
+
+                if (typeof transform.opacity === 'number') {
+                    sprite.setAlpha(transform.opacity);
+                } else {
+                    sprite.setAlpha(1);
+                }
+
+                const shadowBlur = transform.shadowBlur || 0;
+                const shadowX = transform.shadowOffsetX || 0;
+                const shadowY = transform.shadowOffsetY || 0;
+                if (shadowBlur > 0) {
+                    img.style.filter = `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.5))`;
+                } else {
+                    img.style.filter = '';
+                }
+            } else {
+                sprite.setAlpha(1);
+                img.style.transform = 'none';
+                img.style.filter = '';
+            }
         } else {
-            sprite = this.add.text(worldX, worldY, '📦', {
-                fontSize: '28px'
-            });
-            sprite.setInteractive({ useHandCursor: true });
-            sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
+            const textureKey = item.textureKey || `item_${item.id}`;
+            if (this.textures.exists(textureKey)) {
+                sprite = this.add.image(worldX, worldY, textureKey);
+                sprite.setDisplaySize(size.width, size.height);
+                sprite.setInteractive({ useHandCursor: true });
+                sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
+            } else if (imagePath) {
+                const img = document.createElement('img');
+                img.src = imagePath;
+                img.style.width = `${size.width}px`;
+                img.style.height = `${size.height}px`;
+                img.style.pointerEvents = 'auto';
+
+                sprite = this.add.dom(worldX, worldY, img);
+                sprite.setOrigin(0.5);
+                sprite.addListener('pointerdown');
+                sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
+            } else {
+                sprite = this.add.text(worldX, worldY, '📦', {
+                    fontSize: '28px'
+                });
+                sprite.setInteractive({ useHandCursor: true });
+                sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
+            }
+
+            sprite.setOrigin?.(0.5);
+            sprite.setDepth(90);
+
+            if (transform) {
+                const rotation = transform.rotation || 0;
+                sprite.setAngle?.(rotation);
+                if (transform.flipX) sprite.setFlipX?.(true);
+                if (transform.flipY) sprite.setFlipY?.(true);
+                if (typeof transform.opacity === 'number' && sprite.setAlpha) {
+                    sprite.setAlpha(transform.opacity);
+                }
+                if (sprite.setScale && (transform.scaleX !== undefined || transform.scaleY !== undefined)) {
+                    const scaleX = transform.scaleX ?? 1;
+                    const scaleY = transform.scaleY ?? 1;
+                    sprite.setScale(scaleX, scaleY);
+                }
+            }
         }
 
-        sprite.setOrigin?.(0.5);
-        sprite.setDepth(90);
+        if (!sprite) return;
+
+        sprite.setDepth?.(90);
 
         const label = this.add.text(worldX, worldY + size.height / 2 + 8, item.name || item.id, {
             fontSize: '12px',

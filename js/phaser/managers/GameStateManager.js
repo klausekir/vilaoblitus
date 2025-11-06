@@ -57,23 +57,38 @@ class GameStateManager {
         this.normalizeInventory();
 
         this.state.collectedItems.push(item.id);
-        this.state.inventory[item.id] = this.normalizeInventoryEntry(item.id, {
+        const entryData = {
             name: item.name,
             description: item.description,
             image: item.image,
             size: item.size || { width: 80, height: 80 },
             status: 'held'
-        });
+        };
+
+        if (item.transform && typeof item.transform === 'object') {
+            entryData.transform = JSON.parse(JSON.stringify(item.transform));
+            entryData.renderMode = item.renderMode || 'dom';
+        }
+
+        if (item.textureKey) {
+            entryData.textureKey = item.textureKey;
+        }
+
+        if (item.renderMode && !entryData.renderMode) {
+            entryData.renderMode = item.renderMode;
+        }
+
+        this.state.inventory[item.id] = this.normalizeInventoryEntry(item.id, entryData);
 
         if (item.id === 'master_key') {
-        this.state.hasKey = true;
-    }
+            this.state.hasKey = true;
+        }
 
-    this.saveProgress();
-    this.trigger('itemCollected', item);
-    this.trigger('inventoryChanged');
-    return true;
-}
+        this.saveProgress();
+        this.trigger('itemCollected', item);
+        this.trigger('inventoryChanged');
+        return true;
+    }
 
     /**
      * Item foi coletado?
@@ -403,6 +418,22 @@ class GameStateManager {
         if (!itemId) return null;
 
         const entry = { ...raw };
+
+        if (entry.transform && typeof entry.transform === 'object') {
+            try {
+                entry.transform = JSON.parse(JSON.stringify(entry.transform));
+            } catch (_) {
+                entry.transform = { ...entry.transform };
+            }
+        }
+
+        if (entry.dropTransform && typeof entry.dropTransform === 'object') {
+            try {
+                entry.dropTransform = JSON.parse(JSON.stringify(entry.dropTransform));
+            } catch (_) {
+                entry.dropTransform = { ...entry.dropTransform };
+            }
+        }
 
         entry.id = itemId;
         entry.name = entry.name || itemId;

@@ -228,6 +228,25 @@ class DatabaseLoader {
     }
 
     /**
+     * Get a specific item definition across all locations
+     * @param {string} itemId Item ID
+     * @returns {Object|null} Item data with optional locationId
+     */
+    getItemDefinition(itemId) {
+        if (!itemId) return null;
+
+        for (const [locationId, location] of Object.entries(this.gameMap)) {
+            const items = location?.items || [];
+            const found = items.find(item => item.id === itemId);
+            if (found) {
+                return { ...found, locationId };
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Check if game data is loaded
      * @returns {boolean}
      */
