@@ -248,6 +248,42 @@ class GameStateManager {
         return { id: itemId, ...item };
     }
 
+    moveDroppedItem(itemId, locationId, positionPercent, options = {}) {
+        this.normalizeInventory();
+
+        const item = this.state.inventory[itemId];
+        if (!item || item.status !== 'dropped') {
+            console.warn('[Inventory] Item indisponível para mover:', itemId);
+            return null;
+        }
+
+        if (item.dropLocation && item.dropLocation !== locationId) {
+            console.warn('[Inventory] O item não está localizado aqui:', itemId, '->', item.dropLocation, '!=', locationId);
+        }
+
+        item.dropLocation = locationId;
+        item.dropPosition = {
+            x: Math.max(0, Math.min(100, Number(positionPercent.x) || 0)),
+            y: Math.max(0, Math.min(100, Number(positionPercent.y) || 0))
+        };
+
+        if (options.size) {
+            const baseSize = options.size || item.dropSize || item.size || { width: 80, height: 80 };
+            item.dropSize = {
+                width: Number(baseSize.width) || 80,
+                height: Number(baseSize.height) || 80
+            };
+        }
+
+        if (options.inPuzzleArea !== undefined) {
+            item.dropInPuzzleArea = !!options.inPuzzleArea;
+        }
+
+        this.saveProgress(false);
+        this.trigger('inventoryChanged');
+        return { id: itemId, ...item };
+    }
+
     pickupDroppedItem(itemId) {
         this.normalizeInventory();
         const item = this.state.inventory[itemId];

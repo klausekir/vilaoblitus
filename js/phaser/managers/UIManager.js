@@ -476,8 +476,8 @@ class UIManager {
         });
 
         const overlay = this.inventoryOverlay || document.getElementById('inventory-overlay');
-        if (this.inventoryWasOpenOnDrag && overlay) {
-            overlay.classList.add('active');
+        if (overlay) {
+            overlay.classList.remove('active');
         }
         this.inventoryWasOpenOnDrag = false;
 

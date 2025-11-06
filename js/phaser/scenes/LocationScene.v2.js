@@ -1,3 +1,10 @@
+const DEBUG_SCENE_DRAG = true;
+function debugSceneDrag(...args) {
+    if (DEBUG_SCENE_DRAG) {
+        console.log('[SCENE-DRAG]', ...args);
+    }
+}
+
 /**
  * LocationScene
  * Cena principal onde o jogo acontece
@@ -14,6 +21,11 @@ class LocationScene extends Phaser.Scene {
         this.puzzleHitArea = null;
         this.currentPuzzleData = null;
         this.droppedItemSprites = [];
+        this.activeDroppedItemDrag = null;
+        this.sceneItemDragThreshold = 8;
+        this._boundSceneItemDragMove = (event) => this.handleSceneItemDragMove(event);
+        this._boundSceneItemDragEnd = (event) => this.handleSceneItemDragEnd(event);
+        this._sceneDragListenersAttached = false;
     }
 
     init(data) {
@@ -267,6 +279,7 @@ class LocationScene extends Phaser.Scene {
     }
 
     clearDroppedSprites() {
+        this.cancelActiveDroppedItemDrag('scene-reset');
         if (!this.droppedItemSprites) {
             this.droppedItemSprites = [];
             return;
@@ -386,8 +399,6 @@ class LocationScene extends Phaser.Scene {
 
             sprite = this.add.dom(worldX, worldY, img);
             sprite.setOrigin(0.5);
-            sprite.addListener('pointerdown');
-            sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
             sprite.setDepth(90);
 
             const perspective = transform?.perspective || 800;
@@ -453,8 +464,6 @@ class LocationScene extends Phaser.Scene {
             if (this.textures.exists(textureKey)) {
                 sprite = this.add.image(worldX, worldY, textureKey);
                 sprite.setDisplaySize(size.width, size.height);
-                sprite.setInteractive({ useHandCursor: true });
-                sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
             } else if (imagePath) {
                 const img = document.createElement('img');
                 img.src = imagePath;
@@ -464,14 +473,10 @@ class LocationScene extends Phaser.Scene {
 
                 sprite = this.add.dom(worldX, worldY, img);
                 sprite.setOrigin(0.5);
-                sprite.addListener('pointerdown');
-                sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
             } else {
                 sprite = this.add.text(worldX, worldY, '📦', {
                     fontSize: '28px'
                 });
-                sprite.setInteractive({ useHandCursor: true });
-                sprite.on('pointerdown', () => this.pickupDroppedItem(item.id));
             }
 
             sprite.setOrigin?.(0.5);
@@ -508,13 +513,320 @@ class LocationScene extends Phaser.Scene {
 
         const spriteAlpha = typeof sprite.alpha === 'number' ? sprite.alpha : 1;
         const labelAlpha = typeof label.alpha === 'number' ? label.alpha : 1;
-        this.droppedItemSprites.push({
+        const entry = {
             id: item.id,
             sprite,
             label,
             alpha: spriteAlpha,
-            labelAlpha
+            labelAlpha,
+            data: item,
+            size,
+            transform,
+            renderMode,
+            useDom
+        };
+        this.attachDroppedItemInteractions(entry);
+        this.droppedItemSprites.push(entry);
+    }
+
+    attachDroppedItemInteractions(entry) {
+        if (!entry || !entry.sprite) return;
+
+        const { sprite, label, useDom } = entry;
+
+        if (useDom && sprite.node) {
+            sprite.node.style.cursor = 'grab';
+            sprite.node.style.touchAction = 'none';
+        }
+
+        if (useDom && typeof sprite.addListener === 'function') {
+            sprite.addListener('pointerdown');
+            sprite.on('pointerdown', (event) => {
+                this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
+            });
+        } else if (sprite.setInteractive) {
+            sprite.setInteractive({ useHandCursor: true, draggable: false });
+            sprite.on('pointerdown', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
+            });
+        }
+
+        if (label && label.setInteractive) {
+            label.setInteractive({ useHandCursor: true });
+            label.on('pointerdown', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
+            });
+        }
+    }
+
+    onDroppedSceneItemPointerDown(entry, pointer, event, source = 'sprite') {
+        if (!entry) return;
+        const pointerInfo = this.resolveScenePointerInfo(pointer, event);
+        if (!pointerInfo) {
+            debugSceneDrag('pointerdown-missed', { itemId: entry.id, source });
+            return;
+        }
+
+        if (pointerInfo.nativeEvent?.stopPropagation) {
+            pointerInfo.nativeEvent.stopPropagation();
+        }
+        if (pointerInfo.nativeEvent?.preventDefault) {
+            pointerInfo.nativeEvent.preventDefault();
+        }
+
+        this.startSceneItemDrag(entry, pointerInfo, source);
+    }
+
+    resolveScenePointerInfo(pointer, event) {
+        if (pointer && typeof pointer.worldX === 'number' && typeof pointer.worldY === 'number') {
+            const nativeEvent = event || pointer.event || null;
+            return {
+                pointerId: pointer.id ?? pointer.pointerId ?? 0,
+                worldX: pointer.worldX,
+                worldY: pointer.worldY,
+                pointerType: nativeEvent?.pointerType || pointer.pointerType || 'mouse',
+                nativeEvent
+            };
+        }
+
+        const nativeEvent = event instanceof Event ? event : (pointer instanceof Event ? pointer : null);
+        if (!nativeEvent) return null;
+        const clientX = nativeEvent.clientX ?? nativeEvent.pageX;
+        const clientY = nativeEvent.clientY ?? nativeEvent.pageY;
+        if (typeof clientX !== 'number' || typeof clientY !== 'number') return null;
+
+        const world = this.clientToWorld(clientX, clientY);
+        return {
+            pointerId: nativeEvent.pointerId ?? nativeEvent.identifier ?? 0,
+            worldX: world.x,
+            worldY: world.y,
+            pointerType: nativeEvent.pointerType || 'mouse',
+            nativeEvent
+        };
+    }
+
+    startSceneItemDrag(entry, pointerInfo, source = 'sprite') {
+        if (!entry || !pointerInfo) return;
+
+        if (this.activeDroppedItemDrag) {
+            this.cancelActiveDroppedItemDrag('replace');
+        }
+
+        const sprite = entry.sprite;
+        const label = entry.label;
+        const labelOffset = label ? { x: label.x - sprite.x, y: label.y - sprite.y } : { x: 0, y: 0 };
+
+        this.activeDroppedItemDrag = {
+            entry,
+            pointerId: pointerInfo.pointerId ?? 0,
+            source,
+            startSpriteX: sprite.x,
+            startSpriteY: sprite.y,
+            startWorldX: pointerInfo.worldX,
+            startWorldY: pointerInfo.worldY,
+            pointerOffsetX: pointerInfo.worldX - sprite.x,
+            pointerOffsetY: pointerInfo.worldY - sprite.y,
+            labelOffset,
+            moved: false,
+            pointerType: pointerInfo.pointerType || 'mouse',
+            originalDepth: sprite.depth ?? 0,
+            originalLabelDepth: label?.depth ?? 0
+        };
+
+        if (sprite.setDepth) {
+            sprite.setDepth(Math.max((sprite.depth ?? 0) + 10, 120));
+        }
+        if (label?.setDepth) {
+            label.setDepth((label.depth ?? 0) + 12);
+        }
+        if (entry.useDom && sprite.node) {
+            sprite.node.style.cursor = 'grabbing';
+        }
+        document.body.style.cursor = 'grabbing';
+
+        debugSceneDrag('start', {
+            itemId: entry.id,
+            pointerId: this.activeDroppedItemDrag.pointerId,
+            source,
+            world: { x: pointerInfo.worldX, y: pointerInfo.worldY }
         });
+
+        this.attachSceneItemDragListeners();
+    }
+
+    attachSceneItemDragListeners() {
+        if (this._sceneDragListenersAttached) return;
+        window.addEventListener('pointermove', this._boundSceneItemDragMove, { passive: false });
+        window.addEventListener('pointerup', this._boundSceneItemDragEnd, { passive: false });
+        window.addEventListener('pointercancel', this._boundSceneItemDragEnd, { passive: false });
+        this._sceneDragListenersAttached = true;
+    }
+
+    detachSceneItemDragListeners() {
+        if (!this._sceneDragListenersAttached) return;
+        window.removeEventListener('pointermove', this._boundSceneItemDragMove);
+        window.removeEventListener('pointerup', this._boundSceneItemDragEnd);
+        window.removeEventListener('pointercancel', this._boundSceneItemDragEnd);
+        this._sceneDragListenersAttached = false;
+    }
+
+    handleSceneItemDragMove(event) {
+        const ctx = this.activeDroppedItemDrag;
+        if (!ctx) return;
+        const pointerId = this.normalizePointerEventId(event);
+        if (pointerId !== ctx.pointerId) return;
+
+        if (event && event.cancelable) {
+            event.preventDefault();
+        }
+        event?.stopPropagation?.();
+
+        const world = this.clientToWorld(event.clientX, event.clientY);
+
+        if (!ctx.moved) {
+            const distance = Phaser.Math.Distance.Between(world.x, world.y, ctx.startWorldX, ctx.startWorldY);
+            if (distance >= this.sceneItemDragThreshold) {
+                ctx.moved = true;
+                debugSceneDrag('drag', { itemId: ctx.entry.id, pointerId: ctx.pointerId, distance });
+            }
+        }
+
+        const targetX = world.x - ctx.pointerOffsetX;
+        const targetY = world.y - ctx.pointerOffsetY;
+        const clamped = this.clampToBackgroundBounds(targetX, targetY, ctx.entry);
+
+        ctx.lastSpriteX = clamped.x;
+        ctx.lastSpriteY = clamped.y;
+
+        ctx.entry.sprite.setPosition?.(clamped.x, clamped.y);
+        if (ctx.entry.label) {
+            ctx.entry.label.setPosition(clamped.x + ctx.labelOffset.x, clamped.y + ctx.labelOffset.y);
+        }
+    }
+
+    handleSceneItemDragEnd(event) {
+        const ctx = this.activeDroppedItemDrag;
+        if (!ctx) return;
+        const pointerId = this.normalizePointerEventId(event);
+        if (pointerId !== ctx.pointerId) return;
+
+        if (event && event.cancelable) {
+            event.preventDefault();
+        }
+        event?.stopPropagation?.();
+
+        this.detachSceneItemDragListeners();
+        document.body.style.cursor = '';
+
+        const { entry } = ctx;
+        if (entry?.useDom && entry.sprite?.node) {
+            entry.sprite.node.style.cursor = 'grab';
+        }
+
+        entry?.sprite?.setDepth?.(ctx.originalDepth ?? entry.sprite.depth);
+        entry?.label?.setDepth?.(ctx.originalLabelDepth ?? entry.label.depth);
+
+        this.activeDroppedItemDrag = null;
+
+        if (event.type === 'pointercancel') {
+            if (entry?.sprite) {
+                entry.sprite.setPosition?.(ctx.startSpriteX, ctx.startSpriteY);
+            }
+            if (entry?.label) {
+                entry.label.setPosition(ctx.startSpriteX + ctx.labelOffset.x, ctx.startSpriteY + ctx.labelOffset.y);
+            }
+            debugSceneDrag('cancelled', { itemId: entry?.id });
+            return;
+        }
+
+        if (ctx.moved) {
+            const worldX = entry.sprite.x;
+            const worldY = entry.sprite.y;
+            const percent = this.worldToPercent(worldX, worldY);
+            const inPuzzleArea = this.isPointInsidePuzzle(worldX, worldY);
+            const updated = gameStateManager.moveDroppedItem(entry.id, this.currentLocation, percent, {
+                inPuzzleArea
+            });
+
+            debugSceneDrag('end', {
+                itemId: entry.id,
+                pointerId,
+                moved: true,
+                world: { x: worldX, y: worldY },
+                percent
+            });
+
+            if (!updated) {
+                uiManager.showNotification('Não foi possível reposicionar este item.', 2500);
+                entry.sprite.setPosition(ctx.startSpriteX, ctx.startSpriteY);
+                if (entry.label) {
+                    entry.label.setPosition(ctx.startSpriteX + ctx.labelOffset.x, ctx.startSpriteY + ctx.labelOffset.y);
+                }
+            } else {
+                this.renderDroppedItems();
+            }
+        } else {
+            debugSceneDrag('click', { itemId: entry.id, pointerId });
+            this.pickupDroppedItem(entry.id);
+        }
+    }
+
+    cancelActiveDroppedItemDrag(reason = 'cancel') {
+        if (!this.activeDroppedItemDrag) return;
+        const ctx = this.activeDroppedItemDrag;
+        const { entry } = ctx;
+
+        debugSceneDrag('cancel', { itemId: entry?.id, reason });
+
+        this.detachSceneItemDragListeners();
+        document.body.style.cursor = '';
+
+        if (entry?.useDom && entry.sprite?.node) {
+            entry.sprite.node.style.cursor = 'grab';
+        }
+
+        entry?.sprite?.setDepth?.(ctx.originalDepth ?? entry.sprite.depth);
+        entry?.label?.setDepth?.(ctx.originalLabelDepth ?? entry.label.depth);
+
+        if (entry?.sprite) {
+            entry.sprite.setPosition(ctx.startSpriteX, ctx.startSpriteY);
+        }
+        if (entry?.label) {
+            entry.label.setPosition(ctx.startSpriteX + ctx.labelOffset.x, ctx.startSpriteY + ctx.labelOffset.y);
+        }
+
+        this.activeDroppedItemDrag = null;
+    }
+
+    normalizePointerEventId(event) {
+        if (!event) return 0;
+        if (typeof event.pointerId === 'number') return event.pointerId;
+        return 0;
+    }
+
+    clampToBackgroundBounds(x, y, entry) {
+        const bounds = this.getBackgroundBounds();
+        const size = entry?.data?.dropSize || entry?.size || { width: 80, height: 80 };
+        const halfWidth = Math.max(0, Number(size.width) || 0) / 2;
+        const halfHeight = Math.max(0, Number(size.height) || 0) / 2;
+        const minX = bounds.bgX + halfWidth;
+        const maxX = bounds.bgX + bounds.bgWidth - halfWidth;
+        const minY = bounds.bgY + halfHeight;
+        const maxY = bounds.bgY + bounds.bgHeight - halfHeight;
+
+        return {
+            x: Phaser.Math.Clamp(x, minX, maxX),
+            y: Phaser.Math.Clamp(y, minY, maxY)
+        };
+    }
+
+    clientToWorld(clientX, clientY) {
+        const rect = this.game.canvas.getBoundingClientRect();
+        const baseWidth = this.scale.gameSize.width;
+        const baseHeight = this.scale.gameSize.height;
+        const localX = ((clientX - rect.left) / rect.width) * baseWidth;
+        const localY = ((clientY - rect.top) / rect.height) * baseHeight;
+        return this.cameras.main.getWorldPoint(localX, localY);
     }
 
     highlightDroppedItem(itemId, attempt = 0) {
