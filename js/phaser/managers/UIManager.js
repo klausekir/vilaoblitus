@@ -456,20 +456,6 @@ class UIManager {
 
         const { item } = this.draggedInventoryItem;
 
-        if (this.dragPreview) {
-            this.dragPreview.remove();
-            this.dragPreview = null;
-        }
-
-        document.removeEventListener('pointermove', this.boundHandleInventoryDragMove);
-        document.removeEventListener('pointerup', this.boundEndInventoryDrag);
-        document.removeEventListener('pointercancel', this.boundEndInventoryDrag);
-        document.removeEventListener('touchmove', this.boundHandleInventoryDragMove);
-        document.removeEventListener('touchend', this.boundEndInventoryDrag);
-        document.removeEventListener('touchcancel', this.boundEndInventoryDrag);
-
-        this.draggedInventoryItem = null;
-
         const overlay = this.inventoryOverlay || document.getElementById('inventory-overlay');
         if (this.inventoryWasOpenOnDrag && overlay) {
             overlay.classList.add('active');
@@ -509,6 +495,20 @@ class UIManager {
                 uiManager.showNotification('Solte o item sobre a cena.', 2500);
             }
         }
+
+        if (this.dragPreview) {
+            this.dragPreview.remove();
+            this.dragPreview = null;
+        }
+
+        document.removeEventListener('pointermove', this.boundHandleInventoryDragMove);
+        document.removeEventListener('pointerup', this.boundEndInventoryDrag);
+        document.removeEventListener('pointercancel', this.boundEndInventoryDrag);
+        document.removeEventListener('touchmove', this.boundHandleInventoryDragMove);
+        document.removeEventListener('touchend', this.boundEndInventoryDrag);
+        document.removeEventListener('touchcancel', this.boundEndInventoryDrag);
+
+        this.draggedInventoryItem = null;
     }
 
     getEventCoords(event, trackedPointerId = null) {
