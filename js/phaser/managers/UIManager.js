@@ -353,7 +353,18 @@ class UIManager {
             label.textContent = item.name;
             itemDiv.appendChild(label);
 
-            itemDiv.addEventListener('pointerdown', (event) => this.startInventoryDrag(item, event));
+        itemDiv.addEventListener('pointerdown', (event) => this.startInventoryDrag(item, event));
+        itemDiv.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            const touch = event.changedTouches[0];
+            const pointerEvent = new PointerEvent('pointerdown', {
+                pointerId: touch.identifier,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                button: 0
+            });
+            this.startInventoryDrag(item, pointerEvent);
+        }, { passive: false });
 
             grid.appendChild(itemDiv);
         });
@@ -398,16 +409,21 @@ class UIManager {
 
         document.addEventListener('pointermove', this.boundHandleInventoryDragMove, { passive: false });
         document.addEventListener('pointerup', this.boundEndInventoryDrag, { passive: false });
+        document.addEventListener('touchmove', this.boundHandleInventoryDragMove, { passive: false });
+        document.addEventListener('touchend', this.boundEndInventoryDrag, { passive: false });
     }
 
     handleInventoryDragMove(event) {
-        if (!this.draggedInventoryItem || event.pointerId !== this.draggedInventoryItem.pointerId) return;
+        if (!this.draggedInventoryItem || (event instanceof PointerEvent && event.pointerId !== this.draggedInventoryItem.pointerId)) return;
         event.preventDefault();
+        const clientX = event instanceof TouchEvent ? event.changedTouches[0].clientX : event.clientX;
+        const clientY = event instanceof TouchEvent ? event.changedTouches[0].clientY : event.clientY;
         this.updateDragPreviewPosition(event.clientX, event.clientY);
     }
 
     endInventoryDrag(event) {
-        if (!this.draggedInventoryItem || event.pointerId !== this.draggedInventoryItem.pointerId) return;
+        const pointerId = event instanceof PointerEvent ? event.pointerId : event.changedTouches?.[0]?.identifier;
+        if (!this.draggedInventoryItem || pointerId !== this.draggedInventoryItem.pointerId) return;
         event.preventDefault();
 
         const { item } = this.draggedInventoryItem;
@@ -419,6 +435,8 @@ class UIManager {
 
         document.removeEventListener('pointermove', this.boundHandleInventoryDragMove);
         document.removeEventListener('pointerup', this.boundEndInventoryDrag);
+        document.removeEventListener('touchmove', this.boundHandleInventoryDragMove);
+        document.removeEventListener('touchend', this.boundEndInventoryDrag);
 
         this.draggedInventoryItem = null;
 
@@ -430,13 +448,15 @@ class UIManager {
 
         if (!window.game || !game.canvas) return;
         const rect = game.canvas.getBoundingClientRect();
-        const inside = event.clientX >= rect.left && event.clientX <= rect.right &&
-            event.clientY >= rect.top && event.clientY <= rect.bottom;
+        const clientX = event instanceof TouchEvent ? event.changedTouches[0].clientX : event.clientX;
+        const clientY = event instanceof TouchEvent ? event.changedTouches[0].clientY : event.clientY;
+        const inside = clientX >= rect.left && clientX <= rect.right &&
+            clientY >= rect.top && clientY <= rect.bottom;
 
         if (inside && this.activeScene && typeof this.activeScene.handleInventoryDrop === 'function') {
             const pointerPosition = {
-                x: event.clientX,
-                y: event.clientY
+                x: clientX,
+                y: clientY
             };
             this.activeScene.handleInventoryDrop(item.id, pointerPosition);
         }
