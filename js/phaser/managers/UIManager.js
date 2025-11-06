@@ -409,6 +409,7 @@ class UIManager {
 
         document.body.appendChild(this.dragPreview);
         this.updateDragPreviewPosition(coords.x, coords.y);
+        this.dragPreview.dataset.dragging = 'true';
 
         const overlay = this.inventoryOverlay || document.getElementById('inventory-overlay');
         this.inventoryWasOpenOnDrag = !!(overlay && overlay.classList.contains('active'));
@@ -435,6 +436,10 @@ class UIManager {
         this.draggedInventoryItem.lastY = coords.y;
         this.updateDragPreviewPosition(coords.x, coords.y);
 
+        if (this.dragPreview) {
+            this.dragPreview.dataset.dragging = 'true';
+        }
+
         if (!this.draggedInventoryItem.loggedMove) {
             debugDrag('move', {
                 itemId: this.draggedInventoryItem.item.id,
@@ -455,6 +460,10 @@ class UIManager {
         event.preventDefault();
 
         const { item } = this.draggedInventoryItem;
+
+        if (this.dragPreview) {
+            this.dragPreview.dataset.dragging = 'false';
+        }
 
         const overlay = this.inventoryOverlay || document.getElementById('inventory-overlay');
         if (this.inventoryWasOpenOnDrag && overlay) {
@@ -493,6 +502,10 @@ class UIManager {
             });
             if (!inside) {
                 uiManager.showNotification('Solte o item sobre a cena.', 2500);
+            }
+
+            if (this.dragPreview && this.dragPreview.dataset.dragging !== 'true') {
+                // Cancelled drag - still clean up preview
             }
         }
 
