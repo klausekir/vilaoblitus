@@ -655,7 +655,14 @@ class LocationScene extends Phaser.Scene {
     }
 
     handleInventoryDrop(itemId, pointer) {
-        const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y, true);
+        const canvas = this.game.canvas;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const localX = (pointer.x - rect.left) * scaleX;
+        const localY = (pointer.y - rect.top) * scaleY;
+
+        const worldPoint = this.cameras.main.getWorldPoint(localX, localY, true);
         const bounds = this.getBackgroundBounds();
         if (!this.isPointInsideBackground(worldPoint.x, worldPoint.y, bounds)) {
             uiManager.showNotification('Solte o item sobre a cena.', 2500);
