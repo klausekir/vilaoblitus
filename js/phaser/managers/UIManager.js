@@ -408,6 +408,9 @@ class UIManager {
         }
 
         document.body.appendChild(this.dragPreview);
+        if (this.dragPreview instanceof HTMLElement) {
+            this.dragPreview.style.pointerEvents = 'none';
+        }
         this.updateDragPreviewPosition(coords.x, coords.y);
         this.dragPreview.dataset.dragging = 'true';
 
@@ -423,6 +426,12 @@ class UIManager {
         document.addEventListener('touchmove', this.boundHandleInventoryDragMove, { passive: false });
         document.addEventListener('touchend', this.boundEndInventoryDrag, { passive: false });
         document.addEventListener('touchcancel', this.boundEndInventoryDrag, { passive: false });
+        document.addEventListener('mouseup', this.boundEndInventoryDrag, { passive: false });
+        window.addEventListener('pointerup', this.boundEndInventoryDrag, { passive: false });
+        window.addEventListener('pointercancel', this.boundEndInventoryDrag, { passive: false });
+        window.addEventListener('mouseup', this.boundEndInventoryDrag, { passive: false });
+        window.addEventListener('touchend', this.boundEndInventoryDrag, { passive: false });
+        window.addEventListener('touchcancel', this.boundEndInventoryDrag, { passive: false });
     }
 
     handleInventoryDragMove(event) {
@@ -454,35 +463,63 @@ class UIManager {
     endInventoryDrag(event) {
         if (!this.draggedInventoryItem) return;
 
-        const coords = this.getEventCoords(event, this.draggedInventoryItem.pointerId);
-        if (!coords) return;
-
-        event.preventDefault();
-
-        const { item } = this.draggedInventoryItem;
-
-        if (this.dragPreview) {
-            this.dragPreview.dataset.dragging = 'false';
-        }
-
+        const dragContext = this.draggedInventoryItem;
         const overlay = this.inventoryOverlay || document.getElementById('inventory-overlay');
         if (this.inventoryWasOpenOnDrag && overlay) {
             overlay.classList.add('active');
         }
         this.inventoryWasOpenOnDrag = false;
 
-        if (!window.game || !game.canvas) return;
+        const cleanup = (reason, extra = {}) => {
+            if (this.dragPreview) {
+                this.dragPreview.remove();
+                this.dragPreview = null;
+            }
+            this.detachInventoryDragListeners();
+            debugDrag('cleanup', {
+                reason,
+                itemId: dragContext.item.id,
+                ...extra
+            });
+            this.draggedInventoryItem = null;
+        };
+
+        const coords = this.getEventCoords(event, dragContext.pointerId);
+        if (!coords) {
+            cleanup('coords-missing', {
+                eventType: event.type,
+                pointerId: event.pointerId ?? null,
+                trackedPointerId: dragContext.pointerId
+            });
+            return;
+        }
+
+        event.preventDefault();
+
+        if (this.dragPreview) {
+            this.dragPreview.dataset.dragging = 'false';
+        }
+
+        if (!window.game || !game.canvas) {
+            cleanup('missing-game', { eventType: event.type });
+            return;
+        }
+
         const rect = game.canvas.getBoundingClientRect();
         const inside = coords.x >= rect.left && coords.x <= rect.right &&
             coords.y >= rect.top && coords.y <= rect.bottom;
 
         debugDrag('end', {
-            itemId: item.id,
+            itemId: dragContext.item.id,
             pointerId: coords.pointerId,
             x: coords.x,
             y: coords.y,
-            insideCanvas: inside
+            insideCanvas: inside,
+            pointerMismatch: !!coords.pointerMismatch,
+            originalPointerId: dragContext.pointerId
         });
+
+        let dropResult = 'cancelled';
 
         if (inside && this.activeScene && typeof this.activeScene.handleInventoryDrop === 'function') {
             const pointerPosition = {
@@ -490,38 +527,44 @@ class UIManager {
                 y: coords.y
             };
             debugDrag('drop', {
-                itemId: item.id,
+                itemId: dragContext.item.id,
                 pointerPosition,
                 location: this.activeScene?.currentLocation
             });
-            this.activeScene.handleInventoryDrop(item.id, pointerPosition);
+            try {
+                this.activeScene.handleInventoryDrop(dragContext.item.id, pointerPosition);
+                dropResult = 'dispatched';
+            } catch (err) {
+                console.error('Erro ao processar drop:', err);
+                dropResult = 'handler-error';
+            }
         } else {
+            dropResult = inside ? 'no-handler' : 'outside-canvas';
             debugDrag('drop-cancelled', {
-                itemId: item.id,
+                itemId: dragContext.item.id,
                 insideCanvas: inside
             });
             if (!inside) {
                 uiManager.showNotification('Solte o item sobre a cena.', 2500);
             }
-
-            if (this.dragPreview && this.dragPreview.dataset.dragging !== 'true') {
-                // Cancelled drag - still clean up preview
-            }
         }
 
-        if (this.dragPreview) {
-            this.dragPreview.remove();
-            this.dragPreview = null;
-        }
+        cleanup('completed', { dropResult, insideCanvas: inside });
+    }
 
+    detachInventoryDragListeners() {
         document.removeEventListener('pointermove', this.boundHandleInventoryDragMove);
         document.removeEventListener('pointerup', this.boundEndInventoryDrag);
         document.removeEventListener('pointercancel', this.boundEndInventoryDrag);
         document.removeEventListener('touchmove', this.boundHandleInventoryDragMove);
         document.removeEventListener('touchend', this.boundEndInventoryDrag);
         document.removeEventListener('touchcancel', this.boundEndInventoryDrag);
-
-        this.draggedInventoryItem = null;
+        document.removeEventListener('mouseup', this.boundEndInventoryDrag);
+        window.removeEventListener('pointerup', this.boundEndInventoryDrag);
+        window.removeEventListener('pointercancel', this.boundEndInventoryDrag);
+        window.removeEventListener('mouseup', this.boundEndInventoryDrag);
+        window.removeEventListener('touchend', this.boundEndInventoryDrag);
+        window.removeEventListener('touchcancel', this.boundEndInventoryDrag);
     }
 
     getEventCoords(event, trackedPointerId = null) {
@@ -529,7 +572,16 @@ class UIManager {
             const touches = Array.from(event.changedTouches);
             let touch = null;
             if (trackedPointerId !== null) {
-                touch = touches.find(t => t.identifier === trackedPointerId) || touches[0];
+                touch = touches.find(t => t.identifier === trackedPointerId);
+                if (!touch && touches[0]) {
+                    debugDrag('coords-touch-fallback', {
+                        eventType: event.type,
+                        trackedPointerId,
+                        fallbackId: touches[0].identifier,
+                        totalTouches: touches.length
+                    });
+                    touch = touches[0];
+                }
             } else {
                 touch = touches[0];
             }
@@ -537,7 +589,8 @@ class UIManager {
             return {
                 x: touch.clientX,
                 y: touch.clientY,
-                pointerId: touch.identifier
+                pointerId: touch.identifier,
+                pointerMismatch: trackedPointerId !== null && touch.identifier !== trackedPointerId
             };
         }
 
@@ -546,7 +599,19 @@ class UIManager {
         }
 
         if (trackedPointerId !== null && event.pointerId !== undefined && event.pointerId !== trackedPointerId) {
-            return null;
+            debugDrag('coords-pointer-mismatch', {
+                eventType: event.type,
+                eventPointerId: event.pointerId,
+                trackedPointerId,
+                buttons: event.buttons,
+                button: event.button
+            });
+            return {
+                x: event.clientX,
+                y: event.clientY,
+                pointerId: event.pointerId,
+                pointerMismatch: true
+            };
         }
 
         return {
