@@ -365,6 +365,13 @@ class GameStateManager {
         if (Array.isArray(rawInventory)) {
             rawInventory.forEach(entry => {
                 if (!entry) return;
+                if (typeof entry === 'string') {
+                    const normalizedEntry = this.normalizeInventoryEntry(entry, { name: entry });
+                    if (normalizedEntry) {
+                        normalized[entry] = normalizedEntry;
+                    }
+                    return;
+                }
                 const id = entry.id || entry.itemId || entry.name;
                 if (!id) return;
                 const normalizedEntry = this.normalizeInventoryEntry(id, entry);
@@ -375,6 +382,13 @@ class GameStateManager {
         } else if (rawInventory && typeof rawInventory === 'object') {
             Object.entries(rawInventory).forEach(([id, value]) => {
                 if (!value) return;
+                if (typeof value === 'string') {
+                    const normalizedEntry = this.normalizeInventoryEntry(id, { name: value || id });
+                    if (normalizedEntry) {
+                        normalized[id] = normalizedEntry;
+                    }
+                    return;
+                }
                 const normalizedEntry = this.normalizeInventoryEntry(id, { id, ...value });
                 if (normalizedEntry) {
                     normalized[id] = normalizedEntry;
