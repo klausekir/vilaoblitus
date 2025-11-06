@@ -657,10 +657,10 @@ class LocationScene extends Phaser.Scene {
     handleInventoryDrop(itemId, pointer) {
         const canvas = this.game.canvas;
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const localX = (pointer.x - rect.left) * scaleX;
-        const localY = (pointer.y - rect.top) * scaleY;
+        const baseWidth = this.scale.gameSize.width;
+        const baseHeight = this.scale.gameSize.height;
+        const localX = ((pointer.x - rect.left) / rect.width) * baseWidth;
+        const localY = ((pointer.y - rect.top) / rect.height) * baseHeight;
 
         const worldPoint = this.cameras.main.getWorldPoint(localX, localY, true);
         const bounds = this.getBackgroundBounds();
