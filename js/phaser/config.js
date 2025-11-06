@@ -41,6 +41,7 @@ async function initGame() {
 
     // DEPOIS: Inicializar Phaser
     game = new Phaser.Game(config);
+    window.game = game;
     console.log('✓ Jogo inicializado');
 }
 

@@ -511,8 +511,12 @@ class UIManager {
             this.dragPreview.dataset.dragging = 'false';
         }
 
-        if (!window.game || !game.canvas) {
-            cleanup('missing-game', { eventType: event.type });
+        if (typeof game === 'undefined' || !game || !game.canvas) {
+            cleanup('missing-game', {
+                eventType: event.type,
+                hasGlobalGame: typeof game !== 'undefined',
+                canvasAvailable: !!game?.canvas
+            });
             return;
         }
 
