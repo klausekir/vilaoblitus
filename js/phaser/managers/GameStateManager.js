@@ -100,7 +100,7 @@ class GameStateManager {
     /**
      * Resolver puzzle
      */
-    solvePuzzle(puzzleId, reward) {
+    solvePuzzle(puzzleId, reward, locationId = null, rewardOptions = {}) {
         if (this.state.solvedPuzzles.includes(puzzleId)) {
             return false; // Já resolvido
         }
@@ -108,7 +108,58 @@ class GameStateManager {
         this.state.solvedPuzzles.push(puzzleId);
 
         if (reward) {
-            this.collectItem(reward);
+            this.normalizeInventory();
+
+            const dropPosition = rewardOptions.dropPosition || reward.dropPosition || reward.position || null;
+            const dropLocation = rewardOptions.dropLocation || locationId || this.state.currentLocation;
+            const dropSize = rewardOptions.dropSize || reward.dropSize || reward.size || null;
+            const dropTransform = rewardOptions.dropTransform || reward.dropTransform || reward.transform || null;
+            const renderMode = rewardOptions.renderMode || reward.renderMode || undefined;
+            const baseTransform = rewardOptions.baseTransform || reward.transform || null;
+            const existing = this.state.inventory[reward.id];
+
+            const entryData = {
+                ...reward,
+                status: 'dropped',
+                dropLocation,
+                dropPosition,
+                dropSize,
+                dropTransform,
+                renderMode,
+                transform: baseTransform || reward.transform || existing?.transform || null
+            };
+
+            if (existing) {
+                const merged = {
+                    ...existing,
+                    ...entryData,
+                    status: 'dropped'
+                };
+                if (dropPosition) {
+                    merged.dropPosition = dropPosition;
+                }
+                if (dropSize) {
+                    merged.dropSize = dropSize;
+                }
+                if (dropTransform) {
+                    merged.dropTransform = dropTransform;
+                }
+                if (baseTransform) {
+                    merged.transform = baseTransform;
+                }
+                if (renderMode) {
+                    merged.renderMode = renderMode;
+                }
+                this.state.inventory[reward.id] = this.normalizeInventoryEntry(reward.id, merged);
+            } else {
+                if (!entryData.size) {
+                    entryData.size = dropSize || { width: 80, height: 80 };
+                }
+                this.state.inventory[reward.id] = this.normalizeInventoryEntry(reward.id, entryData);
+            }
+
+            // Recompensas ainda não contam como coletadas até o jogador pegar manualmente
+            this.state.collectedItems = this.state.collectedItems.filter(id => id !== reward.id);
         }
 
         this.saveProgress();
@@ -209,6 +260,9 @@ class GameStateManager {
         delete item.dropPosition;
         delete item.dropSize;
         delete item.dropInPuzzleArea;
+        if (!this.state.collectedItems.includes(itemId)) {
+            this.state.collectedItems.push(itemId);
+        }
 
         this.saveProgress(false);
         this.trigger('inventoryChanged');

@@ -11,7 +11,6 @@ class LocationScene extends Phaser.Scene {
         this.hotspots = [];
         this.items = [];
         this.puzzleSprite = null;
-        this.rewardSprite = null;
         this.puzzleHitArea = null;
         this.currentPuzzleData = null;
         this.droppedItemSprites = [];
@@ -47,6 +46,7 @@ class LocationScene extends Phaser.Scene {
         // Renderizar itens
         this.renderItems();
         this.renderDroppedItems();
+        this.highlightPendingPuzzleReward();
 
         // Atualizar UI
         uiManager.updateLocationInfo(this.locationData);
@@ -93,10 +93,6 @@ class LocationScene extends Phaser.Scene {
         if (this.puzzleSprite) {
             this.puzzleSprite.destroy();
             this.puzzleSprite = null;
-        }
-        if (this.rewardSprite) {
-            this.rewardSprite.destroy();
-            this.rewardSprite = null;
         }
 
         this.renderPuzzle();
@@ -192,10 +188,6 @@ class LocationScene extends Phaser.Scene {
         if (this.puzzleSprite) {
             this.puzzleSprite.destroy();
             this.puzzleSprite = null;
-        }
-        if (this.rewardSprite) {
-            this.rewardSprite.destroy();
-            this.rewardSprite = null;
         }
         this.puzzleHitArea = null;
         this.currentPuzzleData = this.locationData.puzzle || null;
@@ -298,6 +290,63 @@ class LocationScene extends Phaser.Scene {
             const world = this.percentToWorld(item.dropPosition, bounds);
             this.createDroppedItemSprite(item, world.x, world.y);
         });
+    }
+
+    calculateRewardDropPlacement(puzzle, reward) {
+        const bounds = this.getBackgroundBounds();
+        const clampPercent = (value) => Math.min(98, Math.max(2, value));
+        const rewardSize = reward?.size || { width: 80, height: 80 };
+
+        const pickPercent = (source) => {
+            if (!source) return null;
+            const { x, y } = source;
+            if (typeof x === 'number' && typeof y === 'number' && !Number.isNaN(x) && !Number.isNaN(y)) {
+                return { x, y };
+            }
+            return null;
+        };
+
+        let percent = pickPercent(reward?.dropPosition) ||
+            pickPercent(reward?.position) ||
+            pickPercent(puzzle?.rewardPosition) ||
+            pickPercent(puzzle?.visual?.rewardPosition) ||
+            null;
+
+        if (!percent) {
+            if (this.puzzleSprite) {
+                const spriteBounds = this.puzzleSprite.getBounds ? this.puzzleSprite.getBounds() : null;
+                const worldX = spriteBounds ? spriteBounds.centerX : this.puzzleSprite.x;
+                const spriteBottom = spriteBounds ? spriteBounds.bottom : (this.puzzleSprite.y + (this.puzzleSprite.displayHeight || 0) / 2);
+                const dropWorldY = spriteBottom + (rewardSize.height / 2) + 12;
+                percent = this.worldToPercent(worldX, dropWorldY, bounds);
+            } else if (puzzle?.visual?.position) {
+                percent = {
+                    x: puzzle.visual.position.x,
+                    y: puzzle.visual.position.y + 12
+                };
+            } else {
+                percent = { x: 50, y: 60 };
+            }
+        }
+
+        const applyOffset = (offset) => {
+            if (!offset) return;
+            if (typeof offset.x === 'number' && !Number.isNaN(offset.x)) {
+                percent.x += offset.x;
+            }
+            if (typeof offset.y === 'number' && !Number.isNaN(offset.y)) {
+                percent.y += offset.y;
+            }
+        };
+
+        applyOffset(reward?.dropOffset);
+        applyOffset(puzzle?.rewardOffset);
+        applyOffset(puzzle?.visual?.rewardOffset);
+
+        percent.x = clampPercent(percent.x);
+        percent.y = clampPercent(percent.y);
+
+        return percent;
     }
 
     createDroppedItemSprite(item, worldX, worldY) {
@@ -457,7 +506,73 @@ class LocationScene extends Phaser.Scene {
         label.setOrigin(0.5, 0);
         label.setDepth(90);
 
-        this.droppedItemSprites.push({ sprite, label });
+        const spriteAlpha = typeof sprite.alpha === 'number' ? sprite.alpha : 1;
+        const labelAlpha = typeof label.alpha === 'number' ? label.alpha : 1;
+        this.droppedItemSprites.push({
+            id: item.id,
+            sprite,
+            label,
+            alpha: spriteAlpha,
+            labelAlpha
+        });
+    }
+
+    highlightDroppedItem(itemId, attempt = 0) {
+        if (!this.droppedItemSprites || this.droppedItemSprites.length === 0) {
+            if (attempt < 5) {
+                this.time.delayedCall(80, () => this.highlightDroppedItem(itemId, attempt + 1));
+            }
+            return;
+        }
+
+        const entry = this.droppedItemSprites.find(data => data.id === itemId);
+        if (!entry) {
+            if (attempt < 5) {
+                this.time.delayedCall(80, () => this.highlightDroppedItem(itemId, attempt + 1));
+            }
+            return;
+        }
+
+        const { sprite, label, alpha, labelAlpha } = entry;
+        if (!sprite) return;
+
+        const finalAlpha = typeof alpha === 'number' ? alpha : (typeof sprite.alpha === 'number' ? sprite.alpha : 1);
+        const originalY = sprite.y;
+
+        sprite.setAlpha(0);
+        sprite.setY(originalY - 40);
+
+        this.tweens.add({
+            targets: sprite,
+            alpha: finalAlpha,
+            y: originalY,
+            duration: 500,
+            ease: 'Back.easeOut'
+        });
+
+        if (label) {
+            const finalLabelAlpha = typeof labelAlpha === 'number' ? labelAlpha : (typeof label.alpha === 'number' ? label.alpha : 1);
+            const labelOriginalY = label.y;
+            label.setAlpha(0);
+            label.setY(labelOriginalY - 20);
+            this.tweens.add({
+                targets: label,
+                alpha: finalLabelAlpha,
+                y: labelOriginalY,
+                duration: 450,
+                ease: 'Cubic.easeOut',
+                delay: 120
+            });
+        }
+    }
+
+    highlightPendingPuzzleReward() {
+        const puzzle = this.locationData.puzzle;
+        if (!puzzle || !puzzle.reward) return;
+        const rewardItem = gameStateManager.getInventoryItem(puzzle.reward.id);
+        if (rewardItem && rewardItem.status === 'dropped' && rewardItem.dropLocation === this.currentLocation) {
+            this.time.delayedCall(120, () => this.highlightDroppedItem(puzzle.reward.id));
+        }
     }
 
     pickupDroppedItem(itemId) {
@@ -903,12 +1018,23 @@ class LocationScene extends Phaser.Scene {
 
     solveCurrentPuzzle(puzzle, consumedItems = []) {
         if (!puzzle) return;
-        const reward = puzzle.reward ? { ...puzzle.reward } : null;
+        const reward = puzzle.reward ? JSON.parse(JSON.stringify(puzzle.reward)) : null;
         if (reward && !reward.image) {
             reward.image = `images/items/${reward.id}.png`;
         }
 
-        const solved = gameStateManager.solvePuzzle(puzzle.id, reward);
+        let dropPosition = null;
+        if (reward) {
+            dropPosition = this.calculateRewardDropPlacement(puzzle, reward);
+        }
+
+        const solved = gameStateManager.solvePuzzle(puzzle.id, reward, this.currentLocation, {
+            dropPosition,
+            dropSize: reward?.size,
+            dropTransform: reward?.dropTransform || reward?.transform,
+            renderMode: reward?.renderMode,
+            baseTransform: reward?.transform
+        });
         if (!solved) {
             uiManager.showNotification('Este enigma já foi resolvido.');
             return;
@@ -923,10 +1049,12 @@ class LocationScene extends Phaser.Scene {
         this.updatePuzzleVisual(true);
         this.renderDroppedItems();
 
-        uiManager.showNotification('✓ Enigma resolvido!');
-
         if (reward) {
-            this.spawnPuzzleReward(puzzle, reward);
+            const messageName = reward.name || 'Recompensa';
+            uiManager.showNotification(`✓ Enigma resolvido! ${messageName} apareceu na cena.`);
+            this.highlightDroppedItem(reward.id);
+        } else {
+            uiManager.showNotification('✓ Enigma resolvido!');
         }
 
         uiManager.renderInventory();
@@ -958,64 +1086,6 @@ class LocationScene extends Phaser.Scene {
             width: displayWidth,
             height: displayHeight
         };
-    }
-
-    spawnPuzzleReward(puzzle, reward) {
-        if (!reward) return;
-
-        const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
-        const visual = puzzle.visual;
-        const baseWidth = visual.size?.width || 120;
-        const baseHeight = visual.size?.height || 120;
-
-        const x = bgX + (visual.position.x / 100) * bgWidth;
-        const y = bgY + (visual.position.y / 100) * bgHeight - baseHeight * 0.6;
-
-        const textureKey = `puzzle_reward_${reward.id}`;
-        if (this.rewardSprite) {
-            this.rewardSprite.destroy();
-        }
-
-        if (this.textures.exists(textureKey)) {
-            this.rewardSprite = this.add.image(x, y, textureKey);
-            this.rewardSprite.setDisplaySize(baseWidth * 0.7, baseHeight * 0.7);
-        } else {
-            this.rewardSprite = this.add.text(x, y, reward.name || 'Recompensa', {
-                fontSize: '24px',
-                color: '#f0a500',
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                padding: { x: 12, y: 8 }
-            });
-            this.rewardSprite.setOrigin(0.5);
-        }
-
-        this.rewardSprite.setDepth(200);
-        this.rewardSprite.setAlpha(0);
-
-        this.tweens.add({
-            targets: this.rewardSprite,
-            y: this.rewardSprite.y - 20,
-            alpha: 1,
-            duration: 400,
-            ease: 'Power2'
-        });
-
-        this.time.delayedCall(3000, () => {
-            if (!this.rewardSprite) return;
-            this.tweens.add({
-                targets: this.rewardSprite,
-                alpha: 0,
-                y: this.rewardSprite.y - 20,
-                duration: 400,
-                ease: 'Power2',
-                onComplete: () => {
-                    if (this.rewardSprite) {
-                        this.rewardSprite.destroy();
-                        this.rewardSprite = null;
-                    }
-                }
-            });
-        });
     }
 
     navigateToLocation(targetLocationId, hotspot) {
@@ -1114,10 +1184,6 @@ class LocationScene extends Phaser.Scene {
         if (this.puzzleSprite) {
             this.puzzleSprite.destroy();
             this.puzzleSprite = null;
-        }
-        if (this.rewardSprite) {
-            this.rewardSprite.destroy();
-            this.rewardSprite = null;
         }
         this.currentPuzzleData = null;
         this.clearDroppedSprites();
