@@ -477,9 +477,20 @@
                     <button class="btn" onclick="addHotspot()">➕ Adicionar Hotspot</button>
                     <div class="hotspot-list" id="hotspotList"></div>
                 </div>
+
+                <div class="form-group">
+                    <label>🧩 Enigma (Puzzle)</label>
+                    <button class="btn" onclick="togglePuzzleEditor()" id="btnTogglePuzzle">
+                        ${currentLocation.puzzle ? '✏️ Editar Enigma' : '➕ Adicionar Enigma'}
+                    </button>
+                    <div id="puzzleEditor" style="display: ${currentLocation.puzzle ? 'block' : 'none'}; margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border: 1px solid #444; border-radius: 8px;">
+                        <!-- Puzzle editor content will be injected here -->
+                    </div>
+                </div>
             `;
 
             renderHotspots();
+            renderPuzzleEditor();
         }
 
         function renderHotspots() {
@@ -554,6 +565,311 @@
             renderHotspots();
         }
 
+        // ============ PUZZLE FUNCTIONS ============
+
+        function togglePuzzleEditor() {
+            const editor = document.getElementById('puzzleEditor');
+            const btn = document.getElementById('btnTogglePuzzle');
+
+            if (!currentLocation.puzzle) {
+                // Criar novo puzzle
+                currentLocation.puzzle = {
+                    id: `puzzle_${currentLocation.id}_${Date.now()}`,
+                    type: 'code',
+                    question: '',
+                    hint: '',
+                    correctAnswer: '',
+                    successMessage: 'Enigma resolvido!',
+                    options: [],
+                    requiredItems: [],
+                    visual: {
+                        beforeImage: '',
+                        afterImage: '',
+                        position: { x: 50, y: 50 },
+                        size: { width: 120, height: 120 },
+                        transform: {}
+                    },
+                    reward: {
+                        id: '',
+                        name: '',
+                        image: '',
+                        size: { width: 80, height: 80 },
+                        dropPosition: { x: 50, y: 60 }
+                    }
+                };
+                btn.textContent = '✏️ Editar Enigma';
+                editor.style.display = 'block';
+                renderPuzzleEditor();
+            } else {
+                editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function renderPuzzleEditor() {
+            const editor = document.getElementById('puzzleEditor');
+            if (!editor || !currentLocation.puzzle) return;
+
+            const p = currentLocation.puzzle;
+
+            editor.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="color: #f0a500; margin: 0;">Configurar Enigma</h3>
+                    <button class="btn danger" onclick="deletePuzzle()" style="width: auto; padding: 8px 15px;">🗑️ Remover</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Enigma</label>
+                    <select id="puzzleType" onchange="updatePuzzleType()">
+                        <option value="code" ${p.type === 'code' ? 'selected' : ''}>Código Numérico</option>
+                        <option value="math" ${p.type === 'math' ? 'selected' : ''}>Matemática</option>
+                        <option value="riddle" ${p.type === 'riddle' ? 'selected' : ''}>Adivinha</option>
+                        <option value="direction" ${p.type === 'direction' ? 'selected' : ''}>Direção</option>
+                        <option value="sequence_symbols" ${p.type === 'sequence_symbols' ? 'selected' : ''}>Sequência de Símbolos</option>
+                        <option value="item_combination" ${p.type === 'item_combination' ? 'selected' : ''}>Combinação de Itens</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Pergunta/Enunciado</label>
+                    <textarea id="puzzleQuestion" placeholder="Ex: Qual é o código para abrir o cofre?">${p.question || ''}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Dica (opcional)</label>
+                    <input type="text" id="puzzleHint" value="${p.hint || ''}" placeholder="Ex: A resposta está na parede">
+                </div>
+
+                <div id="puzzleTypeFields"></div>
+
+                <div class="form-group">
+                    <label>Mensagem de Sucesso</label>
+                    <input type="text" id="puzzleSuccess" value="${p.successMessage || 'Enigma resolvido!'}" placeholder="Ex: Parabéns! Você encontrou a chave.">
+                </div>
+
+                <details style="margin-top: 15px;">
+                    <summary style="cursor: pointer; color: #f0a500; font-weight: 600; padding: 8px;">⚙️ Visual do Enigma</summary>
+                    <div style="padding: 10px; margin-top: 10px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                        <div class="form-group">
+                            <label>Imagem Antes (unsolved)</label>
+                            <input type="text" id="puzzleBeforeImage" value="${p.visual.beforeImage || ''}" placeholder="images/puzzles/cofre_fechado.png">
+                        </div>
+                        <div class="form-group">
+                            <label>Imagem Depois (solved)</label>
+                            <input type="text" id="puzzleAfterImage" value="${p.visual.afterImage || ''}" placeholder="images/puzzles/cofre_aberto.png">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label>Posição X (%)</label>
+                                <input type="number" id="puzzlePosX" value="${p.visual.position.x}" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Posição Y (%)</label>
+                                <input type="number" id="puzzlePosY" value="${p.visual.position.y}" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Largura (px)</label>
+                                <input type="number" id="puzzleWidth" value="${p.visual.size.width}">
+                            </div>
+                            <div class="form-group">
+                                <label>Altura (px)</label>
+                                <input type="number" id="puzzleHeight" value="${p.visual.size.height}">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details style="margin-top: 15px;">
+                    <summary style="cursor: pointer; color: #f0a500; font-weight: 600; padding: 8px;">🎁 Recompensa</summary>
+                    <div style="padding: 10px; margin-top: 10px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                        <div class="form-group">
+                            <label>ID do Item</label>
+                            <input type="text" id="rewardId" value="${p.reward?.id || ''}" placeholder="chave_mestra">
+                        </div>
+                        <div class="form-group">
+                            <label>Nome do Item</label>
+                            <input type="text" id="rewardName" value="${p.reward?.name || ''}" placeholder="Chave Mestra">
+                        </div>
+                        <div class="form-group">
+                            <label>Imagem</label>
+                            <input type="text" id="rewardImage" value="${p.reward?.image || ''}" placeholder="images/items/chave.png">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label>Posição Drop X (%)</label>
+                                <input type="number" id="rewardDropX" value="${p.reward?.dropPosition?.x || 50}" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Posição Drop Y (%)</label>
+                                <input type="number" id="rewardDropY" value="${p.reward?.dropPosition?.y || 60}" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <button class="btn primary" onclick="savePuzzleData()" style="margin-top: 15px;">💾 Salvar Enigma</button>
+            `;
+
+            renderPuzzleTypeFields();
+        }
+
+        function renderPuzzleTypeFields() {
+            const container = document.getElementById('puzzleTypeFields');
+            if (!container || !currentLocation.puzzle) return;
+
+            const p = currentLocation.puzzle;
+            const type = document.getElementById('puzzleType')?.value || p.type;
+
+            if (type === 'code' || type === 'math') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Resposta Correta</label>
+                        <input type="text" id="puzzleAnswer" value="${p.correctAnswer || ''}" placeholder="${type === 'code' ? '1234' : '42'}">
+                    </div>
+                `;
+            } else if (type === 'riddle' || type === 'direction') {
+                const options = p.options || [];
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Opções (uma por linha)</label>
+                        <textarea id="puzzleOptions" rows="4" placeholder="Norte\nSul\nLeste\nOeste">${options.join('\n')}</textarea>
+                        <small style="color: #999;">A primeira opção é índice 0, segunda é 1, etc.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Índice da Resposta Correta</label>
+                        <input type="number" id="puzzleAnswer" value="${p.correctAnswer ?? 0}" min="0" placeholder="0">
+                    </div>
+                `;
+            } else if (type === 'sequence_symbols') {
+                const options = p.options || [];
+                const sequence = p.correctSequence || [];
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Símbolos Disponíveis (um por linha)</label>
+                        <textarea id="puzzleOptions" rows="4" placeholder="🌙\n⭐\n☀️\n🌟">${options.join('\n')}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Sequência Correta (índices separados por vírgula)</label>
+                        <input type="text" id="puzzleSequence" value="${sequence.join(',')}" placeholder="0,1,2">
+                        <small style="color: #999;">Ex: 0,2,1 significa primeiro símbolo, terceiro, segundo</small>
+                    </div>
+                `;
+            } else if (type === 'item_combination') {
+                const items = p.requiredItems || [];
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>IDs dos Itens Necessários (separados por vírgula)</label>
+                        <input type="text" id="puzzleRequiredItems" value="${items.join(',')}" placeholder="chave_prata,chave_ouro">
+                        <small style="color: #999;">O jogador precisa arrastar estes itens até o puzzle</small>
+                    </div>
+                `;
+            }
+        }
+
+        function updatePuzzleType() {
+            if (!currentLocation.puzzle) return;
+            const type = document.getElementById('puzzleType').value;
+            currentLocation.puzzle.type = type;
+            renderPuzzleTypeFields();
+        }
+
+        function savePuzzleData() {
+            if (!currentLocation.puzzle) return;
+
+            const p = currentLocation.puzzle;
+            const type = document.getElementById('puzzleType').value;
+
+            // Dados básicos
+            p.type = type;
+            p.question = document.getElementById('puzzleQuestion').value;
+            p.hint = document.getElementById('puzzleHint').value;
+            p.successMessage = document.getElementById('puzzleSuccess').value;
+
+            // Tipo específico
+            if (type === 'code' || type === 'math') {
+                p.correctAnswer = document.getElementById('puzzleAnswer').value;
+            } else if (type === 'riddle' || type === 'direction') {
+                const optionsText = document.getElementById('puzzleOptions').value;
+                p.options = optionsText.split('\n').map(s => s.trim()).filter(Boolean);
+                p.correctAnswer = parseInt(document.getElementById('puzzleAnswer').value) || 0;
+            } else if (type === 'sequence_symbols') {
+                const optionsText = document.getElementById('puzzleOptions').value;
+                p.options = optionsText.split('\n').map(s => s.trim()).filter(Boolean);
+                const sequenceText = document.getElementById('puzzleSequence').value;
+                p.correctSequence = sequenceText.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            } else if (type === 'item_combination') {
+                const itemsText = document.getElementById('puzzleRequiredItems').value;
+                p.requiredItems = itemsText.split(',').map(s => s.trim()).filter(Boolean);
+            }
+
+            // Visual
+            p.visual.beforeImage = document.getElementById('puzzleBeforeImage').value;
+            p.visual.afterImage = document.getElementById('puzzleAfterImage').value;
+            p.visual.position.x = parseFloat(document.getElementById('puzzlePosX').value) || 50;
+            p.visual.position.y = parseFloat(document.getElementById('puzzlePosY').value) || 50;
+            p.visual.size.width = parseInt(document.getElementById('puzzleWidth').value) || 120;
+            p.visual.size.height = parseInt(document.getElementById('puzzleHeight').value) || 120;
+
+            // Recompensa
+            if (!p.reward) p.reward = {};
+            p.reward.id = document.getElementById('rewardId').value;
+            p.reward.name = document.getElementById('rewardName').value;
+            p.reward.image = document.getElementById('rewardImage').value;
+            if (!p.reward.dropPosition) p.reward.dropPosition = {};
+            p.reward.dropPosition.x = parseFloat(document.getElementById('rewardDropX').value) || 50;
+            p.reward.dropPosition.y = parseFloat(document.getElementById('rewardDropY').value) || 60;
+
+            showMessage('✓ Dados do enigma atualizados! Clique em "Salvar Localização" para enviar ao servidor.', 'success');
+        }
+
+        function deletePuzzle() {
+            if (!confirm('Tem certeza que deseja remover o enigma desta localização?')) return;
+            currentLocation.puzzle = null;
+            document.getElementById('puzzleEditor').style.display = 'none';
+            document.getElementById('btnTogglePuzzle').textContent = '➕ Adicionar Enigma';
+            showMessage('Enigma removido. Clique em "Salvar Localização" para confirmar.', 'success');
+        }
+
+        async function savePuzzleToAPI() {
+            if (!currentLocation || !currentLocation.id) {
+                console.warn('Nenhuma localização válida para salvar puzzle');
+                return true; // Não é erro crítico
+            }
+
+            try {
+                const payload = {
+                    location_id: currentLocation.id,
+                    puzzle_data: currentLocation.puzzle
+                };
+
+                const response = await fetch('api/puzzles/save.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    console.error('Erro HTTP ao salvar puzzle:', response.status);
+                    return false;
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Erro ao salvar puzzle:', data.message);
+                    return false;
+                }
+
+                console.log('✓ Puzzle salvo com sucesso:', data);
+                return true;
+
+            } catch (error) {
+                console.error('Erro ao salvar puzzle:', error);
+                return false;
+            }
+        }
+
+        // ============ END PUZZLE FUNCTIONS ============
+
         async function saveLocation() {
             if (!currentLocation) {
                 showMessage('Nenhuma localização selecionada', 'error');
@@ -597,7 +913,15 @@
                 }
 
                 if (data.success) {
-                    showMessage('✓ Localização salva com sucesso!', 'success');
+                    // Salvar puzzle separadamente
+                    const puzzleSaved = await savePuzzleToAPI();
+
+                    if (puzzleSaved) {
+                        showMessage('✓ Localização e enigma salvos com sucesso!', 'success');
+                    } else {
+                        showMessage('✓ Localização salva, mas houve erro ao salvar enigma', 'warning');
+                    }
+
                     await loadLocations();
                 } else {
                     showMessage('Erro ao salvar: ' + data.message, 'error');
