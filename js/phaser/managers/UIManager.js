@@ -640,6 +640,7 @@ class UIManager {
             this.puzzleInputArea.innerHTML = '';
         }
 
+        const puzzleType = (puzzle.type ?? '').toString().trim().toLowerCase();
         const context = {
             puzzle,
             onSubmit: typeof options.onSubmit === 'function' ? options.onSubmit : null,
@@ -652,7 +653,6 @@ class UIManager {
         };
         this.activePuzzleContext = context;
 
-        const puzzleType = (puzzle.type || '').toLowerCase();
         context.type = puzzleType;
 
         if (this.puzzleTitleEl) {

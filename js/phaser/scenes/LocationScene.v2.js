@@ -1008,7 +1008,8 @@ class LocationScene extends Phaser.Scene {
             return { success: true, message: 'Este enigma já foi resolvido.', closeDelay: 700 };
         }
 
-        switch (puzzle.type) {
+        const puzzleType = (puzzle.type ?? '').toString().trim().toLowerCase();
+        switch (puzzleType) {
             case 'direction':
             case 'riddle':
                 return this.evaluateChoicePuzzle(puzzle, payload);
@@ -1484,7 +1485,7 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
-        const puzzleType = puzzle.type || 'item_combination';
+        const puzzleType = (puzzle.type ?? 'item_combination').toString().trim().toLowerCase();
 
         if (puzzleType === 'item_combination') {
             uiManager.showNotification('Arraste o item correto do inventário até o enigma.');
