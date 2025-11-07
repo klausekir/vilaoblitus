@@ -246,7 +246,7 @@ function getWaitlistEmailTemplate($name) {
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="https://kirner.com.br" style="display: inline-block; background: linear-gradient(135deg, #f0a500, #f5c75a); color: #0a0a0a; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                                        <a href="https://explorandoavilaoblitus.kirner.com.br" style="display: inline-block; background: linear-gradient(135deg, #f0a500, #f5c75a); color: #0a0a0a; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
                                             Visitar Site
                                         </a>
                                     </td>
@@ -402,7 +402,7 @@ function getLaunchEmailTemplate($name) {
                             <div style="background: rgba(240, 165, 0, 0.15); border: 2px solid #f0a500; padding: 25px; margin: 30px 0; border-radius: 8px; text-align: center;">
                                 <p style="color: #f0a500; margin: 0 0 15px 0; font-weight: bold; font-size: 18px;">🏚️ COMECE A JOGAR AGORA</p>
                                 <table width="100%" cellpadding="0" cellspacing="0">
-                                    <tr><td align="center"><a href="https://vilaoblitus.kirner.com.br/login.php" style="display: inline-block; background: linear-gradient(135deg, #f0a500, #f5c75a); color: #0a0a0a; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px;">JOGAR AGORA</a></td></tr>
+                                    <tr><td align="center"><a href="https://explorandoavilaoblitus.kirner.com.br/login.php" style="display: inline-block; background: linear-gradient(135deg, #f0a500, #f5c75a); color: #0a0a0a; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px;">JOGAR AGORA</a></td></tr>
                                 </table>
                             </div>
                             <div style="background: rgba(0, 0, 0, 0.3); padding: 20px; margin: 30px 0; border-radius: 8px; border-left: 4px solid #f0a500;">
