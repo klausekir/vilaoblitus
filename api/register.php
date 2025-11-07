@@ -6,6 +6,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendResponse(false, [], 'Method not allowed');
 }
 
+// Check if registration is enabled
+try {
+    $pdo = getDBConnection();
+    $stmt = $pdo->prepare("SELECT setting_value FROM game_settings WHERE setting_key = 'registration_enabled'");
+    $stmt->execute();
+    $result = $stmt->fetch();
+
+    if ($result && ($result['setting_value'] === 'false' || $result['setting_value'] === '0')) {
+        http_response_code(403);
+        sendResponse(false, [], 'Cadastro de novos usuários está temporariamente desabilitado.');
+    }
+} catch (PDOException $e) {
+    // If setting doesn't exist or error, allow registration (fail-safe)
+    error_log("Error checking registration status: " . $e->getMessage());
+}
+
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 

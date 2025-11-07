@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - Vila Abandonada</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .back-link {
+            margin-bottom: 30px;
+        }
+
+        .back-link a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .back-link a:hover {
+            color: #667eea;
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .setting-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .setting-card:hover {
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .setting-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .setting-description {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .setting-updated {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 10px;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(244, 67, 54, 0.3);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .slider:after {
+            content: 'OFF';
+            color: #fff;
+            display: block;
+            position: absolute;
+            transform: translate(-50%,-50%);
+            top: 50%;
+            left: 70%;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        input:checked + .slider:after {
+            content: 'ON';
+            left: 30%;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            color: #4caf50;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.4);
+            color: #f44336;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Configurações do Jogo</h1>
+            <p>Controle as configurações gerais do jogo</p>
+        </div>
+
+        <div class="back-link">
+            <a href="admin-panel.html">← Voltar para o painel admin</a>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="color: rgba(255, 255, 255, 0.6);">Carregando configurações...</p>
+        </div>
+
+        <div id="settings-container" class="settings-grid" style="display: none;">
+            <!-- Settings will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        // Check if user is admin
+        const isAdmin = localStorage.getItem('is_admin') === 'true';
+        const sessionToken = localStorage.getItem('session_token');
+
+        if (!isAdmin || !sessionToken) {
+            alert('Acesso negado. Apenas administradores podem acessar esta página.');
+            window.location.href = 'game-phaser.html';
+        }
+
+        function showMessage(text, type) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.className = 'message ' + type + ' show';
+
+            setTimeout(() => {
+                msgEl.className = 'message ' + type;
+            }, 5000);
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('api/admin/get-settings.php', {
+                    headers: {
+                        'Authorization': `Bearer ${sessionToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    renderSettings(data.data);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('settings-container').style.display = 'grid';
+                } else {
+                    showMessage(data.message || 'Erro ao carregar configurações', 'error');
+                    document.getElementById('loading').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showMessage('Erro ao carregar configurações', 'error');
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderSettings(settings) {
+            const container = document.getElementById('settings-container');
+            container.innerHTML = '';
+
+            // Registration enabled setting
+            if (settings.registration_enabled) {
+                const card = createSettingCard(
+                    'registration_enabled',
+                    '📝 Cadastro de Usuários',
+                    settings.registration_enabled.description || 'Controla se novos usuários podem se cadastrar',
+                    settings.registration_enabled.value === 'true',
+                    settings.registration_enabled.updated_at
+                );
+                container.appendChild(card);
+            }
+
+            // Add more settings here as needed
+        }
+
+        function createSettingCard(key, title, description, isEnabled, updatedAt) {
+            const card = document.createElement('div');
+            card.className = 'setting-card';
+
+            const header = document.createElement('div');
+            header.className = 'setting-header';
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'setting-title';
+            titleEl.textContent = title;
+
+            const switchLabel = document.createElement('label');
+            switchLabel.className = 'switch';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = isEnabled;
+            input.onchange = () => updateSetting(key, input.checked);
+
+            const slider = document.createElement('span');
+            slider.className = 'slider';
+
+            switchLabel.appendChild(input);
+            switchLabel.appendChild(slider);
+
+            header.appendChild(titleEl);
+            header.appendChild(switchLabel);
+
+            const descEl = document.createElement('div');
+            descEl.className = 'setting-description';
+            descEl.textContent = description;
+
+            const updatedEl = document.createElement('div');
+            updatedEl.className = 'setting-updated';
+            updatedEl.textContent = updatedAt ? `Última atualização: ${new Date(updatedAt).toLocaleString('pt-BR')}` : '';
+
+            card.appendChild(header);
+            card.appendChild(descEl);
+            card.appendChild(updatedEl);
+
+            return card;
+        }
+
+        async function updateSetting(key, value) {
+            const valueStr = value ? 'true' : 'false';
+
+            try {
+                const response = await fetch('api/admin/update-settings.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionToken}`
+                    },
+                    body: JSON.stringify({
+                        setting_key: key,
+                        setting_value: valueStr
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Configuração atualizada com sucesso!', 'success');
+                    // Reload settings to show updated timestamp
+                    setTimeout(() => loadSettings(), 1000);
+                } else {
+                    showMessage(data.message || 'Erro ao atualizar configuração', 'error');
+                    // Reload to revert the switch
+                    loadSettings();
+                }
+            } catch (error) {
+                console.error('Error updating setting:', error);
+                showMessage('Erro ao atualizar configuração', 'error');
+                // Reload to revert the switch
+                loadSettings();
+            }
+        }
+
+        // Load settings on page load
+        loadSettings();
+    </script>
+</body>
+</html>
