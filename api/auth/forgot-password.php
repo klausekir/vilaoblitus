@@ -79,10 +79,18 @@ try {
     $insertStmt->close();
 
     // Send email with reset link
-    $resetLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http")
-                 . "://" . $_SERVER['HTTP_HOST']
-                 . dirname(dirname($_SERVER['PHP_SELF']))
-                 . "/reset-password.html?token=" . $token;
+    // O arquivo reset-password.html está na raiz do site, não em /api
+    $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+    $host = $_SERVER['HTTP_HOST'];
+
+    // Descobrir o caminho base (remover /api/auth/forgot-password.php)
+    $scriptPath = $_SERVER['PHP_SELF']; // Ex: /api/auth/forgot-password.php
+    $basePath = dirname(dirname(dirname($scriptPath))); // Remove 3 níveis: forgot-password.php, auth/, api/
+    if ($basePath === '/' || $basePath === '\\') {
+        $basePath = '';
+    }
+
+    $resetLink = $protocol . "://" . $host . $basePath . "/reset-password.html?token=" . $token;
 
     error_log("🔵 [FORGOT-PASSWORD] Iniciando envio de email de reset");
     error_log("🔵 [FORGOT-PASSWORD] Reset link: " . $resetLink);
