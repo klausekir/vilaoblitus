@@ -55,17 +55,26 @@ try {
     error_log("✅ Nova inscrição na waitlist: $name ($email)");
 
     // Enviar email de confirmação
+    error_log("🔵 [WAITLIST] Iniciando tentativa de envio de email");
+    error_log("🔵 [WAITLIST] SMTP_HOST: " . SMTP_HOST);
+    error_log("🔵 [WAITLIST] SMTP_PORT: " . SMTP_PORT);
+    error_log("🔵 [WAITLIST] SMTP_USER: " . SMTP_USER);
+    error_log("🔵 [WAITLIST] SMTP_PASS configurado: " . (!empty(SMTP_PASS) ? 'SIM' : 'NÃO'));
+    error_log("🔵 [WAITLIST] EMAIL_FROM: " . EMAIL_FROM);
+
     $emailSent = false;
     if (!empty(SMTP_PASS)) {
         try {
+            error_log("🔵 [WAITLIST] Chamando sendEmail()...");
             $subject = "Bem-vindo à Lista de Espera - Vila Abandonada 🏚️";
             $body = getWaitlistEmailTemplate($name);
             $emailSent = sendEmail($email, $name, $subject, $body);
+            error_log("🔵 [WAITLIST] sendEmail() retornou: " . ($emailSent ? 'true' : 'false'));
         } catch (Exception $e) {
-            error_log("⚠️ Erro ao enviar email: " . $e->getMessage());
+            error_log("❌ [WAITLIST] Erro ao enviar email: " . $e->getMessage());
         }
     } else {
-        error_log("⚠️ SMTP_PASS não configurado - email não enviado");
+        error_log("❌ [WAITLIST] SMTP_PASS não configurado - email não enviado");
     }
 
     $message = 'Cadastro realizado com sucesso! ';
