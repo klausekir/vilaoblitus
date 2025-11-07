@@ -212,8 +212,8 @@ class LocationScene extends Phaser.Scene {
         const visual = puzzle.visual;
         const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
 
-        const width = visual.size?.width || 120;
-        const height = visual.size?.height || 120;
+        const targetWidth = visual.size?.width || 120;
+        const targetHeight = visual.size?.height || 120;
 
         const x = bgX + (visual.position.x / 100) * bgWidth;
         const y = bgY + (visual.position.y / 100) * bgHeight;
@@ -229,17 +229,27 @@ class LocationScene extends Phaser.Scene {
 
         if (textureKey && this.textures.exists(textureKey)) {
             this.puzzleSprite = this.add.image(x, y, textureKey);
-            this.puzzleSprite.setDisplaySize(width, height);
+
+            const sourceWidth = this.puzzleSprite.width || targetWidth || 1;
+            const sourceHeight = this.puzzleSprite.height || targetHeight || 1;
+            const safeTargetWidth = Math.max(1, targetWidth);
+            const safeTargetHeight = Math.max(1, targetHeight);
+            const containScale = Math.min(safeTargetWidth / sourceWidth, safeTargetHeight / sourceHeight);
+            const finalScale = Number.isFinite(containScale) && containScale > 0 ? containScale : 1;
+
+            this.puzzleSprite.setScale(finalScale);
+            this.puzzleSprite.displayWidth = sourceWidth * finalScale;
+            this.puzzleSprite.displayHeight = sourceHeight * finalScale;
         } else {
-            this.puzzleSprite = this.add.rectangle(x, y, width, height, 0x8b4513, 0.65);
+            this.puzzleSprite = this.add.rectangle(x, y, targetWidth, targetHeight, 0x8b4513, 0.65);
             this.puzzleSprite.setStrokeStyle(2, 0xf0a500);
         }
 
         this.applyPuzzleTransforms(this.puzzleSprite, visual.transform);
         this.puzzleSprite.setDepth(80);
 
-        const displayWidth = this.puzzleSprite.displayWidth || width;
-        const displayHeight = this.puzzleSprite.displayHeight || height;
+        const displayWidth = this.puzzleSprite.displayWidth || targetWidth;
+        const displayHeight = this.puzzleSprite.displayHeight || targetHeight;
 
         this.puzzleHitArea = {
             x: this.puzzleSprite.x - displayWidth / 2,
