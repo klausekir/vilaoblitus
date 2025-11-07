@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waitlist - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(15, 15, 30, 0.95);
+            border: 2px solid #f0a500;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #f0a500;
+            font-size: 28px;
+            text-shadow: 0 0 20px rgba(240, 165, 0, 0.5);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f0a500, #f5c75a);
+            color: #0a0a0a;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(240, 165, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(15, 15, 30, 0.95);
+            border: 1px solid rgba(240, 165, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            color: #f0a500;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .table-container {
+            background: rgba(15, 15, 30, 0.95);
+            border: 2px solid #f0a500;
+            border-radius: 16px;
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h2 {
+            color: #f0a500;
+            font-size: 20px;
+        }
+
+        .selection-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(240, 165, 0, 0.1);
+            color: #f0a500;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(240, 165, 0, 0.3);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        tr:hover {
+            background: rgba(240, 165, 0, 0.05);
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #81c784;
+        }
+
+        .badge-warning {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ffb74d;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #81c784;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #ef5350;
+        }
+
+        .message.info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196f3;
+            color: #64b5f6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #f0a500;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .btn-delete {
+            padding: 6px 12px;
+            background: rgba(244, 67, 54, 0.2);
+            color: #ef5350;
+            border: 1px solid #f44336;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background: rgba(244, 67, 54, 0.3);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .table-container {
+                padding: 15px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 10px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏚️ Waitlist - Lista de Espera</h1>
+            <div class="header-actions">
+                <a href="admin-panel.html" class="btn btn-secondary">← Voltar ao Admin</a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total de Inscritos</h3>
+                <div class="value" id="totalCount">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Notificados</h3>
+                <div class="value" id="notifiedCount">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pendentes</h3>
+                <div class="value" id="pendingCount">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Selecionados</h3>
+                <div class="value" id="selectedCount">0</div>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Inscritos na Waitlist</h2>
+                <div class="selection-actions">
+                    <button class="btn btn-secondary" id="selectAllBtn">Selecionar Todos</button>
+                    <button class="btn btn-primary" id="sendEmailBtn" disabled>
+                        📧 Notificar Lançamento
+                    </button>
+                </div>
+            </div>
+
+            <div id="loadingState" class="loading">
+                <div class="spinner"></div>
+                <p>Carregando inscritos...</p>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <h3>Nenhum inscrito ainda</h3>
+                <p>Quando alguém se cadastrar na landing page, aparecerá aqui.</p>
+            </div>
+
+            <div id="tableWrapper" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="50"><input type="checkbox" class="checkbox" id="selectAllCheckbox"></th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Idade</th>
+                            <th>Cidade</th>
+                            <th>Telefone</th>
+                            <th>Fonte do Livro</th>
+                            <th>Data Cadastro</th>
+                            <th>Status</th>
+                            <th width="100">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waitlistTable">
+                        <!-- Dados carregados via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let waitlistData = [];
+        let selectedIds = new Set();
+
+        // Verificar autenticação
+        const sessionToken = localStorage.getItem('session_token');
+        const isAdmin = localStorage.getItem('is_admin') === 'true';
+
+        if (!sessionToken || !isAdmin) {
+            window.location.href = 'login.php';
+        }
+
+        // Carregar dados da waitlist
+        async function loadWaitlist() {
+            try {
+                const response = await fetch('api/admin/waitlist.php', {
+                    headers: {
+                        'Authorization': 'Bearer ' + sessionToken
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    waitlistData = data.data;
+                    renderWaitlist();
+                    updateStats();
+                } else {
+                    showMessage(data.message || 'Erro ao carregar waitlist', 'error');
+                }
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro ao conectar com o servidor', 'error');
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        // Renderizar tabela
+        function renderWaitlist() {
+            const tbody = document.getElementById('waitlistTable');
+
+            if (waitlistData.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('tableWrapper').style.display = 'block';
+
+            tbody.innerHTML = waitlistData.map(item => `
+                <tr id="row-${item.id}">
+                    <td>
+                        <input type="checkbox"
+                               class="checkbox row-checkbox"
+                               data-id="${item.id}"
+                               ${item.notified ? 'disabled' : ''}
+                               ${selectedIds.has(item.id) ? 'checked' : ''}>
+                    </td>
+                    <td>${item.name || '-'}</td>
+                    <td>${item.email}</td>
+                    <td>${item.age || '-'}</td>
+                    <td>${item.city || '-'}</td>
+                    <td>${item.phone || '-'}</td>
+                    <td>${item.book_source || '-'}</td>
+                    <td>${new Date(item.created_at).toLocaleDateString('pt-BR')}</td>
+                    <td>
+                        ${item.notified
+                            ? '<span class="badge badge-success">✓ Notificado</span>'
+                            : '<span class="badge badge-warning">Pendente</span>'}
+                    </td>
+                    <td>
+                        <button class="btn-delete" data-id="${item.id}" data-email="${item.email}">
+                            🗑️ Deletar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Adicionar event listeners aos checkboxes
+            document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', handleCheckboxChange);
+            });
+
+            // Adicionar event listeners aos botões de deletar
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', handleDelete);
+            });
+        }
+
+        // Atualizar estatísticas
+        function updateStats() {
+            const total = waitlistData.length;
+            const notified = waitlistData.filter(item => item.notified).length;
+            const pending = total - notified;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('notifiedCount').textContent = notified;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('selectedCount').textContent = selectedIds.size;
+
+            // Habilitar/desabilitar botão de envio
+            document.getElementById('sendEmailBtn').disabled = selectedIds.size === 0;
+        }
+
+        // Manipular mudança de checkbox
+        function handleCheckboxChange(e) {
+            const id = parseInt(e.target.dataset.id);
+
+            if (e.target.checked) {
+                selectedIds.add(id);
+            } else {
+                selectedIds.delete(id);
+                document.getElementById('selectAllCheckbox').checked = false;
+            }
+
+            updateStats();
+        }
+
+        // Deletar inscrito
+        async function handleDelete(e) {
+            const id = parseInt(e.target.dataset.id);
+            const email = e.target.dataset.email;
+
+            if (!confirm(`Tem certeza que deseja remover "${email}" da waitlist?`)) {
+                return;
+            }
+
+            e.target.disabled = true;
+            e.target.textContent = '🗑️ Deletando...';
+
+            try {
+                const response = await fetch('api/admin/delete-waitlist.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionToken
+                    },
+                    body: JSON.stringify({ id })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('✅ Inscrito removido com sucesso', 'success');
+
+                    // Remover da lista e recarregar
+                    selectedIds.delete(id);
+                    await loadWaitlist();
+                } else {
+                    showMessage(data.message || 'Erro ao remover inscrito', 'error');
+                    e.target.disabled = false;
+                    e.target.textContent = '🗑️ Deletar';
+                }
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro ao conectar com o servidor', 'error');
+                e.target.disabled = false;
+                e.target.textContent = '🗑️ Deletar';
+            }
+        }
+
+        // Selecionar todos
+        document.getElementById('selectAllBtn').addEventListener('click', () => {
+            const allCheckbox = document.getElementById('selectAllCheckbox');
+            allCheckbox.checked = !allCheckbox.checked;
+
+            document.querySelectorAll('.row-checkbox:not(:disabled)').forEach(checkbox => {
+                checkbox.checked = allCheckbox.checked;
+                const id = parseInt(checkbox.dataset.id);
+
+                if (allCheckbox.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
+            });
+
+            updateStats();
+        });
+
+        // Checkbox "selecionar todos" no header
+        document.getElementById('selectAllCheckbox').addEventListener('change', (e) => {
+            document.querySelectorAll('.row-checkbox:not(:disabled)').forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+                const id = parseInt(checkbox.dataset.id);
+
+                if (e.target.checked) {
+                    selectedIds.add(id);
+                } else {
+                    selectedIds.delete(id);
+                }
+            });
+
+            updateStats();
+        });
+
+        // Enviar email de lançamento
+        document.getElementById('sendEmailBtn').addEventListener('click', async () => {
+            if (selectedIds.size === 0) {
+                showMessage('Selecione pelo menos um inscrito', 'error');
+                return;
+            }
+
+            if (!confirm(`Enviar email de lançamento para ${selectedIds.size} pessoa(s)?`)) {
+                return;
+            }
+
+            const btn = document.getElementById('sendEmailBtn');
+            btn.disabled = true;
+            btn.textContent = '📧 Enviando...';
+
+            try {
+                const response = await fetch('api/admin/send-launch-email.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + sessionToken
+                    },
+                    body: JSON.stringify({
+                        user_ids: Array.from(selectedIds)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(
+                        `✅ Emails enviados com sucesso! ${data.sent} de ${data.total} enviados.`,
+                        'success'
+                    );
+
+                    // Limpar seleção e recarregar
+                    selectedIds.clear();
+                    await loadWaitlist();
+                } else {
+                    showMessage(data.message || 'Erro ao enviar emails', 'error');
+                }
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showMessage('Erro ao conectar com o servidor', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📧 Notificar Lançamento';
+            }
+        });
+
+        // Mostrar mensagem
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = 'message ' + type;
+            msgDiv.style.display = 'block';
+
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Carregar ao iniciar
+        loadWaitlist();
+    </script>
+</body>
+</html>
