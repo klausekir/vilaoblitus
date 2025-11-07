@@ -861,6 +861,10 @@ class LocationScene extends Phaser.Scene {
                 }
             } else {
                 this.renderDroppedItems();
+                const puzzle = this.locationData.puzzle;
+                if (inPuzzleArea && puzzle && puzzle.type === 'item_combination') {
+                    this.evaluateItemCombinationPuzzlePlacement(puzzle, entry.id);
+                }
             }
         } else {
             debugSceneDrag('click', { itemId: entry.id, pointerId });
@@ -982,6 +986,34 @@ class LocationScene extends Phaser.Scene {
         if (rewardItem && rewardItem.status === 'dropped' && rewardItem.dropLocation === this.currentLocation) {
             this.time.delayedCall(120, () => this.highlightDroppedItem(puzzle.reward.id));
         }
+    }
+
+    evaluateItemCombinationPuzzlePlacement(puzzle, itemId) {
+        if (!puzzle || puzzle.type !== 'item_combination') return;
+        if (gameStateManager.isPuzzleSolved(puzzle.id)) {
+            return;
+        }
+
+        const required = (puzzle.requiredItems || []).map(id => id.trim()).filter(Boolean);
+        if (required.length === 0) {
+            this.solveCurrentPuzzle(puzzle, [itemId]);
+            return;
+        }
+
+        if (!required.includes(itemId)) {
+            uiManager.showNotification('Este item não parece encaixar aqui.', 2500);
+            this.flashPuzzleSprite(0xff6666);
+            return;
+        }
+
+        const missing = required.filter(id => !gameStateManager.isItemPlacedAtLocation(id, this.currentLocation, true));
+        if (missing.length > 0) {
+            uiManager.showNotification(`Falta posicionar: ${missing.join(', ')}`, 2500);
+            this.flashPuzzleSprite(0xffc107);
+            return;
+        }
+
+        this.solveCurrentPuzzle(puzzle, required);
     }
 
     pickupDroppedItem(itemId) {
@@ -1399,26 +1431,7 @@ class LocationScene extends Phaser.Scene {
         this.renderDroppedItems();
         uiManager.renderInventory();
 
-        const required = (puzzle.requiredItems || []).map(id => id.trim()).filter(Boolean);
-        if (required.length === 0) {
-            this.solveCurrentPuzzle(puzzle, [itemId]);
-            return;
-        }
-
-        if (!required.includes(itemId)) {
-            uiManager.showNotification('Este item não parece encaixar aqui.', 2500);
-            this.flashPuzzleSprite(0xff6666);
-            return;
-        }
-
-        const missing = required.filter(id => !gameStateManager.isItemPlacedAtLocation(id, this.currentLocation, true));
-        if (missing.length > 0) {
-            uiManager.showNotification(`Falta posicionar: ${missing.join(', ')}`, 2500);
-            this.flashPuzzleSprite(0xffc107);
-            return;
-        }
-
-        this.solveCurrentPuzzle(puzzle, required);
+        this.evaluateItemCombinationPuzzlePlacement(puzzle, itemId);
     }
 
     solveCurrentPuzzle(puzzle, consumedItems = []) {
