@@ -84,15 +84,23 @@ try {
                  . dirname(dirname($_SERVER['PHP_SELF']))
                  . "/reset-password.html?token=" . $token;
 
+    error_log("🔵 [FORGOT-PASSWORD] Iniciando envio de email de reset");
+    error_log("🔵 [FORGOT-PASSWORD] Reset link: " . $resetLink);
+    error_log("🔵 [FORGOT-PASSWORD] SMTP_PASS configurado: " . (!empty(SMTP_PASS) ? 'SIM' : 'NÃO'));
+
     $emailSent = false;
     if (!empty(SMTP_PASS)) {
         try {
+            error_log("🔵 [FORGOT-PASSWORD] Chamando sendEmail()...");
             $subject = "Reset de Senha - Vila Abandonada 🏚️";
             $body = getPasswordResetEmailTemplate($username, $resetLink);
             $emailSent = sendEmail($email, $username, $subject, $body);
+            error_log("🔵 [FORGOT-PASSWORD] sendEmail() retornou: " . ($emailSent ? 'true' : 'false'));
         } catch (Exception $e) {
-            error_log("⚠️ Erro ao enviar email de reset: " . $e->getMessage());
+            error_log("❌ [FORGOT-PASSWORD] Erro ao enviar email de reset: " . $e->getMessage());
         }
+    } else {
+        error_log("❌ [FORGOT-PASSWORD] SMTP_PASS não configurado");
     }
 
     $conn->close();
