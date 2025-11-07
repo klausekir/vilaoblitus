@@ -589,9 +589,17 @@ class UIManager {
 
         if (isActive) {
             overlay.classList.remove('active');
+            // Reabilitar input do Phaser quando inventário fecha
+            if (this.activeScene && this.activeScene.input) {
+                this.activeScene.input.enabled = true;
+            }
         } else {
             this.renderInventory();
             overlay.classList.add('active');
+            // Desabilitar input do Phaser quando inventário abre
+            if (this.activeScene && this.activeScene.input) {
+                this.activeScene.input.enabled = false;
+            }
         }
     }
 
@@ -1163,6 +1171,10 @@ class UIManager {
         const overlay = this.inventoryOverlay || document.getElementById('inventory-overlay');
         if (overlay) {
             overlay.classList.remove('active');
+            // Reabilitar input do Phaser quando inventário fecha por drag
+            if (this.activeScene && this.activeScene.input) {
+                this.activeScene.input.enabled = true;
+            }
         }
         this.inventoryWasOpenOnDrag = false;
 

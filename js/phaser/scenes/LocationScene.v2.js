@@ -606,6 +606,23 @@ class LocationScene extends Phaser.Scene {
             sprite.on('pointerupoutside', (event) => {
                 this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
             });
+        } else if (useDom && sprite.node) {
+            // Fallback: usar eventos DOM nativos quando addListener não existe
+            sprite.node.addEventListener('mousedown', (event) => {
+                this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
+            });
+            sprite.node.addEventListener('touchstart', (event) => {
+                this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
+            });
+            sprite.node.addEventListener('mouseup', (event) => {
+                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
+            });
+            sprite.node.addEventListener('touchend', (event) => {
+                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
+            });
+            sprite.node.addEventListener('mouseleave', (event) => {
+                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
+            });
         } else if (sprite.setInteractive) {
             sprite.setInteractive({ useHandCursor: true, draggable: false });
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
