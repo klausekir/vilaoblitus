@@ -483,10 +483,6 @@ class LocationScene extends Phaser.Scene {
 
                 img.style.transform = transforms.join(' ') || 'none';
 
-                if (baseScaleX !== 1 || baseScaleY !== 1 || flipX === -1 || flipY === -1) {
-                    sprite.setScale(finalScaleX, finalScaleY);
-                }
-
                 if (typeof transform.opacity === 'number') {
                     sprite.setAlpha(transform.opacity);
                 } else {
@@ -577,10 +573,24 @@ class LocationScene extends Phaser.Scene {
             sprite.on('pointerdown', (event) => {
                 this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
             });
+            sprite.addListener('pointerup');
+            sprite.addListener('pointerupoutside');
+            sprite.on('pointerup', (event) => {
+                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
+            });
+            sprite.on('pointerupoutside', (event) => {
+                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
+            });
         } else if (sprite.setInteractive) {
             sprite.setInteractive({ useHandCursor: true, draggable: false });
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
+            });
+            sprite.on('pointerup', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
+            });
+            sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
         }
 
@@ -588,6 +598,12 @@ class LocationScene extends Phaser.Scene {
             label.setInteractive({ useHandCursor: true });
             label.on('pointerdown', (pointer, localX, localY, event) => {
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
+            });
+            label.on('pointerup', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
+            label.on('pointerupoutside', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
             });
         }
     }
@@ -608,6 +624,33 @@ class LocationScene extends Phaser.Scene {
         }
 
         this.startSceneItemDrag(entry, pointerInfo, source);
+    }
+
+    onDroppedSceneItemPointerUp(entry, pointer, event, source = 'sprite') {
+        const nativeEvent = (event && event.event) ? event.event :
+            (event instanceof Event ? event : pointer?.event || null);
+
+        debugSceneDrag('pointerup', { itemId: entry?.id, source, hasEvent: !!nativeEvent });
+
+        if (nativeEvent) {
+            this.handleSceneItemDragEnd(nativeEvent);
+            return;
+        }
+
+        if (this.activeDroppedItemDrag && (!entry || this.activeDroppedItemDrag.entry === entry)) {
+            const ctx = this.activeDroppedItemDrag;
+            const clientX = ctx.lastClientX ?? ctx.startClientX ?? 0;
+            const clientY = ctx.lastClientY ?? ctx.startClientY ?? 0;
+            this.handleSceneItemDragEnd({
+                type: 'pointerup',
+                pointerId: ctx.pointerId,
+                clientX,
+                clientY,
+                preventDefault() { },
+                stopPropagation() { },
+                cancelable: false
+            });
+        }
     }
 
     resolveScenePointerInfo(pointer, event) {
@@ -663,7 +706,11 @@ class LocationScene extends Phaser.Scene {
             moved: false,
             pointerType: pointerInfo.pointerType || 'mouse',
             originalDepth: sprite.depth ?? 0,
-            originalLabelDepth: label?.depth ?? 0
+            originalLabelDepth: label?.depth ?? 0,
+            startClientX: pointerInfo.nativeEvent?.clientX ?? null,
+            startClientY: pointerInfo.nativeEvent?.clientY ?? null,
+            lastClientX: pointerInfo.nativeEvent?.clientX ?? null,
+            lastClientY: pointerInfo.nativeEvent?.clientY ?? null
         };
 
         if (sprite.setDepth) {
@@ -715,6 +762,8 @@ class LocationScene extends Phaser.Scene {
         event?.stopPropagation?.();
 
         const world = this.clientToWorld(event.clientX, event.clientY);
+        ctx.lastClientX = event.clientX;
+        ctx.lastClientY = event.clientY;
 
         if (!ctx.moved) {
             const distance = Phaser.Math.Distance.Between(world.x, world.y, ctx.startWorldX, ctx.startWorldY);
@@ -742,6 +791,11 @@ class LocationScene extends Phaser.Scene {
         if (!ctx) return;
         const pointerId = this.normalizePointerEventId(event);
         if (pointerId !== ctx.pointerId) return;
+
+        if (typeof event.clientX === 'number' && typeof event.clientY === 'number') {
+            ctx.lastClientX = event.clientX;
+            ctx.lastClientY = event.clientY;
+        }
 
         if (event && event.cancelable) {
             event.preventDefault();
@@ -974,24 +1028,25 @@ class LocationScene extends Phaser.Scene {
             zone.setOrigin(0.5);
 
             // Label (nome do destino)
-            const label = this.add.text(x + w / 2, y + h + 10, hotspot.label, {
+            const labelCenterX = x + w / 2;
+            const labelCenterY = y + h / 2;
+            const label = this.add.text(labelCenterX, labelCenterY, hotspot.label, {
                 fontSize: '18px',
                 color: '#f0a500',
                 backgroundColor: '#000000',
                 padding: { x: 10, y: 6 },
                 fontStyle: 'bold'
             });
-            label.setOrigin(0.5, 0);
+            label.setOrigin(0.5);
             label.setAlpha(0); // Invisível por padrão
 
             // Hover effects - apenas label
             zone.on('pointerover', () => {
-                label.setAlpha(1);
-                // Animação suave de fade in
+                this.tweens.killTweensOf(label);
                 this.tweens.add({
                     targets: label,
                     alpha: 1,
-                    y: label.y - 5,
+                    scale: 1.05,
                     duration: 200,
                     ease: 'Power2'
                 });
@@ -999,8 +1054,13 @@ class LocationScene extends Phaser.Scene {
 
             zone.on('pointerout', () => {
                 this.tweens.killTweensOf(label);
-                label.setAlpha(0);
-                label.setY(y + h + 10); // Reset posição
+                this.tweens.add({
+                    targets: label,
+                    alpha: 0,
+                    scale: 1,
+                    duration: 150,
+                    ease: 'Power2'
+                });
             });
 
             // Click handler
@@ -1090,10 +1150,6 @@ class LocationScene extends Phaser.Scene {
                 img.style.transform = transformString;
 
                 // Aplicar scale TAMBÉM via Phaser (além do CSS)
-                if (baseScaleX !== 1 || baseScaleY !== 1) {
-                    element.setScale(finalScaleX, finalScaleY);
-                }
-
                 // DEBUG
                 console.log('🎨 Item:', item.id);
                 console.log('  Transform object:', transform);
