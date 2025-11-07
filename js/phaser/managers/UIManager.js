@@ -641,6 +641,10 @@ class UIManager {
         }
 
         if (this.puzzleOverlay) {
+            console.log('[PUZZLE][UI]', 'ativando overlay', {
+                beforeInline: this.puzzleOverlay.style.display,
+                hasActive: this.puzzleOverlay.classList.contains('active')
+            });
             this.puzzleOverlay.classList.add('active');
             this.puzzleOverlay.style.display = 'flex';
             this.puzzleOverlay.style.pointerEvents = 'auto';
