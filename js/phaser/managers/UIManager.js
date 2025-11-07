@@ -693,12 +693,6 @@ class UIManager {
             }
         };
 
-        if (!context.onSubmit) {
-            setSubmitEnabled(false);
-        } else {
-            setSubmitEnabled(true);
-        }
-
         const addHelperText = (text) => {
             if (!this.puzzleInputArea) return;
             const helper = document.createElement('div');
