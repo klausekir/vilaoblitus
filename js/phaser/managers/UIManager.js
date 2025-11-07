@@ -833,7 +833,11 @@ class UIManager {
             context.validateBeforeSubmit = () => ({ valid: false, message: 'Enigma não suportado.' });
         }
 
-        this.puzzleOverlay.classList.add('active');
+        if (this.puzzleOverlay) {
+            this.puzzleOverlay.classList.add('active');
+            this.puzzleOverlay.style.display = 'flex';
+            this.puzzleOverlay.style.pointerEvents = 'auto';
+        }
         console.log('[PUZZLE]', 'overlay ativo');
         this._ignoreNextPuzzleOverlayClick = true;
         setTimeout(() => {
@@ -847,6 +851,8 @@ class UIManager {
         this._ignoreNextPuzzleOverlayClick = false;
         if (this.puzzleOverlay) {
             this.puzzleOverlay.classList.remove('active');
+            this.puzzleOverlay.style.display = 'none';
+            this.puzzleOverlay.style.pointerEvents = 'none';
         }
         if (this.puzzleInputArea) {
             this.puzzleInputArea.innerHTML = '';
