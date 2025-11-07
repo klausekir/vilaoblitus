@@ -149,6 +149,30 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+            user-select: none;
+            transition: color 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
         .btn {
             width: 100%;
             padding: 14px;
@@ -267,7 +291,10 @@
                 </div>
                 <div class="form-group">
                     <label for="login-password">Senha</label>
-                    <input type="password" id="login-password" placeholder="Digite sua senha" required>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="login-password" placeholder="Digite sua senha" required>
+                        <span class="toggle-password" onclick="togglePasswordVisibility('login-password', this)">👁️</span>
+                    </div>
                 </div>
                 <button type="submit" class="btn">Entrar</button>
                 <div style="text-align: center; margin-top: 15px;">
@@ -289,7 +316,10 @@
                 </div>
                 <div class="form-group">
                     <label for="register-password">Senha</label>
-                    <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" required minlength="6">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" required minlength="6">
+                        <span class="toggle-password" onclick="togglePasswordVisibility('register-password', this)">👁️</span>
+                    </div>
                 </div>
                 <button type="submit" class="btn">Criar Conta</button>
             </form>
@@ -321,6 +351,17 @@
 
             // Clear message
             hideMessage();
+        }
+
+        function togglePasswordVisibility(inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconElement.textContent = '👁️‍🗨️'; // Eye with speech bubble (closed eye)
+            } else {
+                input.type = 'password';
+                iconElement.textContent = '👁️'; // Open eye
+            }
         }
 
         function showMessage(text, type) {
