@@ -1503,6 +1503,7 @@ class LocationScene extends Phaser.Scene {
         if (supportedTypes.includes(puzzleType)) {
             console.log('[PUZZLE]', 'abrindo dialogo suportado', puzzleType);
             const openDialog = () => {
+                console.log('[PUZZLE]', 'executando openDialog');
                 uiManager.openPuzzleDialog(puzzle, {
                     onSubmit: (payload) => this.handlePuzzleSubmission(puzzle, payload),
                     onClose: () => {
@@ -1512,11 +1513,7 @@ class LocationScene extends Phaser.Scene {
                     }
                 });
             };
-            if (this.time?.delayedCall) {
-                this.time.delayedCall(60, openDialog);
-            } else {
-                setTimeout(openDialog, 60);
-            }
+            setTimeout(openDialog, 60);
             this.flashPuzzleSprite(0xf0a500);
             return;
         }
