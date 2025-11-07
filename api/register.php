@@ -31,19 +31,24 @@ $password = $input['password'] ?? '';
 
 // Validation
 if (empty($username) || empty($email) || empty($password)) {
-    sendResponse(false, [], 'All fields are required');
+    sendResponse(false, [], 'Todos os campos são obrigatórios');
 }
 
 if (strlen($username) < 3 || strlen($username) > 50) {
-    sendResponse(false, [], 'Username must be between 3 and 50 characters');
+    sendResponse(false, [], 'Nome de usuário deve ter entre 3 e 50 caracteres');
+}
+
+// Validate username format (only letters, numbers, and underscore)
+if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+    sendResponse(false, [], 'Nome de usuário deve conter apenas letras, números e underscore (_)');
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    sendResponse(false, [], 'Invalid email format');
+    sendResponse(false, [], 'Formato de email inválido');
 }
 
 if (strlen($password) < PASSWORD_MIN_LENGTH) {
-    sendResponse(false, [], 'Password must be at least ' . PASSWORD_MIN_LENGTH . ' characters');
+    sendResponse(false, [], 'Senha deve ter no mínimo ' . PASSWORD_MIN_LENGTH . ' caracteres');
 }
 
 // Check if username or email already exists
@@ -54,7 +59,7 @@ try {
     $stmt->execute([$username, $email]);
 
     if ($stmt->fetch()) {
-        sendResponse(false, [], 'Username or email already exists');
+        sendResponse(false, [], 'Nome de usuário ou email já cadastrado');
     }
 
     // Hash password
@@ -92,9 +97,9 @@ try {
         'email' => $email,
         'is_admin' => false,
         'session_token' => $sessionToken
-    ], 'Account created successfully');
+    ], 'Conta criada com sucesso');
 
 } catch (PDOException $e) {
     error_log($e->getMessage());
-    sendResponse(false, [], 'Registration failed');
+    sendResponse(false, [], 'Falha ao criar conta. Tente novamente.');
 }

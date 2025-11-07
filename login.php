@@ -149,6 +149,28 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
+        input.invalid {
+            border-color: #f44336 !important;
+        }
+
+        input.valid {
+            border-color: #4caf50 !important;
+        }
+
+        .input-hint {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .input-hint.error {
+            color: #f44336;
+        }
+
+        .input-hint.success {
+            color: #4caf50;
+        }
+
         .password-input-wrapper {
             position: relative;
         }
@@ -308,11 +330,13 @@
             <form onsubmit="handleRegister(event)">
                 <div class="form-group">
                     <label for="register-username">Usuário</label>
-                    <input type="text" id="register-username" placeholder="Escolha um nome de usuário" required minlength="3" maxlength="50">
+                    <input type="text" id="register-username" placeholder="Escolha um nome de usuário" required minlength="3" maxlength="50" pattern="[a-zA-Z0-9_]+" title="Apenas letras, números e underscore (_)">
+                    <div id="username-hint" class="input-hint" style="color: rgba(255, 255, 255, 0.5);">Apenas letras, números e underscore (_)</div>
                 </div>
                 <div class="form-group">
                     <label for="register-email">Email</label>
                     <input type="email" id="register-email" placeholder="seu@email.com" required>
+                    <div id="email-hint" class="input-hint" style="color: rgba(255, 255, 255, 0.5);">Digite um email válido</div>
                 </div>
                 <div class="form-group">
                     <label for="register-password">Senha</label>
@@ -320,6 +344,7 @@
                         <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" required minlength="6">
                         <span class="toggle-password" onclick="togglePasswordVisibility('register-password', this)">👁️</span>
                     </div>
+                    <div id="password-hint" class="input-hint" style="color: rgba(255, 255, 255, 0.5);">Mínimo 6 caracteres</div>
                 </div>
                 <button type="submit" class="btn">Criar Conta</button>
             </form>
@@ -368,6 +393,104 @@
 
         // Check registration status on page load
         checkRegistrationStatus();
+
+        // Real-time username validation
+        const usernameInput = document.getElementById('register-username');
+        const usernameHint = document.getElementById('username-hint');
+
+        if (usernameInput && usernameHint) {
+            usernameInput.addEventListener('input', function() {
+                const username = this.value;
+                const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
+                if (username.length === 0) {
+                    // Empty - show default hint
+                    this.classList.remove('valid', 'invalid');
+                    usernameHint.textContent = 'Apenas letras, números e underscore (_)';
+                    usernameHint.className = 'input-hint';
+                    usernameHint.style.color = 'rgba(255, 255, 255, 0.5)';
+                } else if (username.length < 3) {
+                    // Too short
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    usernameHint.textContent = 'Mínimo 3 caracteres';
+                    usernameHint.className = 'input-hint error';
+                } else if (!usernameRegex.test(username)) {
+                    // Invalid characters
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    usernameHint.textContent = 'Apenas letras, números e underscore (_)';
+                    usernameHint.className = 'input-hint error';
+                } else {
+                    // Valid
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                    usernameHint.textContent = '✓ Nome de usuário válido';
+                    usernameHint.className = 'input-hint success';
+                }
+            });
+        }
+
+        // Real-time email validation
+        const emailInput = document.getElementById('register-email');
+        const emailHint = document.getElementById('email-hint');
+
+        if (emailInput && emailHint) {
+            emailInput.addEventListener('input', function() {
+                const email = this.value;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                if (email.length === 0) {
+                    // Empty - show default hint
+                    this.classList.remove('valid', 'invalid');
+                    emailHint.textContent = 'Digite um email válido';
+                    emailHint.className = 'input-hint';
+                    emailHint.style.color = 'rgba(255, 255, 255, 0.5)';
+                } else if (!emailRegex.test(email)) {
+                    // Invalid email
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    emailHint.textContent = 'Formato de email inválido';
+                    emailHint.className = 'input-hint error';
+                } else {
+                    // Valid
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                    emailHint.textContent = '✓ Email válido';
+                    emailHint.className = 'input-hint success';
+                }
+            });
+        }
+
+        // Real-time password validation
+        const passwordInput = document.getElementById('register-password');
+        const passwordHint = document.getElementById('password-hint');
+
+        if (passwordInput && passwordHint) {
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+
+                if (password.length === 0) {
+                    // Empty - show default hint
+                    this.classList.remove('valid', 'invalid');
+                    passwordHint.textContent = 'Mínimo 6 caracteres';
+                    passwordHint.className = 'input-hint';
+                    passwordHint.style.color = 'rgba(255, 255, 255, 0.5)';
+                } else if (password.length < 6) {
+                    // Too short
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    passwordHint.textContent = `${password.length}/6 caracteres`;
+                    passwordHint.className = 'input-hint error';
+                } else {
+                    // Valid
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                    passwordHint.textContent = '✓ Senha válida';
+                    passwordHint.className = 'input-hint success';
+                }
+            });
+        }
 
         // Add back button
         const container = document.querySelector('.container');
@@ -466,11 +589,38 @@
         async function handleRegister(e) {
             e.preventDefault();
             hideMessage();
-            showLoading();
 
-            const username = document.getElementById('register-username').value;
-            const email = document.getElementById('register-email').value;
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
             const password = document.getElementById('register-password').value;
+
+            // Validate username format
+            const usernameRegex = /^[a-zA-Z0-9_]+$/;
+            if (!usernameRegex.test(username)) {
+                showMessage('Nome de usuário deve conter apenas letras, números e underscore (_)', 'error');
+                return;
+            }
+
+            // Validate username length
+            if (username.length < 3 || username.length > 50) {
+                showMessage('Nome de usuário deve ter entre 3 e 50 caracteres', 'error');
+                return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('Email inválido', 'error');
+                return;
+            }
+
+            // Validate password length
+            if (password.length < 6) {
+                showMessage('Senha deve ter no mínimo 6 caracteres', 'error');
+                return;
+            }
+
+            showLoading();
 
             try {
                 const response = await fetch('api/register.php', {
