@@ -988,6 +988,59 @@ class LocationScene extends Phaser.Scene {
         }
     }
 
+    handlePuzzleSubmission(puzzle, payload = {}) {
+        if (!puzzle) {
+            return { success: false, message: 'Enigma inválido.' };
+        }
+
+        if (gameStateManager.isPuzzleSolved(puzzle.id)) {
+            return { success: true, message: 'Este enigma já foi resolvido.', closeDelay: 700 };
+        }
+
+        switch (puzzle.type) {
+            case 'code':
+            case 'math':
+                return this.evaluateAnswerPuzzle(puzzle, payload);
+            default:
+                return {
+                    success: false,
+                    message: 'Este tipo de enigma ainda não está disponível nesta versão.'
+                };
+        }
+    }
+
+    evaluateAnswerPuzzle(puzzle, payload = {}) {
+        const attemptRaw = (payload.answer ?? '').toString().trim();
+        if (!attemptRaw) {
+            this.flashPuzzleSprite(0xff6666);
+            return { success: false, message: 'Digite uma resposta.' };
+        }
+
+        const expectedRaw = puzzle.correctAnswer ?? puzzle.answer;
+        if (expectedRaw === undefined || expectedRaw === null || expectedRaw === '') {
+            return { success: false, message: 'Este enigma está sem resposta configurada.' };
+        }
+
+        const normalizedAttempt = attemptRaw.toLowerCase();
+        const normalizedExpected = expectedRaw.toString().trim().toLowerCase();
+
+        if (normalizedAttempt === normalizedExpected) {
+            this.solveCurrentPuzzle(puzzle);
+            return {
+                success: true,
+                message: 'Código correto!',
+                closeDelay: 900
+            };
+        }
+
+        this.flashPuzzleSprite(0xff6666);
+        const hintSuffix = puzzle.hint ? ` Dica: ${puzzle.hint}` : '';
+        return {
+            success: false,
+            message: `Código incorreto.${hintSuffix}`
+        };
+    }
+
     evaluateItemCombinationPuzzlePlacement(puzzle, itemId) {
         if (!puzzle || puzzle.type !== 'item_combination') return;
         if (gameStateManager.isPuzzleSolved(puzzle.id)) {
@@ -1335,7 +1388,28 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
-        uiManager.showNotification('Arraste o item correto do inventário até o enigma.');
+        const puzzleType = puzzle.type || 'item_combination';
+
+        if (puzzleType === 'item_combination') {
+            uiManager.showNotification('Arraste o item correto do inventário até o enigma.');
+            this.flashPuzzleSprite();
+            return;
+        }
+
+        if (puzzleType === 'code' || puzzleType === 'math') {
+            uiManager.openPuzzleDialog(puzzle, {
+                onSubmit: (payload) => this.handlePuzzleSubmission(puzzle, payload),
+                onClose: () => {
+                    if (!gameStateManager.isPuzzleSolved(puzzle.id)) {
+                        this.flashPuzzleSprite();
+                    }
+                }
+            });
+            this.flashPuzzleSprite(0xf0a500);
+            return;
+        }
+
+        uiManager.showNotification('Este tipo de enigma ainda não está disponível.');
         this.flashPuzzleSprite();
     }
 
@@ -1609,5 +1683,9 @@ class LocationScene extends Phaser.Scene {
 
         // Remover listener de resize
         this.scale.off('resize', this.handleResize, this);
+
+        if (uiManager && typeof uiManager.closePuzzleOverlay === 'function') {
+            uiManager.closePuzzleOverlay('scene-shutdown');
+        }
     }
 }

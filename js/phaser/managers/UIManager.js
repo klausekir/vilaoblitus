@@ -19,6 +19,15 @@ class UIManager {
         this.boundEndInventoryDrag = this.endInventoryDrag.bind(this);
         this.inventoryWasOpenOnDrag = false;
         this.inventoryOverlay = null;
+        this.puzzleOverlay = null;
+        this.puzzleTitleEl = null;
+        this.puzzleQuestionEl = null;
+        this.puzzleHintEl = null;
+        this.puzzleInputArea = null;
+        this.puzzleMessageEl = null;
+        this.puzzleSubmitBtn = null;
+        this.puzzleCancelBtn = null;
+        this.activePuzzleContext = null;
         if (typeof gameStateManager !== 'undefined' && gameStateManager.on) {
             gameStateManager.on('inventoryChanged', () => this.renderInventory());
         }
@@ -47,6 +56,9 @@ class UIManager {
 
         // Inventory overlay
         this.createInventoryOverlay(uiContainer);
+
+        // Puzzle overlay
+        this.createPuzzleOverlay(uiContainer);
 
         // Location info
         this.createLocationInfo(uiContainer);
@@ -208,6 +220,100 @@ class UIManager {
                 color: #f0a500;
                 font-size: 22px;
             }
+            .puzzle-modal {
+                max-width: 520px;
+                width: min(90vw, 460px);
+                background: linear-gradient(180deg, rgba(26,26,26,0.95) 0%, rgba(15,15,15,0.95) 100%);
+                border: 2px solid #f0a500;
+                border-radius: 16px;
+                padding: 32px 28px 28px;
+                color: #f5ede1;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.65);
+            }
+            .puzzle-modal h2 {
+                font-size: 24px;
+                margin-bottom: 12px;
+                color: #f0a500;
+            }
+            .puzzle-question {
+                font-size: 16px;
+                line-height: 1.5;
+                margin-bottom: 18px;
+                color: #f5ede1;
+            }
+            .puzzle-hint {
+                font-size: 14px;
+                margin-bottom: 20px;
+                color: #f1c27d;
+            }
+            .puzzle-input-area {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .puzzle-input {
+                background: rgba(0, 0, 0, 0.55);
+                border: 1px solid rgba(240, 165, 0, 0.35);
+                border-radius: 8px;
+                padding: 12px 14px;
+                font-size: 18px;
+                color: #ffffff;
+                outline: none;
+                transition: border-color 0.2s, box-shadow 0.2s;
+            }
+            .puzzle-input:focus {
+                border-color: #f0a500;
+                box-shadow: 0 0 0 2px rgba(240, 165, 0, 0.18);
+            }
+            .puzzle-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+                margin-top: 24px;
+            }
+            .phaser-btn-primary,
+            .phaser-btn-secondary {
+                padding: 10px 18px;
+                border-radius: 8px;
+                border: 2px solid transparent;
+                font-size: 16px;
+                cursor: pointer;
+                transition: transform 0.2s, background 0.2s, border-color 0.2s;
+            }
+            .phaser-btn-primary {
+                background: linear-gradient(135deg, #f0a500, #f5c75a);
+                color: #1a1a1a;
+                border-color: #f5c75a;
+            }
+            .phaser-btn-primary:hover {
+                transform: translateY(-1px);
+            }
+            .phaser-btn-secondary {
+                background: rgba(255, 255, 255, 0.08);
+                color: #f5ede1;
+                border-color: rgba(255, 255, 255, 0.18);
+            }
+            .phaser-btn-secondary:hover {
+                transform: translateY(-1px);
+                background: rgba(255, 255, 255, 0.12);
+            }
+            .phaser-btn-primary:disabled,
+            .phaser-btn-secondary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+            .puzzle-message {
+                margin-top: 16px;
+                font-size: 15px;
+                min-height: 22px;
+                color: #f5ede1;
+            }
+            .puzzle-message.success {
+                color: #6df58f;
+            }
+            .puzzle-message.error {
+                color: #ff8484;
+            }
         `;
         document.head.appendChild(style);
 
@@ -257,6 +363,79 @@ class UIManager {
         `;
         container.appendChild(overlay);
         this.inventoryOverlay = overlay;
+    }
+
+    createPuzzleOverlay(container) {
+        const overlay = document.createElement('div');
+        overlay.id = 'puzzle-overlay';
+        overlay.className = 'phaser-overlay';
+
+        const modal = document.createElement('div');
+        modal.className = 'phaser-overlay-content puzzle-modal';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'phaser-close-btn';
+        closeBtn.textContent = '✕';
+        closeBtn.addEventListener('click', () => this.closePuzzleOverlay('close-button'));
+
+        const title = document.createElement('h2');
+        title.textContent = 'Enigma';
+
+        const question = document.createElement('p');
+        question.className = 'puzzle-question';
+
+        const hint = document.createElement('div');
+        hint.className = 'puzzle-hint';
+
+        const inputArea = document.createElement('div');
+        inputArea.className = 'puzzle-input-area';
+
+        const message = document.createElement('div');
+        message.className = 'puzzle-message';
+
+        const actions = document.createElement('div');
+        actions.className = 'puzzle-actions';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'phaser-btn-secondary';
+        cancelBtn.type = 'button';
+        cancelBtn.textContent = 'Cancelar';
+        cancelBtn.addEventListener('click', () => this.closePuzzleOverlay('cancel'));
+
+        const submitBtn = document.createElement('button');
+        submitBtn.className = 'phaser-btn-primary';
+        submitBtn.type = 'button';
+        submitBtn.textContent = 'Confirmar';
+        submitBtn.addEventListener('click', () => this.submitActivePuzzle());
+
+        actions.appendChild(cancelBtn);
+        actions.appendChild(submitBtn);
+
+        modal.appendChild(closeBtn);
+        modal.appendChild(title);
+        modal.appendChild(question);
+        modal.appendChild(hint);
+        modal.appendChild(inputArea);
+        modal.appendChild(message);
+        modal.appendChild(actions);
+
+        overlay.appendChild(modal);
+        container.appendChild(overlay);
+
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) {
+                this.closePuzzleOverlay('backdrop');
+            }
+        });
+
+        this.puzzleOverlay = overlay;
+        this.puzzleTitleEl = title;
+        this.puzzleQuestionEl = question;
+        this.puzzleHintEl = hint;
+        this.puzzleInputArea = inputArea;
+        this.puzzleMessageEl = message;
+        this.puzzleSubmitBtn = submitBtn;
+        this.puzzleCancelBtn = cancelBtn;
     }
 
     createLocationInfo(container) {
@@ -365,6 +544,202 @@ class UIManager {
 
             grid.appendChild(itemDiv);
         });
+    }
+
+    resetPuzzleOverlay() {
+        if (this.puzzleSubmitBtn) {
+            this.puzzleSubmitBtn.disabled = false;
+        }
+        if (this.puzzleCancelBtn) {
+            this.puzzleCancelBtn.disabled = false;
+        }
+        if (this.puzzleMessageEl) {
+            this.puzzleMessageEl.textContent = '';
+            this.puzzleMessageEl.className = 'puzzle-message';
+        }
+    }
+
+    openPuzzleDialog(puzzle, options = {}) {
+        if (!puzzle || !this.puzzleOverlay) {
+            return;
+        }
+
+        if (this.activePuzzleContext) {
+            this.closePuzzleOverlay('replace');
+        }
+
+        this.resetPuzzleOverlay();
+        if (this.puzzleInputArea) {
+            this.puzzleInputArea.innerHTML = '';
+        }
+
+        const context = {
+            puzzle,
+            onSubmit: typeof options.onSubmit === 'function' ? options.onSubmit : null,
+            onSolved: typeof options.onSolved === 'function' ? options.onSolved : null,
+            onClose: typeof options.onClose === 'function' ? options.onClose : null,
+            primaryInput: null
+        };
+        this.activePuzzleContext = context;
+
+        if (this.puzzleTitleEl) {
+            const title = options.title || puzzle.title || puzzle.name || 'Enigma';
+            this.puzzleTitleEl.textContent = title;
+        }
+
+        if (this.puzzleQuestionEl) {
+            this.puzzleQuestionEl.textContent = puzzle.question || 'Resolva o enigma para continuar.';
+        }
+
+        if (this.puzzleHintEl) {
+            if (puzzle.hint) {
+                this.puzzleHintEl.style.display = 'block';
+                this.puzzleHintEl.textContent = `Dica: ${puzzle.hint}`;
+            } else {
+                this.puzzleHintEl.style.display = 'none';
+                this.puzzleHintEl.textContent = '';
+            }
+        }
+
+        let primaryInput = null;
+
+        if (puzzle.type === 'code' || puzzle.type === 'math') {
+            primaryInput = document.createElement('input');
+            primaryInput.type = 'text';
+            primaryInput.className = 'puzzle-input';
+            primaryInput.placeholder = options.placeholder || (puzzle.type === 'code' ? 'Digite o código' : 'Digite a resposta');
+            primaryInput.maxLength = 32;
+            if (puzzle.type === 'code') {
+                primaryInput.inputMode = 'numeric';
+                primaryInput.pattern = '[0-9]*';
+            }
+            primaryInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    this.submitActivePuzzle();
+                }
+            });
+            this.puzzleInputArea?.appendChild(primaryInput);
+        } else {
+            const unsupported = document.createElement('div');
+            unsupported.style.fontSize = '15px';
+            unsupported.style.color = '#ffb57d';
+            unsupported.textContent = 'Este tipo de enigma ainda não está disponível nesta versão.';
+            this.puzzleInputArea?.appendChild(unsupported);
+            if (this.puzzleSubmitBtn) {
+                this.puzzleSubmitBtn.disabled = true;
+            }
+        }
+
+        context.primaryInput = primaryInput;
+
+        if (!context.onSubmit && this.puzzleSubmitBtn) {
+            this.puzzleSubmitBtn.disabled = true;
+        }
+
+        this.puzzleOverlay.classList.add('active');
+
+        if (primaryInput) {
+            setTimeout(() => primaryInput.focus(), 60);
+        }
+    }
+
+    closePuzzleOverlay(reason = 'cancel') {
+        const ctx = this.activePuzzleContext;
+        this.activePuzzleContext = null;
+        if (this.puzzleOverlay) {
+            this.puzzleOverlay.classList.remove('active');
+        }
+        if (this.puzzleInputArea) {
+            this.puzzleInputArea.innerHTML = '';
+        }
+        this.resetPuzzleOverlay();
+
+        if (ctx && typeof ctx.onClose === 'function') {
+            try {
+                ctx.onClose(reason);
+            } catch (error) {
+                console.error('Erro no callback onClose do enigma:', error);
+            }
+        }
+    }
+
+    setPuzzleMessage(message, type = '') {
+        if (!this.puzzleMessageEl) return;
+        const classList = ['puzzle-message'];
+        if (type) {
+            classList.push(type);
+        }
+        this.puzzleMessageEl.className = classList.join(' ');
+        this.puzzleMessageEl.textContent = message || '';
+    }
+
+    async submitActivePuzzle() {
+        const ctx = this.activePuzzleContext;
+        if (!ctx || typeof ctx.onSubmit !== 'function') {
+            return;
+        }
+
+        if (this.puzzleSubmitBtn?.disabled) {
+            return;
+        }
+
+        const payload = {};
+        if (ctx.puzzle.type === 'code' || ctx.puzzle.type === 'math') {
+            payload.answer = ctx.primaryInput ? ctx.primaryInput.value : '';
+        }
+
+        if (this.puzzleSubmitBtn) {
+            this.puzzleSubmitBtn.disabled = true;
+        }
+        if (this.puzzleCancelBtn) {
+            this.puzzleCancelBtn.disabled = true;
+        }
+        if (ctx.primaryInput) {
+            ctx.primaryInput.disabled = true;
+        }
+
+        let result;
+        try {
+            result = await ctx.onSubmit(payload);
+        } catch (error) {
+            console.error('Erro ao processar resposta do enigma:', error);
+            result = { success: false, message: 'Erro ao processar o enigma.' };
+        }
+
+        if (this.activePuzzleContext !== ctx) {
+            return;
+        }
+
+        if (!result) {
+            result = { success: false, message: 'Resposta inválida.' };
+        }
+
+        if (result.success) {
+            this.setPuzzleMessage(result.message || 'Enigma resolvido!', 'success');
+            if (typeof ctx.onSolved === 'function') {
+                try {
+                    ctx.onSolved(result);
+                } catch (error) {
+                    console.error('Erro no callback onSolved do enigma:', error);
+                }
+            }
+            const delay = typeof result.closeDelay === 'number' ? result.closeDelay : 1200;
+            setTimeout(() => this.closePuzzleOverlay('success'), delay);
+        } else {
+            this.setPuzzleMessage(result.message || 'Resposta incorreta.', 'error');
+            if (ctx.primaryInput) {
+                ctx.primaryInput.disabled = false;
+                ctx.primaryInput.focus();
+                ctx.primaryInput.select?.();
+            }
+            if (this.puzzleSubmitBtn) {
+                this.puzzleSubmitBtn.disabled = false;
+            }
+            if (this.puzzleCancelBtn) {
+                this.puzzleCancelBtn.disabled = false;
+            }
+        }
     }
 
     startInventoryDrag(item, event) {
