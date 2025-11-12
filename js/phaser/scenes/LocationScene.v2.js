@@ -542,7 +542,7 @@ class LocationScene extends Phaser.Scene {
                 sprite = this.add.image(worldX, worldY, textureKey);
                 sprite.setDisplaySize(size.width, size.height);
                 sprite.setOrigin(0.5);
-                sprite.setDepth(102); // Acima do label (101) para capturar cliques primeiro
+                sprite.setDepth(100);
             } else if (imagePath) {
                 // Textura não existe - carregar dinamicamente e criar sprite Phaser
                 // Criar retângulo temporário
@@ -567,7 +567,7 @@ class LocationScene extends Phaser.Scene {
                             const newSprite = this.add.image(sprite.x, sprite.y, textureKey);
                             newSprite.setDisplaySize(size.width, size.height);
                             newSprite.setOrigin(0.5);
-                            newSprite.setDepth(102); // Acima do label (101) para capturar cliques primeiro
+                            newSprite.setDepth(100);
 
                             // Destruir o temporário
                             sprite.destroy();
@@ -589,13 +589,13 @@ class LocationScene extends Phaser.Scene {
             }
 
             sprite.setOrigin?.(0.5);
-            sprite.setDepth(102); // Acima do label
+            sprite.setDepth(100);
             this.applySpriteTransform(sprite, transform || {});
         }
 
         if (!sprite) return;
 
-        sprite.setDepth?.(102); // Acima do label (101) para capturar cliques primeiro
+        sprite.setDepth?.(100);
 
         // IMPORTANTE: Recalcular useDom baseado no sprite real criado
         // Mesmo que renderMode seja 'sprite', se criamos um DOM element (quando textura não existe),
@@ -635,30 +635,11 @@ class LocationScene extends Phaser.Scene {
 
         const { sprite, label } = entry;
 
-        // LIMPAR qualquer interatividade anterior
-        if (sprite.input) {
-            sprite.disableInteractive();
-        }
-        if (label && label.input) {
-            label.disableInteractive();
-        }
-
-        // Sprite é o ÚNICO elemento interativo
-        // hitArea GRANDE cobrindo sprite + label
+        // VOLTAR PARA VERSÃO SIMPLES que funcionava
         if (sprite.setInteractive) {
-            const hitArea = new Phaser.Geom.Rectangle(
-                -entry.size.width / 2,
-                -entry.size.height / 2,
-                entry.size.width,
-                entry.size.height + 35  // +35 para cobrir o label abaixo
-            );
-
             sprite.setInteractive({
-                hitArea: hitArea,
-                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
                 useHandCursor: true,
-                draggable: false,
-                pixelPerfect: false
+                pixelPerfect: false  // ÚNICA mudança: ignorar transparências
             });
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
@@ -674,7 +655,21 @@ class LocationScene extends Phaser.Scene {
             });
         }
 
-        // Label NÃO interativo - sprite captura tudo
+        if (label && label.setInteractive) {
+            label.setInteractive({ useHandCursor: true });
+
+            label.on('pointerdown', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerup', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerupoutside', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
+        }
     }
 
     onDroppedSceneItemPointerDown(entry, pointer, event, source = 'sprite') {
