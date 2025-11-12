@@ -639,36 +639,35 @@ class LocationScene extends Phaser.Scene {
 
         debugSceneDrag('attach-interactions', { itemId: entry.id, hasSetInteractive: !!sprite.setInteractive, hasLabel: !!label });
 
-        // SIMPLIFICADO: Sempre usar Phaser listeners se disponível
+        // Usar sistema de drag nativo do Phaser - MUITO MAIS SIMPLES E CONFIÁVEL
         if (sprite.setInteractive) {
-            sprite.setInteractive({ useHandCursor: true });
+            sprite.setInteractive({ draggable: true, useHandCursor: true });
 
-            sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                debugSceneDrag('sprite-pointerdown', { itemId: entry.id, pointerId: pointer.id });
-                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
-            });
-
-            sprite.on('pointerup', (pointer, localX, localY, event) => {
-                debugSceneDrag('sprite-pointerup', { itemId: entry.id, hasActiveDrag: !!this.activeDroppedItemDrag });
-                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
+            sprite.on('dragstart', (pointer) => {
+                debugSceneDrag('dragstart', { itemId: entry.id, pointerId: pointer.id });
+                if (sprite.setDepth) sprite.setDepth(120);
+                if (label?.setDepth) label.setDepth(122);
             });
 
-            sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
-                debugSceneDrag('sprite-pointerupoutside', { itemId: entry.id, hasActiveDrag: !!this.activeDroppedItemDrag });
-                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
+            sprite.on('drag', (pointer, dragX, dragY) => {
+                const clamped = this.clampToBackgroundBounds(dragX, dragY, entry);
+                sprite.setPosition(clamped.x, clamped.y);
+                if (label) {
+                    const labelOffsetX = 0;
+                    const labelOffsetY = entry.size.height / 2 + 8;
+                    label.setPosition(clamped.x + labelOffsetX, clamped.y + labelOffsetY);
+                }
             });
-        }
 
-        if (label && label.setInteractive) {
-            label.setInteractive({ useHandCursor: true });
-            label.on('pointerdown', (pointer, localX, localY, event) => {
-                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
-            });
-            label.on('pointerup', (pointer, localX, localY, event) => {
-                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
-            });
-            label.on('pointerupoutside', (pointer, localX, localY, event) => {
-                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            sprite.on('dragend', (pointer) => {
+                debugSceneDrag('dragend', { itemId: entry.id });
+                if (sprite.setDepth) sprite.setDepth(100);
+                if (label?.setDepth) label.setDepth(101);
+
+                // Salvar nova posição
+                entry.transform = entry.transform || {};
+                entry.transform.x = sprite.x;
+                entry.transform.y = sprite.y;
             });
         }
     }
