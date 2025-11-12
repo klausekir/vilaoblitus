@@ -635,14 +635,35 @@ class LocationScene extends Phaser.Scene {
 
         const { sprite, label } = entry;
 
-        if (sprite.setInteractive) {
+        // Detectar se é DOMElement
+        const isDomElement = !!(sprite.node);
+
+        if (isDomElement && sprite.node) {
+            // Para DOMElements, usar event listeners DOM nativos
+            const domNode = sprite.node;
+            domNode.style.cursor = 'pointer';
+
+            domNode.addEventListener('pointerdown', (event) => {
+                console.log('🖱️ DOM SPRITE CLICK:', entry.data?.id || 'no-id');
+                // Criar pointer fake para compatibilidade
+                const pointer = this.input.activePointer;
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
+            });
+
+            domNode.addEventListener('pointerup', (event) => {
+                const pointer = this.input.activePointer;
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
+            });
+
+        } else if (sprite.setInteractive) {
+            // Para sprites Phaser normais
             sprite.setInteractive({
                 useHandCursor: true,
                 pixelPerfect: false
             });
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                console.log('🖱️ SPRITE CLICK:', entry.item?.id || 'no-id', 'type:', sprite.type, 'texture:', sprite.texture?.key);
+                console.log('🖱️ SPRITE CLICK:', entry.data?.id || 'no-id', 'type:', sprite.type, 'texture:', sprite.texture?.key);
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
             });
 
@@ -659,7 +680,7 @@ class LocationScene extends Phaser.Scene {
             label.setInteractive({ useHandCursor: true });
 
             label.on('pointerdown', (pointer, localX, localY, event) => {
-                console.log('🖱️ LABEL CLICK:', entry.item?.id || 'no-id');
+                console.log('🖱️ LABEL CLICK:', entry.data?.id || 'no-id');
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
             });
 
