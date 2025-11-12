@@ -643,28 +643,19 @@ class LocationScene extends Phaser.Scene {
         if (sprite.setInteractive) {
             sprite.setInteractive({ useHandCursor: true });
 
-            sprite.on('pointerdown', (pointer) => {
+            sprite.on('pointerdown', (pointer, localX, localY, event) => {
                 debugSceneDrag('sprite-pointerdown', { itemId: entry.id, pointerId: pointer.id });
-                this.startSceneItemDrag(entry, {
-                    pointerId: pointer.id,
-                    worldX: pointer.worldX,
-                    worldY: pointer.worldY,
-                    pointerType: pointer.pointerType || 'mouse',
-                    nativeEvent: pointer.event
-                }, 'sprite');
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
             });
 
-            sprite.on('pointerup', () => {
+            sprite.on('pointerup', (pointer, localX, localY, event) => {
                 debugSceneDrag('sprite-pointerup', { itemId: entry.id, hasActiveDrag: !!this.activeDroppedItemDrag });
-                if (this.activeDroppedItemDrag && this.activeDroppedItemDrag.entry === entry) {
-                    this.handleSceneItemDragEnd({ type: 'pointerup', pointerId: this.activeDroppedItemDrag.pointerId });
-                }
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
 
-            sprite.on('pointerupoutside', () => {
-                if (this.activeDroppedItemDrag && this.activeDroppedItemDrag.entry === entry) {
-                    this.handleSceneItemDragEnd({ type: 'pointerup', pointerId: this.activeDroppedItemDrag.pointerId });
-                }
+            sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
+                debugSceneDrag('sprite-pointerupoutside', { itemId: entry.id, hasActiveDrag: !!this.activeDroppedItemDrag });
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
         }
 
