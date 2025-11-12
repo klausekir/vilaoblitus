@@ -846,7 +846,10 @@ class LocationScene extends Phaser.Scene {
         const ctx = this.activeDroppedItemDrag;
         if (!ctx) return;
         const pointerId = this.normalizePointerEventId(event);
-        if (pointerId !== ctx.pointerId) return;
+
+        // Aceitar tanto pointer.id (0) quanto event.pointerId (1) para mouse
+        const isMousePointer = (pointerId === 0 || pointerId === 1) && (ctx.pointerId === 0 || ctx.pointerId === 1);
+        if (!isMousePointer && pointerId !== ctx.pointerId) return;
 
         if (typeof event.clientX === 'number' && typeof event.clientY === 'number') {
             ctx.lastClientX = event.clientX;
