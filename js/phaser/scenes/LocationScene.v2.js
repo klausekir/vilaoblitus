@@ -650,39 +650,9 @@ class LocationScene extends Phaser.Scene {
 
         debugSceneDrag('attach-interactions', { itemId: entry.id, hasSetInteractive: !!sprite.setInteractive, hasLabel: !!label });
 
-        // Sprite é o ÚNICO elemento interativo
-        // HitArea expandida para incluir o texto do label
+        // VERSÃO SIMPLES: ambos interativos, mesma lógica
         if (sprite.setInteractive) {
-            // Calcular hitArea ANTES de setInteractive
-            const spriteHeight = entry.size.height;
-            const labelHeight = label ? 30 : 0; // Altura do label + padding
-
-            const hitArea = new Phaser.Geom.Rectangle(
-                -entry.size.width / 2,
-                -spriteHeight / 2,
-                entry.size.width,
-                spriteHeight + labelHeight
-            );
-
-            // SetInteractive COM a hitArea já definida
-            sprite.setInteractive({
-                hitArea: hitArea,
-                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-                useHandCursor: true,
-                draggable: false,
-                pixelPerfect: false
-            });
-
-            debugSceneDrag('sprite-made-interactive', {
-                itemId: entry.id,
-                spriteType: sprite.type,
-                depth: sprite.depth,
-                hitArea: { x: hitArea.x, y: hitArea.y, width: hitArea.width, height: hitArea.height }
-            });
-
-            sprite.on('pointerover', () => {
-                debugSceneDrag('sprite-pointerover', { itemId: entry.id });
-            });
+            sprite.setInteractive({ useHandCursor: true });
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
                 debugSceneDrag('sprite-pointerdown', { itemId: entry.id, pointerId: pointer.id });
@@ -698,8 +668,25 @@ class LocationScene extends Phaser.Scene {
                 debugSceneDrag('sprite-pointerupoutside', { itemId: entry.id });
                 this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
-        } else {
-            debugSceneDrag('sprite-NO-setInteractive', { itemId: entry.id, spriteType: sprite.type });
+        }
+
+        if (label && label.setInteractive) {
+            label.setInteractive({ useHandCursor: true });
+
+            label.on('pointerdown', (pointer, localX, localY, event) => {
+                debugSceneDrag('label-pointerdown', { itemId: entry.id, pointerId: pointer.id });
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerup', (pointer, localX, localY, event) => {
+                debugSceneDrag('label-pointerup', { itemId: entry.id });
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerupoutside', (pointer, localX, localY, event) => {
+                debugSceneDrag('label-pointerupoutside', { itemId: entry.id });
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
         }
     }
 
