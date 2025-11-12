@@ -542,7 +542,9 @@ class LocationScene extends Phaser.Scene {
                 debugSceneDrag('creating-sprite-existing-texture', { itemId: item.id, textureKey });
                 sprite = this.add.image(worldX, worldY, textureKey);
                 sprite.setDisplaySize(size.width, size.height);
-                debugSceneDrag('sprite-created', { itemId: item.id, hasSetInteractive: !!sprite.setInteractive });
+                sprite.setOrigin(0.5);
+                sprite.setDepth(100);
+                debugSceneDrag('sprite-created', { itemId: item.id, hasSetInteractive: !!sprite.setInteractive, type: sprite.type });
             } else if (imagePath) {
                 // Textura não existe - carregar dinamicamente e criar sprite Phaser
                 debugSceneDrag('loading-texture-dynamically', { itemId: item.id, textureKey, imagePath });
