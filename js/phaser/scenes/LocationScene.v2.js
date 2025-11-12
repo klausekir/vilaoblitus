@@ -633,79 +633,18 @@ class LocationScene extends Phaser.Scene {
     attachDroppedItemInteractions(entry) {
         if (!entry || !entry.sprite) return;
 
-        const { sprite, label } = entry;
+        const { sprite, label, useDom } = entry;
 
-        debugSceneDrag('attach-interactions', {
-            itemId: entry.id,
-            hasNode: !!(sprite.node),
-            hasSetInteractive: typeof sprite.setInteractive === 'function'
-        });
-
-        // NOVA ABORDAGEM SIMPLIFICADA:
-        // Sempre usar setInteractive do Phaser se disponível
-        // Isso garante consistência para todos os tipos de sprite
-
-        if (sprite.setInteractive) {
-            debugSceneDrag('using-simplified-approach', { itemId: entry.id });
-
-            sprite.setInteractive({
-                useHandCursor: true,
-                draggable: false,
-                pixelPerfect: false  // Não fazer hit test pixel perfeito
-            });
-
-            // IMPORTANTE: Desabilitar pointer capture para não interferir com window listeners
-            sprite.disableInteractive();
-            sprite.setInteractive({ useHandCursor: true, draggable: false });
-
-            // Remover captura automática de pointer
-            sprite.removeInteractive = false;
-
-            // IMPORTANTE: Capturar o evento nativo ANTES do Phaser processar
-            sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                // Usar o activePointer.event que tem o pointerId correto
-                const nativeEvent = this.input.activePointer?.event || event;
-                const realPointerId = nativeEvent?.pointerId ?? 1; // Mouse é sempre 1
-
-                debugSceneDrag('sprite-pointerdown', {
-                    itemId: entry.id,
-                    phaserPointerId: pointer.id,
-                    nativePointerId: realPointerId
-                });
-
-                // Prevenir que o Phaser capture o ponteiro
-                if (this.input.manager && this.input.manager.mouse) {
-                    this.input.manager.mouse.locked = false;
-                }
-
-                // Criar um objeto pointer modificado com o pointerId correto
-                const modifiedPointer = {
-                    ...pointer,
-                    id: realPointerId,
-                    pointerId: realPointerId
-                };
-
-                this.onDroppedSceneItemPointerDown(entry, modifiedPointer, nativeEvent, 'sprite');
-            });
-
-            sprite.on('pointerup', (pointer, localX, localY, event) => {
-                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
-            });
-
-            sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
-                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
-            });
-        } else if (sprite.node) {
-            // Fallback para DOM elements sem setInteractive
-            debugSceneDrag('using-dom-fallback', { itemId: entry.id });
-
+        // Estilo do cursor para DOM
+        if (useDom && sprite.node) {
             sprite.node.style.cursor = 'grab';
             sprite.node.style.touchAction = 'none';
             sprite.node.style.userSelect = 'none';
+        }
 
+        // DOM com node
+        if (useDom && sprite.node) {
             sprite.node.addEventListener('pointerdown', (event) => {
-                debugSceneDrag('dom-pointerdown', { itemId: entry.id, pointerId: event.pointerId });
-
                 const world = this.clientToWorld(event.clientX, event.clientY);
                 const fakePointer = {
                     id: event.pointerId,
@@ -714,15 +653,24 @@ class LocationScene extends Phaser.Scene {
                     worldY: world.y,
                     pointerType: event.pointerType || 'mouse'
                 };
-
                 this.onDroppedSceneItemPointerDown(entry, fakePointer, event, 'sprite');
             });
-
             sprite.node.addEventListener('pointerup', (event) => {
                 this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
             });
-        } else {
-            debugSceneDrag('no-listeners-attached', { itemId: entry.id });
+        }
+        // Sprite Phaser normal
+        else if (sprite.setInteractive) {
+            sprite.setInteractive({ useHandCursor: true, draggable: false });
+            sprite.on('pointerdown', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
+            });
+            sprite.on('pointerup', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
+            });
+            sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
+            });
         }
 
         if (label && label.setInteractive) {
@@ -742,22 +690,7 @@ class LocationScene extends Phaser.Scene {
     onDroppedSceneItemPointerDown(entry, pointer, event, source = 'sprite') {
         if (!entry) return;
         const pointerInfo = this.resolveScenePointerInfo(pointer, event);
-        if (!pointerInfo) {
-            debugSceneDrag('pointerdown-missed', { itemId: entry.id, source });
-            return;
-        }
-
-        debugSceneDrag('pointerdown-resolved', {
-            itemId: entry.id,
-            source,
-            pointerId: pointerInfo.pointerId,
-            useDom: entry.useDom,
-            hasNode: !!entry.sprite?.node
-        });
-
-        // Don't preventDefault or stopPropagation on pointerdown
-        // This allows window-level pointermove events to work properly
-        // preventDefault should only be on pointermove to prevent scrolling
+        if (!pointerInfo) return;
 
         this.startSceneItemDrag(entry, pointerInfo, source);
     }
@@ -765,8 +698,6 @@ class LocationScene extends Phaser.Scene {
     onDroppedSceneItemPointerUp(entry, pointer, event, source = 'sprite') {
         const nativeEvent = (event && event.event) ? event.event :
             (event instanceof Event ? event : pointer?.event || null);
-
-        debugSceneDrag('pointerup', { itemId: entry?.id, source, hasEvent: !!nativeEvent });
 
         if (nativeEvent) {
             this.handleSceneItemDragEnd(nativeEvent);
@@ -791,50 +722,16 @@ class LocationScene extends Phaser.Scene {
 
     resolveScenePointerInfo(pointer, event) {
         if (pointer && typeof pointer.worldX === 'number' && typeof pointer.worldY === 'number') {
-            // Tentar obter o evento DOM real de várias fontes
-            let nativeEvent = null;
-
-            // 1. Evento passado diretamente
-            if (event && event.pointerId !== undefined) {
-                nativeEvent = event;
-            }
-            // 2. pointer.event (pode ter o evento DOM)
-            else if (pointer.event && pointer.event.pointerId !== undefined) {
-                nativeEvent = pointer.event;
-            }
-            // 3. Acessar pelo input manager do Phaser (última tentativa)
-            else if (this.input && this.input.activePointer && this.input.activePointer.event) {
-                nativeEvent = this.input.activePointer.event;
-            }
-
-            // Determinar o pointerId
-            let pointerId;
-            if (nativeEvent && nativeEvent.pointerId !== undefined) {
-                // Usar o pointerId do evento DOM nativo
-                pointerId = nativeEvent.pointerId;
-            } else {
-                // Fallback: mouse é sempre pointerId 1
-                // Touch pode ser diferente, mas para mouse usamos 1
-                pointerId = pointer.pointerType === 'mouse' ? 1 : (pointer.pointerId ?? pointer.id ?? 0);
-            }
-
-            debugSceneDrag('resolve-pointer-info', {
-                hasEvent: !!event,
-                hasPointerEvent: !!pointer.event,
-                hasNativeEvent: !!nativeEvent,
-                nativeEventPointerId: nativeEvent?.pointerId,
-                pointerPointerId: pointer.pointerId,
-                phaserPointerId: pointer.id,
-                resolvedPointerId: pointerId,
-                pointerType: pointer.pointerType
-            });
+            const nativeEvent = event || pointer.event || null;
+            // Usar o pointerId correto do evento DOM se disponível
+            const pointerId = pointer.pointerId ?? pointer.id ?? 0;
 
             return {
                 pointerId,
                 worldX: pointer.worldX,
                 worldY: pointer.worldY,
                 pointerType: nativeEvent?.pointerType || pointer.pointerType || 'mouse',
-                nativeEvent: nativeEvent || event || pointer.event || null
+                nativeEvent
             };
         }
 
@@ -897,27 +794,15 @@ class LocationScene extends Phaser.Scene {
         }
         document.body.style.cursor = 'grabbing';
 
-        debugSceneDrag('start', {
-            itemId: entry.id,
-            pointerId: this.activeDroppedItemDrag.pointerId,
-            source,
-            world: { x: pointerInfo.worldX, y: pointerInfo.worldY }
-        });
-
         this.attachSceneItemDragListeners();
     }
 
     attachSceneItemDragListeners() {
-        if (this._sceneDragListenersAttached) {
-            debugSceneDrag('listeners-already-attached');
-            return;
-        }
-        debugSceneDrag('attaching-window-listeners');
+        if (this._sceneDragListenersAttached) return;
         window.addEventListener('pointermove', this._boundSceneItemDragMove, { passive: false });
         window.addEventListener('pointerup', this._boundSceneItemDragEnd, { passive: false });
         window.addEventListener('pointercancel', this._boundSceneItemDragEnd, { passive: false });
         this._sceneDragListenersAttached = true;
-        debugSceneDrag('window-listeners-attached');
     }
 
     detachSceneItemDragListeners() {
@@ -930,27 +815,10 @@ class LocationScene extends Phaser.Scene {
 
     handleSceneItemDragMove(event) {
         const ctx = this.activeDroppedItemDrag;
-        if (!ctx) {
-            debugSceneDrag('move-no-context');
-            return;
-        }
+        if (!ctx) return;
+
         const pointerId = this.normalizePointerEventId(event);
-
-        debugSceneDrag('move-attempt', {
-            eventPointerId: pointerId,
-            contextPointerId: ctx.pointerId,
-            matches: pointerId === ctx.pointerId
-        });
-
-        if (pointerId !== ctx.pointerId) {
-            debugSceneDrag('move-wrong-pointer', {
-                eventPointerId: pointerId,
-                contextPointerId: ctx.pointerId
-            });
-            return;
-        }
-
-        debugSceneDrag('move-processing', { itemId: ctx.entry.id });
+        if (pointerId !== ctx.pointerId) return;
 
         if (event && event.cancelable) {
             event.preventDefault();
@@ -1018,7 +886,6 @@ class LocationScene extends Phaser.Scene {
             if (entry?.label) {
                 entry.label.setPosition(ctx.startSpriteX + ctx.labelOffset.x, ctx.startSpriteY + ctx.labelOffset.y);
             }
-            debugSceneDrag('cancelled', { itemId: entry?.id });
             return;
         }
 
