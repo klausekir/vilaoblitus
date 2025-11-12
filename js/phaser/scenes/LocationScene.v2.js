@@ -668,9 +668,13 @@ class LocationScene extends Phaser.Scene {
             });
         }
 
-        if (label && label.setInteractive) {
+        // Label NÃO deve ser interativo - ele bloqueia os cliques no sprite!
+        // Se o usuário clicar no label, o evento vai "passar através" para o sprite
+        if (label) {
             label.setInteractive({ useHandCursor: true });
             label.on('pointerdown', (pointer, localX, localY, event) => {
+                debugSceneDrag('label-clicked-forwarding-to-sprite', { itemId: entry.id });
+                // Redirecionar para o sprite
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
             });
             label.on('pointerup', (pointer, localX, localY, event) => {
