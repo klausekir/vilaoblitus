@@ -542,7 +542,7 @@ class LocationScene extends Phaser.Scene {
                 sprite = this.add.image(worldX, worldY, textureKey);
                 sprite.setDisplaySize(size.width, size.height);
                 sprite.setOrigin(0.5);
-                sprite.setDepth(100);
+                sprite.setDepth(102); // Acima do label (101) para capturar cliques primeiro
             } else if (imagePath) {
                 // Textura não existe - carregar dinamicamente e criar sprite Phaser
                 // Criar retângulo temporário
@@ -567,7 +567,7 @@ class LocationScene extends Phaser.Scene {
                             const newSprite = this.add.image(sprite.x, sprite.y, textureKey);
                             newSprite.setDisplaySize(size.width, size.height);
                             newSprite.setOrigin(0.5);
-                            newSprite.setDepth(sprite.depth);
+                            newSprite.setDepth(102); // Acima do label (101) para capturar cliques primeiro
 
                             // Destruir o temporário
                             sprite.destroy();
@@ -589,13 +589,13 @@ class LocationScene extends Phaser.Scene {
             }
 
             sprite.setOrigin?.(0.5);
-            sprite.setDepth(100);
+            sprite.setDepth(102); // Acima do label
             this.applySpriteTransform(sprite, transform || {});
         }
 
         if (!sprite) return;
 
-        sprite.setDepth?.(100); // Garantir prioridade máxima
+        sprite.setDepth?.(102); // Acima do label (101) para capturar cliques primeiro
 
         // IMPORTANTE: Recalcular useDom baseado no sprite real criado
         // Mesmo que renderMode seja 'sprite', se criamos um DOM element (quando textura não existe),
