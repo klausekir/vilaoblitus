@@ -21,8 +21,9 @@ $gameCompleted = $input['game_completed'] ?? false;
 // Validate session
 $session = validateSession($sessionToken);
 if (!$session) {
+    error_log("❌ [SAVE-PROGRESS] Sessão inválida ou expirada. Token: " . substr($sessionToken, 0, 10) . "...");
     http_response_code(401);
-    sendResponse(false, [], 'Invalid or expired session');
+    sendResponse(false, [], 'Sessão expirada. Faça login novamente.');
 }
 
 try {

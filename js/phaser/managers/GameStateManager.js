@@ -365,12 +365,19 @@ class GameStateManager {
                 })
             });
 
+            if (response.status === 401) {
+                console.warn('⚠️ Sessão expirada. Progresso salvo apenas localmente.');
+                return;
+            }
+
             const data = await response.json();
             if (data.success) {
                 console.log('✓ Progresso salvo no servidor');
+            } else {
+                console.warn('⚠️ Erro ao salvar no servidor:', data.message);
             }
         } catch (e) {
-            console.warn('Não foi possível salvar no servidor, usando apenas localStorage:', e.message);
+            console.warn('⚠️ Não foi possível salvar no servidor. Progresso salvo localmente:', e.message);
         }
     }
 

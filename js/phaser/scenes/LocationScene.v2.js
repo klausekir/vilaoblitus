@@ -1,4 +1,4 @@
-const DEBUG_SCENE_DRAG = true;
+const DEBUG_SCENE_DRAG = false; // Desabilitado - drag funcionando
 function debugSceneDrag(...args) {
     if (DEBUG_SCENE_DRAG) {
         console.log('[SCENE-DRAG]', ...args);
