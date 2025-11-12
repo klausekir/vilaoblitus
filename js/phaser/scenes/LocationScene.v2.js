@@ -639,18 +639,35 @@ class LocationScene extends Phaser.Scene {
 
         debugSceneDrag('attach-interactions', { itemId: entry.id, hasSetInteractive: !!sprite.setInteractive, hasLabel: !!label });
 
-        // Usar sistema de drag nativo do Phaser - MUITO MAIS SIMPLES E CONFIÁVEL
+        // Sistema manual simples - sem complexidade de pointer IDs
         if (sprite.setInteractive) {
-            sprite.setInteractive({ draggable: true, useHandCursor: true });
+            sprite.setInteractive({ useHandCursor: true });
 
-            sprite.on('dragstart', (pointer) => {
-                debugSceneDrag('dragstart', { itemId: entry.id, pointerId: pointer.id });
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            sprite.on('pointerdown', (pointer) => {
+                debugSceneDrag('pointerdown', { itemId: entry.id });
+                isDragging = true;
+                startX = sprite.x;
+                startY = sprite.y;
+                offsetX = pointer.worldX - sprite.x;
+                offsetY = pointer.worldY - sprite.y;
+
                 if (sprite.setDepth) sprite.setDepth(120);
                 if (label?.setDepth) label.setDepth(122);
             });
 
-            sprite.on('drag', (pointer, dragX, dragY) => {
-                const clamped = this.clampToBackgroundBounds(dragX, dragY, entry);
+            this.input.on('pointermove', (pointer) => {
+                if (!isDragging) return;
+
+                const newX = pointer.worldX - offsetX;
+                const newY = pointer.worldY - offsetY;
+                const clamped = this.clampToBackgroundBounds(newX, newY, entry);
+
                 sprite.setPosition(clamped.x, clamped.y);
                 if (label) {
                     const labelOffsetX = 0;
@@ -659,8 +676,11 @@ class LocationScene extends Phaser.Scene {
                 }
             });
 
-            sprite.on('dragend', (pointer) => {
-                debugSceneDrag('dragend', { itemId: entry.id });
+            const stopDrag = () => {
+                if (!isDragging) return;
+                debugSceneDrag('drag-stopped', { itemId: entry.id });
+                isDragging = false;
+
                 if (sprite.setDepth) sprite.setDepth(100);
                 if (label?.setDepth) label.setDepth(101);
 
@@ -668,7 +688,11 @@ class LocationScene extends Phaser.Scene {
                 entry.transform = entry.transform || {};
                 entry.transform.x = sprite.x;
                 entry.transform.y = sprite.y;
-            });
+            };
+
+            sprite.on('pointerup', stopDrag);
+            sprite.on('pointerupoutside', stopDrag);
+            this.input.on('pointerup', stopDrag);
         }
     }
 
