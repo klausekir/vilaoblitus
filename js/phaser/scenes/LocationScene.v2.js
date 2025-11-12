@@ -724,7 +724,32 @@ class LocationScene extends Phaser.Scene {
 
     resolveScenePointerInfo(pointer, event) {
         if (pointer && typeof pointer.worldX === 'number' && typeof pointer.worldY === 'number') {
-            const nativeEvent = event || pointer.event || null;
+            // Tentar obter o evento DOM real de várias fontes
+            let nativeEvent = null;
+
+            // 1. Evento passado diretamente
+            if (event && event.pointerId !== undefined) {
+                nativeEvent = event;
+            }
+            // 2. pointer.event (pode ter o evento DOM)
+            else if (pointer.event && pointer.event.pointerId !== undefined) {
+                nativeEvent = pointer.event;
+            }
+            // 3. Acessar pelo input manager do Phaser (última tentativa)
+            else if (this.input && this.input.activePointer && this.input.activePointer.event) {
+                nativeEvent = this.input.activePointer.event;
+            }
+
+            // Determinar o pointerId
+            let pointerId;
+            if (nativeEvent && nativeEvent.pointerId !== undefined) {
+                // Usar o pointerId do evento DOM nativo
+                pointerId = nativeEvent.pointerId;
+            } else {
+                // Fallback: mouse é sempre pointerId 1
+                // Touch pode ser diferente, mas para mouse usamos 1
+                pointerId = pointer.pointerType === 'mouse' ? 1 : (pointer.pointerId ?? pointer.id ?? 0);
+            }
 
             debugSceneDrag('resolve-pointer-info', {
                 hasEvent: !!event,
@@ -732,21 +757,17 @@ class LocationScene extends Phaser.Scene {
                 hasNativeEvent: !!nativeEvent,
                 nativeEventPointerId: nativeEvent?.pointerId,
                 pointerPointerId: pointer.pointerId,
-                pointerId: pointer.id,
-                nativeEventType: nativeEvent?.type
+                phaserPointerId: pointer.id,
+                resolvedPointerId: pointerId,
+                pointerType: pointer.pointerType
             });
-
-            // IMPORTANTE: sempre usar o pointerId do evento nativo, não do Phaser
-            // O Phaser usa pointer.id que pode ser diferente do event.pointerId
-            // Os window listeners usam event.pointerId, então precisamos ser consistentes
-            const pointerId = nativeEvent?.pointerId ?? pointer.pointerId ?? pointer.id ?? 0;
 
             return {
                 pointerId,
                 worldX: pointer.worldX,
                 worldY: pointer.worldY,
                 pointerType: nativeEvent?.pointerType || pointer.pointerType || 'mouse',
-                nativeEvent
+                nativeEvent: nativeEvent || event || pointer.event || null
             };
         }
 
