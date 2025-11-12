@@ -456,6 +456,15 @@ class LocationScene extends Phaser.Scene {
 
         const useDom = renderMode === 'dom' || (transform && (transform.rotateX || transform.rotateY || transform.skewX || transform.skewY));
 
+        debugSceneDrag('create-dropped-sprite', {
+            itemId: item.id,
+            renderMode,
+            hasTransform: !!transform,
+            useDom,
+            hasDropTransform: !!item.dropTransform,
+            hasItemTransform: !!item.transform
+        });
+
         let sprite;
 
         if (useDom) {
@@ -586,6 +595,14 @@ class LocationScene extends Phaser.Scene {
 
         const { sprite, label, useDom } = entry;
 
+        debugSceneDrag('attach-interactions', {
+            itemId: entry.id,
+            useDom,
+            hasNode: !!(sprite.node),
+            hasAddListener: typeof sprite.addListener === 'function',
+            hasSetInteractive: typeof sprite.setInteractive === 'function'
+        });
+
         if (useDom && sprite.node) {
             sprite.node.style.cursor = 'grab';
             sprite.node.style.touchAction = 'none';
@@ -594,6 +611,7 @@ class LocationScene extends Phaser.Scene {
         }
 
         if (useDom && typeof sprite.addListener === 'function') {
+            debugSceneDrag('using-phaser-dom-listeners', { itemId: entry.id });
             sprite.addListener('pointerdown');
             sprite.on('pointerdown', (event) => {
                 this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
@@ -607,6 +625,7 @@ class LocationScene extends Phaser.Scene {
                 this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
             });
         } else if (useDom && sprite.node) {
+            debugSceneDrag('using-native-dom-listeners', { itemId: entry.id });
             // Fallback: usar eventos DOM nativos quando addListener não existe
             // IMPORTANTE: usar pointerdown/pointerup para ter pointerId consistente com window pointermove
             sprite.node.addEventListener('pointerdown', (event) => {
@@ -624,6 +643,7 @@ class LocationScene extends Phaser.Scene {
                 this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
             });
         } else if (sprite.setInteractive) {
+            debugSceneDrag('using-phaser-sprite-listeners', { itemId: entry.id });
             sprite.setInteractive({ useHandCursor: true, draggable: false });
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
@@ -634,6 +654,8 @@ class LocationScene extends Phaser.Scene {
             sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
                 this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
+        } else {
+            debugSceneDrag('no-listeners-attached', { itemId: entry.id, useDom, hasSetInteractive: !!sprite.setInteractive });
         }
 
         if (label && label.setInteractive) {
