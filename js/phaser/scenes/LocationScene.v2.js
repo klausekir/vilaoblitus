@@ -1,4 +1,4 @@
-const DEBUG_SCENE_DRAG = false; // Desabilitado - drag funcionando
+const DEBUG_SCENE_DRAG = true; // Debug temporário - chave não funciona
 function debugSceneDrag(...args) {
     if (DEBUG_SCENE_DRAG) {
         console.log('[SCENE-DRAG]', ...args);
@@ -640,6 +640,7 @@ class LocationScene extends Phaser.Scene {
             sprite.setInteractive({ useHandCursor: true });
 
             sprite.on('pointerdown', (pointer) => {
+                debugSceneDrag('sprite-pointerdown', { itemId: entry.id, pointerId: pointer.id });
                 this.startSceneItemDrag(entry, {
                     pointerId: pointer.id,
                     worldX: pointer.worldX,
@@ -650,6 +651,7 @@ class LocationScene extends Phaser.Scene {
             });
 
             sprite.on('pointerup', () => {
+                debugSceneDrag('sprite-pointerup', { itemId: entry.id, hasActiveDrag: !!this.activeDroppedItemDrag });
                 if (this.activeDroppedItemDrag && this.activeDroppedItemDrag.entry === entry) {
                     this.handleSceneItemDragEnd({ type: 'pointerup', pointerId: this.activeDroppedItemDrag.pointerId });
                 }
@@ -844,12 +846,17 @@ class LocationScene extends Phaser.Scene {
 
     handleSceneItemDragEnd(event) {
         const ctx = this.activeDroppedItemDrag;
+        debugSceneDrag('drag-end-called', { hasCtx: !!ctx, eventType: event?.type });
         if (!ctx) return;
         const pointerId = this.normalizePointerEventId(event);
 
         // Aceitar tanto pointer.id (0) quanto event.pointerId (1) para mouse
         const isMousePointer = (pointerId === 0 || pointerId === 1) && (ctx.pointerId === 0 || ctx.pointerId === 1);
-        if (!isMousePointer && pointerId !== ctx.pointerId) return;
+        debugSceneDrag('drag-end-check', { pointerId, ctxPointerId: ctx.pointerId, isMousePointer });
+        if (!isMousePointer && pointerId !== ctx.pointerId) {
+            debugSceneDrag('drag-end-rejected', { pointerId, ctxPointerId: ctx.pointerId });
+            return;
+        }
 
         if (typeof event.clientX === 'number' && typeof event.clientY === 'number') {
             ctx.lastClientX = event.clientX;
