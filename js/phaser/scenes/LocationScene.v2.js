@@ -1,4 +1,4 @@
-const DEBUG_SCENE_DRAG = true; // Debug temporário - chave não funciona
+const DEBUG_SCENE_DRAG = false; // Desligado - versão funcionando
 function debugSceneDrag(...args) {
     if (DEBUG_SCENE_DRAG) {
         console.log('[SCENE-DRAG]', ...args);
@@ -539,23 +539,18 @@ class LocationScene extends Phaser.Scene {
 
             if (this.textures.exists(textureKey)) {
                 // Textura já existe - usar normalmente
-                debugSceneDrag('creating-sprite-existing-texture', { itemId: item.id, textureKey });
                 sprite = this.add.image(worldX, worldY, textureKey);
                 sprite.setDisplaySize(size.width, size.height);
                 sprite.setOrigin(0.5);
                 sprite.setDepth(100);
-                debugSceneDrag('sprite-created', { itemId: item.id, hasSetInteractive: !!sprite.setInteractive, type: sprite.type });
             } else if (imagePath) {
                 // Textura não existe - carregar dinamicamente e criar sprite Phaser
-                debugSceneDrag('loading-texture-dynamically', { itemId: item.id, textureKey, imagePath });
-
                 // Criar retângulo temporário
                 sprite = this.add.rectangle(worldX, worldY, size.width, size.height, 0x666666, 0.5);
 
                 // Carregar textura
                 this.load.image(textureKey, imagePath);
                 this.load.once('complete', () => {
-                    debugSceneDrag('texture-loaded', { textureKey });
 
                     if (this.textures.exists(textureKey) && sprite && !sprite.scene) {
                         // Sprite foi destruído, não fazer nada
@@ -614,7 +609,7 @@ class LocationScene extends Phaser.Scene {
             padding: { x: 6, y: 3 }
         });
         label.setOrigin(0.5, 0);
-        label.setDepth(98); // Label BEM ABAIXO do sprite (100) para não bloquear eventos
+        label.setDepth(101); // Label acima do sprite
 
         const spriteAlpha = typeof sprite.alpha === 'number' ? sprite.alpha : 1;
         const labelAlpha = typeof label.alpha === 'number' ? label.alpha : 1;
@@ -631,14 +626,6 @@ class LocationScene extends Phaser.Scene {
             useDom: actualUseDom  // Usar o valor recalculado!
         };
 
-        debugSceneDrag('creating-entry', {
-            itemId: item.id,
-            spriteType: sprite.type,
-            hasSetInteractive: !!sprite.setInteractive,
-            useDom: actualUseDom,
-            hasNode: !!sprite.node
-        });
-
         this.attachDroppedItemInteractions(entry);
         this.droppedItemSprites.push(entry);
     }
@@ -648,59 +635,38 @@ class LocationScene extends Phaser.Scene {
 
         const { sprite, label } = entry;
 
-        debugSceneDrag('attach-interactions', { itemId: entry.id, hasSetInteractive: !!sprite.setInteractive, hasLabel: !!label });
-
-        // Desabilitar label para não bloquear eventos
-        if (label) {
-            label.disableInteractive();
-        }
-
-        // Sprite é o ÚNICO elemento interativo
-        // HitArea expandida cobrindo TODA a área (sprite + label)
+        // VERSÃO SIMPLES que funcionou para moeda: ambos interativos
         if (sprite.setInteractive) {
-            const spriteWidth = entry.size.width;
-            const spriteHeight = entry.size.height;
-            const labelHeight = 30; // Espaço para o label abaixo
-
-            // HitArea cobre sprite + espaço do label
-            const hitArea = new Phaser.Geom.Rectangle(
-                -spriteWidth / 2,
-                -spriteHeight / 2,
-                spriteWidth,
-                spriteHeight + labelHeight
-            );
-
-            sprite.setInteractive({
-                hitArea: hitArea,
-                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-                useHandCursor: true,
-                pixelPerfect: false
-            });
-
-            debugSceneDrag('sprite-interactive-setup', {
-                itemId: entry.id,
-                spriteSize: { width: spriteWidth, height: spriteHeight },
-                hitArea: { x: hitArea.x, y: hitArea.y, width: hitArea.width, height: hitArea.height }
-            });
+            sprite.setInteractive({ useHandCursor: true });
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                debugSceneDrag('sprite-pointerdown', { itemId: entry.id, pointerId: pointer.id });
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
             });
 
             sprite.on('pointerup', (pointer, localX, localY, event) => {
-                debugSceneDrag('sprite-pointerup', { itemId: entry.id });
                 this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
 
             sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
-                debugSceneDrag('sprite-pointerupoutside', { itemId: entry.id });
                 this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
         }
 
-        // Label NÃO é interativo - eventos passam através dele para o sprite
-        // O sprite já tem hitArea expandida cobrindo o label
+        if (label && label.setInteractive) {
+            label.setInteractive({ useHandCursor: true });
+
+            label.on('pointerdown', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerup', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerupoutside', (pointer, localX, localY, event) => {
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
+        }
     }
 
     onDroppedSceneItemPointerDown(entry, pointer, event, source = 'sprite') {
@@ -769,8 +735,6 @@ class LocationScene extends Phaser.Scene {
 
     startSceneItemDrag(entry, pointerInfo, source = 'sprite') {
         if (!entry || !pointerInfo) return;
-
-        debugSceneDrag('start-drag', { itemId: entry.id, pointerId: pointerInfo.pointerId, source });
 
         if (this.activeDroppedItemDrag) {
             this.cancelActiveDroppedItemDrag('replace');
@@ -854,7 +818,6 @@ class LocationScene extends Phaser.Scene {
             const distance = Phaser.Math.Distance.Between(world.x, world.y, ctx.startWorldX, ctx.startWorldY);
             if (distance >= this.sceneItemDragThreshold) {
                 ctx.moved = true;
-                debugSceneDrag('drag', { itemId: ctx.entry.id, pointerId: ctx.pointerId, distance });
             }
         }
 
@@ -873,15 +836,12 @@ class LocationScene extends Phaser.Scene {
 
     handleSceneItemDragEnd(event) {
         const ctx = this.activeDroppedItemDrag;
-        debugSceneDrag('drag-end-called', { hasCtx: !!ctx, eventType: event?.type });
         if (!ctx) return;
         const pointerId = this.normalizePointerEventId(event);
 
         // Aceitar tanto pointer.id (0) quanto event.pointerId (1) para mouse
         const isMousePointer = (pointerId === 0 || pointerId === 1) && (ctx.pointerId === 0 || ctx.pointerId === 1);
-        debugSceneDrag('drag-end-check', { pointerId, ctxPointerId: ctx.pointerId, isMousePointer });
         if (!isMousePointer && pointerId !== ctx.pointerId) {
-            debugSceneDrag('drag-end-rejected', { pointerId, ctxPointerId: ctx.pointerId });
             return;
         }
 
