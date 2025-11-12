@@ -648,32 +648,10 @@ class LocationScene extends Phaser.Scene {
 
         debugSceneDrag('attach-interactions', { itemId: entry.id, hasSetInteractive: !!sprite.setInteractive, hasLabel: !!label });
 
-        // Label NÃO deve ser interativo - ele bloqueia eventos do sprite
-        // Desabilitar input do label para que eventos passem através
-        if (label) {
-            label.disableInteractive();
-            // Fazer o label não bloquear eventos de pointer
-            if (label.input) {
-                label.input.enabled = false;
-            }
-        }
-
-        // Sprite é o único elemento interativo, com hitArea expandida para cobrir label também
+        // AMBOS sprite e label devem ser interativos e chamarem a mesma função
+        // Assim funciona clicar em qualquer um dos dois
         if (sprite.setInteractive) {
-            // Aumentar a área clicável do sprite para incluir o label abaixo
-            const hitAreaHeight = entry.size.height + (label ? 30 : 0); // +30 para o label
-            const hitArea = new Phaser.Geom.Rectangle(
-                -entry.size.width / 2,
-                -entry.size.height / 2,
-                entry.size.width,
-                hitAreaHeight
-            );
-
-            sprite.setInteractive({
-                hitArea: hitArea,
-                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-                useHandCursor: true
-            });
+            sprite.setInteractive({ useHandCursor: true });
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
                 debugSceneDrag('sprite-pointerdown', { itemId: entry.id, pointerId: pointer.id });
@@ -688,6 +666,25 @@ class LocationScene extends Phaser.Scene {
             sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
                 debugSceneDrag('sprite-pointerupoutside', { itemId: entry.id });
                 this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
+            });
+        }
+
+        if (label && label.setInteractive) {
+            label.setInteractive({ useHandCursor: true });
+
+            label.on('pointerdown', (pointer, localX, localY, event) => {
+                debugSceneDrag('label-pointerdown', { itemId: entry.id, pointerId: pointer.id });
+                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerup', (pointer, localX, localY, event) => {
+                debugSceneDrag('label-pointerup', { itemId: entry.id });
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
+            });
+
+            label.on('pointerupoutside', (pointer, localX, localY, event) => {
+                debugSceneDrag('label-pointerupoutside', { itemId: entry.id });
+                this.onDroppedSceneItemPointerUp(entry, pointer, event, 'label');
             });
         }
     }
