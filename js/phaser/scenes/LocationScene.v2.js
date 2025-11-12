@@ -628,6 +628,15 @@ class LocationScene extends Phaser.Scene {
             renderMode,
             useDom: actualUseDom  // Usar o valor recalculado!
         };
+
+        debugSceneDrag('creating-entry', {
+            itemId: item.id,
+            spriteType: sprite.type,
+            hasSetInteractive: !!sprite.setInteractive,
+            useDom: actualUseDom,
+            hasNode: !!sprite.node
+        });
+
         this.attachDroppedItemInteractions(entry);
         this.droppedItemSprites.push(entry);
     }
