@@ -537,41 +537,52 @@ class LocationScene extends Phaser.Scene {
         } else {
             const textureKey = item.textureKey || `item_${item.id}`;
 
-            // Tentar carregar textura se não existir
-            if (!this.textures.exists(textureKey) && imagePath) {
-                debugSceneDrag('loading-texture-dynamically', { itemId: item.id, textureKey, imagePath });
-
-                // Carregar textura dinamicamente
-                this.load.image(textureKey, imagePath);
-                this.load.once('complete', () => {
-                    debugSceneDrag('texture-loaded', { textureKey });
-                });
-                this.load.start();
-            }
-
             if (this.textures.exists(textureKey)) {
+                // Textura já existe - usar normalmente
                 sprite = this.add.image(worldX, worldY, textureKey);
                 sprite.setDisplaySize(size.width, size.height);
             } else if (imagePath) {
-                // Fallback: criar sprite temporário e substituir quando textura carregar
+                // Textura não existe - carregar dinamicamente e criar sprite Phaser
+                debugSceneDrag('loading-texture-dynamically', { itemId: item.id, textureKey, imagePath });
+
+                // Criar retângulo temporário
                 sprite = this.add.rectangle(worldX, worldY, size.width, size.height, 0x666666, 0.5);
 
-                // Quando a textura carregar, substituir o retângulo por imagem
+                // Carregar textura
+                this.load.image(textureKey, imagePath);
                 this.load.once('complete', () => {
-                    if (this.textures.exists(textureKey)) {
-                        const newSprite = this.add.image(sprite.x, sprite.y, textureKey);
-                        newSprite.setDisplaySize(size.width, size.height);
-                        newSprite.setDepth(sprite.depth);
+                    debugSceneDrag('texture-loaded', { textureKey });
 
-                        // Atualizar referência
+                    if (this.textures.exists(textureKey) && sprite && !sprite.scene) {
+                        // Sprite foi destruído, não fazer nada
+                        return;
+                    }
+
+                    if (this.textures.exists(textureKey)) {
+                        // Encontrar o entry atual
                         const entryIndex = this.droppedItemSprites.findIndex(e => e.sprite === sprite);
                         if (entryIndex >= 0) {
+                            const entry = this.droppedItemSprites[entryIndex];
+
+                            // Criar novo sprite com imagem
+                            const newSprite = this.add.image(sprite.x, sprite.y, textureKey);
+                            newSprite.setDisplaySize(size.width, size.height);
+                            newSprite.setOrigin(0.5);
+                            newSprite.setDepth(sprite.depth);
+
+                            // Destruir o temporário
                             sprite.destroy();
-                            this.droppedItemSprites[entryIndex].sprite = newSprite;
-                            this.attachDroppedItemInteractions(this.droppedItemSprites[entryIndex]);
+
+                            // Atualizar entry
+                            entry.sprite = newSprite;
+                            entry.useDom = false; // Agora é sprite Phaser puro
+
+                            // Re-anexar listeners
+                            this.attachDroppedItemInteractions(entry);
                         }
                     }
                 });
+                this.load.start();
             } else {
                 sprite = this.add.text(worldX, worldY, '📦', {
                     fontSize: '28px'
@@ -579,7 +590,7 @@ class LocationScene extends Phaser.Scene {
             }
 
             sprite.setOrigin?.(0.5);
-            sprite.setDepth(100); // Prioridade máxima
+            sprite.setDepth(100);
             this.applySpriteTransform(sprite, transform || {});
         }
 
