@@ -650,7 +650,20 @@ class LocationScene extends Phaser.Scene {
 
         // Usar sistema centralizado - SEM listeners globais por item
         if (sprite.setInteractive) {
-            sprite.setInteractive({ useHandCursor: true });
+            // Aumentar a área clicável do sprite para incluir o label abaixo
+            const hitAreaHeight = entry.size.height + (label ? 30 : 0); // +30 para o label
+            const hitArea = new Phaser.Geom.Rectangle(
+                -entry.size.width / 2,
+                -entry.size.height / 2,
+                entry.size.width,
+                hitAreaHeight
+            );
+
+            sprite.setInteractive({
+                hitArea: hitArea,
+                hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+                useHandCursor: true
+            });
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
                 debugSceneDrag('sprite-pointerdown', { itemId: entry.id, pointerId: pointer.id });
@@ -668,13 +681,11 @@ class LocationScene extends Phaser.Scene {
             });
         }
 
-        // Label NÃO deve ser interativo - ele bloqueia os cliques no sprite!
-        // Se o usuário clicar no label, o evento vai "passar através" para o sprite
+        // Label também interativo como backup
         if (label) {
             label.setInteractive({ useHandCursor: true });
             label.on('pointerdown', (pointer, localX, localY, event) => {
                 debugSceneDrag('label-clicked-forwarding-to-sprite', { itemId: entry.id });
-                // Redirecionar para o sprite
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
             });
             label.on('pointerup', (pointer, localX, localY, event) => {
