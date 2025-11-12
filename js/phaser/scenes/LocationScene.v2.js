@@ -610,6 +610,11 @@ class LocationScene extends Phaser.Scene {
             // Fallback: usar eventos DOM nativos quando addListener não existe
             // IMPORTANTE: usar pointerdown/pointerup para ter pointerId consistente com window pointermove
             sprite.node.addEventListener('pointerdown', (event) => {
+                debugSceneDrag('dom-pointerdown', { itemId: entry.id, pointerId: event.pointerId });
+                // Release pointer capture so window events can work
+                if (sprite.node.hasPointerCapture && sprite.node.hasPointerCapture(event.pointerId)) {
+                    sprite.node.releasePointerCapture(event.pointerId);
+                }
                 this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
             });
             sprite.node.addEventListener('pointerup', (event) => {
@@ -653,12 +658,17 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
-        if (pointerInfo.nativeEvent?.stopPropagation) {
-            pointerInfo.nativeEvent.stopPropagation();
-        }
-        if (pointerInfo.nativeEvent?.preventDefault) {
-            pointerInfo.nativeEvent.preventDefault();
-        }
+        debugSceneDrag('pointerdown-resolved', {
+            itemId: entry.id,
+            source,
+            pointerId: pointerInfo.pointerId,
+            useDom: entry.useDom,
+            hasNode: !!entry.sprite?.node
+        });
+
+        // Don't preventDefault or stopPropagation on pointerdown
+        // This allows window-level pointermove events to work properly
+        // preventDefault should only be on pointermove to prevent scrolling
 
         this.startSceneItemDrag(entry, pointerInfo, source);
     }
@@ -789,9 +799,18 @@ class LocationScene extends Phaser.Scene {
 
     handleSceneItemDragMove(event) {
         const ctx = this.activeDroppedItemDrag;
-        if (!ctx) return;
+        if (!ctx) {
+            debugSceneDrag('move-no-context');
+            return;
+        }
         const pointerId = this.normalizePointerEventId(event);
-        if (pointerId !== ctx.pointerId) return;
+        if (pointerId !== ctx.pointerId) {
+            debugSceneDrag('move-wrong-pointer', {
+                eventPointerId: pointerId,
+                contextPointerId: ctx.pointerId
+            });
+            return;
+        }
 
         if (event && event.cancelable) {
             event.preventDefault();
