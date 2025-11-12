@@ -637,12 +637,26 @@ class LocationScene extends Phaser.Scene {
 
         // VERSÃO SIMPLES que funcionou para moeda: ambos interativos
         if (sprite.setInteractive) {
-            // Para sprites Image, desabilitar pixel-perfect para capturar cliques em áreas transparentes
+            // Para sprites Image com transparências, criar hitArea retangular explícita
             const isImageSprite = sprite.type === 'Image';
-            sprite.setInteractive({
-                useHandCursor: true,
-                pixelPerfect: isImageSprite ? false : undefined
-            });
+
+            if (isImageSprite) {
+                // HitArea retangular cobrindo toda a área do sprite
+                const hitArea = new Phaser.Geom.Rectangle(
+                    -entry.size.width / 2,
+                    -entry.size.height / 2,
+                    entry.size.width,
+                    entry.size.height
+                );
+
+                sprite.setInteractive({
+                    hitArea: hitArea,
+                    hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+                    useHandCursor: true
+                });
+            } else {
+                sprite.setInteractive({ useHandCursor: true });
+            }
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
