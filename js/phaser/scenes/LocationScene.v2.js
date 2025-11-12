@@ -598,69 +598,80 @@ class LocationScene extends Phaser.Scene {
     attachDroppedItemInteractions(entry) {
         if (!entry || !entry.sprite) return;
 
-        const { sprite, label, useDom } = entry;
+        const { sprite, label } = entry;
 
         debugSceneDrag('attach-interactions', {
             itemId: entry.id,
-            useDom,
             hasNode: !!(sprite.node),
-            hasAddListener: typeof sprite.addListener === 'function',
             hasSetInteractive: typeof sprite.setInteractive === 'function'
         });
 
-        if (useDom && sprite.node) {
-            sprite.node.style.cursor = 'grab';
-            sprite.node.style.touchAction = 'none';
-            sprite.node.style.userSelect = 'none';
-            sprite.node.title = 'Clique e arraste para mover';
-        }
+        // NOVA ABORDAGEM SIMPLIFICADA:
+        // Sempre usar setInteractive do Phaser se disponível
+        // Isso garante consistência para todos os tipos de sprite
 
-        if (useDom && typeof sprite.addListener === 'function') {
-            debugSceneDrag('using-phaser-dom-listeners', { itemId: entry.id });
-            sprite.addListener('pointerdown');
-            sprite.on('pointerdown', (event) => {
-                this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
-            });
-            sprite.addListener('pointerup');
-            sprite.addListener('pointerupoutside');
-            sprite.on('pointerup', (event) => {
-                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
-            });
-            sprite.on('pointerupoutside', (event) => {
-                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
-            });
-        } else if (useDom && sprite.node) {
-            debugSceneDrag('using-native-dom-listeners', { itemId: entry.id });
-            // Fallback: usar eventos DOM nativos quando addListener não existe
-            // IMPORTANTE: usar pointerdown/pointerup para ter pointerId consistente com window pointermove
-            sprite.node.addEventListener('pointerdown', (event) => {
-                debugSceneDrag('dom-pointerdown', { itemId: entry.id, pointerId: event.pointerId });
-                // Release pointer capture so window events can work
-                if (sprite.node.hasPointerCapture && sprite.node.hasPointerCapture(event.pointerId)) {
-                    sprite.node.releasePointerCapture(event.pointerId);
-                }
-                this.onDroppedSceneItemPointerDown(entry, null, event, 'sprite');
-            });
-            sprite.node.addEventListener('pointerup', (event) => {
-                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
-            });
-            sprite.node.addEventListener('pointercancel', (event) => {
-                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
-            });
-        } else if (sprite.setInteractive) {
-            debugSceneDrag('using-phaser-sprite-listeners', { itemId: entry.id });
+        if (sprite.setInteractive) {
+            debugSceneDrag('using-simplified-approach', { itemId: entry.id });
+
             sprite.setInteractive({ useHandCursor: true, draggable: false });
+
+            // IMPORTANTE: Capturar o evento nativo ANTES do Phaser processar
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
+                // Usar o activePointer.event que tem o pointerId correto
+                const nativeEvent = this.input.activePointer?.event || event;
+                const realPointerId = nativeEvent?.pointerId ?? 1; // Mouse é sempre 1
+
+                debugSceneDrag('sprite-pointerdown', {
+                    itemId: entry.id,
+                    phaserPointerId: pointer.id,
+                    nativePointerId: realPointerId
+                });
+
+                // Criar um objeto pointer modificado com o pointerId correto
+                const modifiedPointer = {
+                    ...pointer,
+                    id: realPointerId,
+                    pointerId: realPointerId
+                };
+
+                this.onDroppedSceneItemPointerDown(entry, modifiedPointer, nativeEvent, 'sprite');
             });
+
             sprite.on('pointerup', (pointer, localX, localY, event) => {
                 this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
+
             sprite.on('pointerupoutside', (pointer, localX, localY, event) => {
                 this.onDroppedSceneItemPointerUp(entry, pointer, event, 'sprite');
             });
+        } else if (sprite.node) {
+            // Fallback para DOM elements sem setInteractive
+            debugSceneDrag('using-dom-fallback', { itemId: entry.id });
+
+            sprite.node.style.cursor = 'grab';
+            sprite.node.style.touchAction = 'none';
+            sprite.node.style.userSelect = 'none';
+
+            sprite.node.addEventListener('pointerdown', (event) => {
+                debugSceneDrag('dom-pointerdown', { itemId: entry.id, pointerId: event.pointerId });
+
+                const world = this.clientToWorld(event.clientX, event.clientY);
+                const fakePointer = {
+                    id: event.pointerId,
+                    pointerId: event.pointerId,
+                    worldX: world.x,
+                    worldY: world.y,
+                    pointerType: event.pointerType || 'mouse'
+                };
+
+                this.onDroppedSceneItemPointerDown(entry, fakePointer, event, 'sprite');
+            });
+
+            sprite.node.addEventListener('pointerup', (event) => {
+                this.onDroppedSceneItemPointerUp(entry, null, event, 'sprite');
+            });
         } else {
-            debugSceneDrag('no-listeners-attached', { itemId: entry.id, useDom, hasSetInteractive: !!sprite.setInteractive });
+            debugSceneDrag('no-listeners-attached', { itemId: entry.id });
         }
 
         if (label && label.setInteractive) {
