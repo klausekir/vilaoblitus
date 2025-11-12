@@ -644,10 +644,8 @@ class LocationScene extends Phaser.Scene {
             domNode.style.cursor = 'pointer';
 
             domNode.addEventListener('pointerdown', (event) => {
-                console.log('🖱️ DOM SPRITE CLICK:', entry.data?.id || 'no-id');
                 event.stopPropagation();
                 event.preventDefault();
-                // Criar pointer fake para compatibilidade
                 const pointer = this.input.activePointer;
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
             });
@@ -667,7 +665,6 @@ class LocationScene extends Phaser.Scene {
             });
 
             sprite.on('pointerdown', (pointer, localX, localY, event) => {
-                console.log('🖱️ SPRITE CLICK:', entry.data?.id || 'no-id', 'type:', sprite.type, 'texture:', sprite.texture?.key);
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'sprite');
             });
 
@@ -684,7 +681,6 @@ class LocationScene extends Phaser.Scene {
             label.setInteractive({ useHandCursor: true });
 
             label.on('pointerdown', (pointer, localX, localY, event) => {
-                console.log('🖱️ LABEL CLICK:', entry.data?.id || 'no-id');
                 this.onDroppedSceneItemPointerDown(entry, pointer, event, 'label');
             });
 
@@ -699,17 +695,10 @@ class LocationScene extends Phaser.Scene {
     }
 
     onDroppedSceneItemPointerDown(entry, pointer, event, source = 'sprite') {
-        if (!entry) {
-            console.log('❌ No entry');
-            return;
-        }
+        if (!entry) return;
         const pointerInfo = this.resolveScenePointerInfo(pointer, event);
-        if (!pointerInfo) {
-            console.log('❌ No pointerInfo', {pointer, event});
-            return;
-        }
+        if (!pointerInfo) return;
 
-        console.log('✅ Starting drag', {itemId: entry.data?.id, pointerInfo});
         this.startSceneItemDrag(entry, pointerInfo, source);
     }
 
@@ -833,20 +822,13 @@ class LocationScene extends Phaser.Scene {
 
     handleSceneItemDragMove(event) {
         const ctx = this.activeDroppedItemDrag;
-        if (!ctx) {
-            console.log('❌ MOVE: No active drag');
-            return;
-        }
+        if (!ctx) return;
 
         const pointerId = this.normalizePointerEventId(event);
-        console.log('🖱️ MOVE:', {pointerId, ctxPointerId: ctx.pointerId, itemId: ctx.entry.data?.id});
 
         // Aceitar tanto pointer.id (0) quanto event.pointerId (1) para mouse
         const isMousePointer = (pointerId === 0 || pointerId === 1) && (ctx.pointerId === 0 || ctx.pointerId === 1);
-        if (!isMousePointer && pointerId !== ctx.pointerId) {
-            console.log('❌ MOVE: Pointer ID mismatch');
-            return;
-        }
+        if (!isMousePointer && pointerId !== ctx.pointerId) return;
 
         if (event && event.cancelable) {
             event.preventDefault();
