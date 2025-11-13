@@ -5,7 +5,16 @@
       "Bash(tree:*)",
       "Bash(test:*)",
       "Bash(echo:*)",
-      "Bash(\"C:\\src\\codex.oblitus\\api\\email_helper.php\")"
+      "Bash(\"C:\\src\\codex.oblitus\\api\\email_helper.php\")",
+      "WebSearch",
+      "WebFetch(domain:www.appunwrapper.com)",
+      "WebFetch(domain:webcache.googleusercontent.com)",
+      "WebFetch(domain:web.archive.org)",
+      "WebFetch(domain:game-solver.com)",
+      "Bash(python scrape_appunwrapper.py sk_UaBeCkUrc9EwTJ4RaCJZYb4q4C7DrKHI6Z11jqyuz11XrImMfdOojmn6PYtC1q0t)",
+      "Bash(python scrape_appunwrapper.py:*)",
+      "Bash(python:*)",
+      "Bash(start test-puzzles.html)"
     ],
     "deny": [],
     "ask": []
