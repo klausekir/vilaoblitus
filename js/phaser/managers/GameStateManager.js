@@ -168,497 +168,522 @@ class GameStateManager {
         this.trigger('puzzleSolved', puzzleId);
         this.trigger('inventoryChanged');
         return true;
-        /**
-         * Tirar fotografia de uma pista
-         */
-        takePhotograph(locationId, objectId, imageUrl, caption, clueData = null) {
-            // Garantir que photographAlbum existe
-            if (!this.state.photographAlbum) {
-                this.state.photographAlbum = [];
-            }
+    }
 
-            // Verificar se já fotografou este objeto
-            const existingPhoto = this.state.photographAlbum.find(
-                p => p.location === locationId && p.object === objectId
-            );
+    /**
+     * Verificar se uma parede foi destruída
+     */
+    isWallDestroyed(locationId, wallId) {
+        if (!this.state.destroyedWalls) {
+            this.state.destroyedWalls = [];
+        }
+        return this.state.destroyedWalls.some(w => w.locationId === locationId && w.wallId === wallId);
+    }
 
-            if (existingPhoto) {
-                return { success: false, message: 'Você já fotografou isto.' };
-            }
-
-            const photo = {
-                id: `photo_${Date.now()}`,
-                location: locationId,
-                object: objectId,
-                image: imageUrl,
-                caption: caption,
-                clueData: clueData, // Dados adicionais da pista (símbolos, códigos, etc)
-                timestamp: Date.now()
-            };
-
-            this.state.photographAlbum.push(photo);
+    /**
+     * Destruir uma parede
+     */
+    destroyWall(locationId, wallId) {
+        if (!this.state.destroyedWalls) {
+            this.state.destroyedWalls = [];
+        }
+        if (!this.isWallDestroyed(locationId, wallId)) {
+            this.state.destroyedWalls.push({ locationId, wallId });
             this.saveProgress();
-            this.trigger('photographTaken', photo);
+        }
+    }
 
-            return { success: true, photo: photo };
+    /**
+     * Tirar fotografia de uma pista
+     */
+    takePhotograph(locationId, objectId, imageUrl, caption, clueData = null) {
+        // Garantir que photographAlbum existe
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
         }
 
-        /**
-         * Obter todas as fotografias
-         */
-        getPhotographs() {
-            if (!this.state.photographAlbum) {
-                this.state.photographAlbum = [];
-            }
-            return this.state.photographAlbum;
+        // Verificar se já fotografou este objeto
+        const existingPhoto = this.state.photographAlbum.find(
+            p => p.location === locationId && p.object === objectId
+        );
+
+        if (existingPhoto) {
+            return { success: false, message: 'Você já fotografou isto.' };
         }
 
-        /**
-         * Obter fotografias de uma localização específica
-         */
-        getPhotographsByLocation(locationId) {
-            if (!this.state.photographAlbum) {
-                this.state.photographAlbum = [];
-            }
-            return this.state.photographAlbum.filter(p => p.location === locationId);
-        }
+        const photo = {
+            id: `photo_${Date.now()}`,
+            location: locationId,
+            object: objectId,
+            image: imageUrl,
+            caption: caption,
+            clueData: clueData, // Dados adicionais da pista (símbolos, códigos, etc)
+            timestamp: Date.now()
+        };
 
-        /**
-         * Verificar se já fotografou um objeto
-         */
-        hasPhotograph(locationId, objectId) {
-            if (!this.state.photographAlbum) {
-                this.state.photographAlbum = [];
-            }
-            return this.state.photographAlbum.some(
-                p => p.location === locationId && p.object === objectId
-            );
-        }
+        this.state.photographAlbum.push(photo);
+        this.saveProgress();
+        this.trigger('photographTaken', photo);
 
-        /**
-         * Remover fotografia
-         */
-        removePhotograph(photoId) {
-            if (!this.state.photographAlbum) {
-                this.state.photographAlbum = [];
-            }
-            const index = this.state.photographAlbum.findIndex(p => p.id === photoId);
-            if (index >= 0) {
-                this.state.photographAlbum.splice(index, 1);
-                this.saveProgress();
-                this.trigger('photographRemoved', photoId);
-                return true;
-            }
-            return false;
-        }
+        return { success: true, photo: photo };
+    }
 
-        /**
-         * Obter dados crus de um item no inventário
-         */
-        getInventoryItem(itemId) {
-            this.normalizeInventory();
-            return this.state.inventory[itemId] || null;
+    /**
+     * Obter todas as fotografias
+     */
+    getPhotographs() {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
         }
+        return this.state.photographAlbum;
+    }
 
-        /**
-         * Lista os itens que estão com o jogador
-         */
-        getInventoryArray() {
-            this.normalizeInventory();
-            return Object.entries(this.state.inventory)
-                .filter(([, item]) => (item.status || 'held') === 'held')
-                .map(([id, item]) => ({ id, ...item }));
+    /**
+     * Obter fotografias de uma localização específica
+     */
+    getPhotographsByLocation(locationId) {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
         }
+        return this.state.photographAlbum.filter(p => p.location === locationId);
+    }
 
-        /**
-         * Lista itens posicionados no cenário atual
-         */
-        getDroppedItems(locationId) {
-            this.normalizeInventory();
-            return Object.entries(this.state.inventory)
-                .filter(([, item]) => item.status === 'dropped' && item.dropLocation === locationId)
-                .map(([id, item]) => ({ id, ...item }));
+    /**
+     * Verificar se já fotografou um objeto
+     */
+    hasPhotograph(locationId, objectId) {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
         }
+        return this.state.photographAlbum.some(
+            p => p.location === locationId && p.object === objectId
+        );
+    }
 
-        isItemAvailable(itemId) {
-            this.normalizeInventory();
-            const item = this.state.inventory[itemId];
-            if (!item) return false;
-            return item.status !== 'used';
+    /**
+     * Remover fotografia
+     */
+    removePhotograph(photoId) {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
         }
-
-        isItemPlacedAtLocation(itemId, locationId, requirePuzzleArea = false) {
-            this.normalizeInventory();
-            const item = this.state.inventory[itemId];
-            if (!item || item.status !== 'dropped') return false;
-            if (item.dropLocation !== locationId) return false;
-            if (requirePuzzleArea) {
-                return !!item.dropInPuzzleArea;
-            }
+        const index = this.state.photographAlbum.findIndex(p => p.id === photoId);
+        if (index >= 0) {
+            this.state.photographAlbum.splice(index, 1);
+            this.saveProgress();
+            this.trigger('photographRemoved', photoId);
             return true;
         }
+        return false;
+    }
 
-        dropInventoryItem(itemId, locationId, positionPercent, options = {}) {
-            this.normalizeInventory();
+    /**
+     * Obter dados crus de um item no inventário
+     */
+    getInventoryItem(itemId) {
+        this.normalizeInventory();
+        return this.state.inventory[itemId] || null;
+    }
 
-            const item = this.state.inventory[itemId];
-            if (!item || item.status === 'used') {
-                console.warn('[Inventory] Item indisponível para drop:', itemId);
-                return null;
-            }
+    /**
+     * Lista os itens que estão com o jogador
+     */
+    getInventoryArray() {
+        this.normalizeInventory();
+        return Object.entries(this.state.inventory)
+            .filter(([, item]) => (item.status || 'held') === 'held')
+            .map(([id, item]) => ({ id, ...item }));
+    }
 
-            item.status = 'dropped';
-            item.dropLocation = locationId;
-            item.dropPosition = {
-                x: Math.max(0, Math.min(100, Number(positionPercent.x) || 0)),
-                y: Math.max(0, Math.min(100, Number(positionPercent.y) || 0))
-            };
-            const baseSize = options.size || item.size || { width: 80, height: 80 };
+    /**
+     * Lista itens posicionados no cenário atual
+     */
+    getDroppedItems(locationId) {
+        this.normalizeInventory();
+        return Object.entries(this.state.inventory)
+            .filter(([, item]) => item.status === 'dropped' && item.dropLocation === locationId)
+            .map(([id, item]) => ({ id, ...item }));
+    }
+
+    isItemAvailable(itemId) {
+        this.normalizeInventory();
+        const item = this.state.inventory[itemId];
+        if (!item) return false;
+        return item.status !== 'used';
+    }
+
+    isItemPlacedAtLocation(itemId, locationId, requirePuzzleArea = false) {
+        this.normalizeInventory();
+        const item = this.state.inventory[itemId];
+        if (!item || item.status !== 'dropped') return false;
+        if (item.dropLocation !== locationId) return false;
+        if (requirePuzzleArea) {
+            return !!item.dropInPuzzleArea;
+        }
+        return true;
+    }
+
+    dropInventoryItem(itemId, locationId, positionPercent, options = {}) {
+        this.normalizeInventory();
+
+        const item = this.state.inventory[itemId];
+        if (!item || item.status === 'used') {
+            console.warn('[Inventory] Item indisponível para drop:', itemId);
+            return null;
+        }
+
+        item.status = 'dropped';
+        item.dropLocation = locationId;
+        item.dropPosition = {
+            x: Math.max(0, Math.min(100, Number(positionPercent.x) || 0)),
+            y: Math.max(0, Math.min(100, Number(positionPercent.y) || 0))
+        };
+        const baseSize = options.size || item.size || { width: 80, height: 80 };
+        item.dropSize = {
+            width: Number(baseSize.width) || item.size.width || 80,
+            height: Number(baseSize.height) || item.size.height || 80
+        };
+        item.dropInPuzzleArea = !!options.inPuzzleArea;
+
+        this.saveProgress(false);
+        this.trigger('inventoryChanged');
+        return { id: itemId, ...item };
+    }
+
+    moveDroppedItem(itemId, locationId, positionPercent, options = {}) {
+        this.normalizeInventory();
+
+        const item = this.state.inventory[itemId];
+        if (!item || item.status !== 'dropped') {
+            console.warn('[Inventory] Item indisponível para mover:', itemId);
+            return null;
+        }
+
+        if (item.dropLocation && item.dropLocation !== locationId) {
+            console.warn('[Inventory] O item não está localizado aqui:', itemId, '->', item.dropLocation, '!=', locationId);
+        }
+
+        item.dropLocation = locationId;
+        item.dropPosition = {
+            x: Math.max(0, Math.min(100, Number(positionPercent.x) || 0)),
+            y: Math.max(0, Math.min(100, Number(positionPercent.y) || 0))
+        };
+
+        if (options.size) {
+            const baseSize = options.size || item.dropSize || item.size || { width: 80, height: 80 };
             item.dropSize = {
-                width: Number(baseSize.width) || item.size.width || 80,
-                height: Number(baseSize.height) || item.size.height || 80
+                width: Number(baseSize.width) || 80,
+                height: Number(baseSize.height) || 80
             };
+        }
+
+        if (options.inPuzzleArea !== undefined) {
             item.dropInPuzzleArea = !!options.inPuzzleArea;
-
-            this.saveProgress(false);
-            this.trigger('inventoryChanged');
-            return { id: itemId, ...item };
         }
 
-        moveDroppedItem(itemId, locationId, positionPercent, options = {}) {
-            this.normalizeInventory();
+        this.saveProgress(false);
+        this.trigger('inventoryChanged');
+        return { id: itemId, ...item };
+    }
 
-            const item = this.state.inventory[itemId];
-            if (!item || item.status !== 'dropped') {
-                console.warn('[Inventory] Item indisponível para mover:', itemId);
-                return null;
-            }
-
-            if (item.dropLocation && item.dropLocation !== locationId) {
-                console.warn('[Inventory] O item não está localizado aqui:', itemId, '->', item.dropLocation, '!=', locationId);
-            }
-
-            item.dropLocation = locationId;
-            item.dropPosition = {
-                x: Math.max(0, Math.min(100, Number(positionPercent.x) || 0)),
-                y: Math.max(0, Math.min(100, Number(positionPercent.y) || 0))
-            };
-
-            if (options.size) {
-                const baseSize = options.size || item.dropSize || item.size || { width: 80, height: 80 };
-                item.dropSize = {
-                    width: Number(baseSize.width) || 80,
-                    height: Number(baseSize.height) || 80
-                };
-            }
-
-            if (options.inPuzzleArea !== undefined) {
-                item.dropInPuzzleArea = !!options.inPuzzleArea;
-            }
-
-            this.saveProgress(false);
-            this.trigger('inventoryChanged');
-            return { id: itemId, ...item };
+    pickupDroppedItem(itemId) {
+        this.normalizeInventory();
+        const item = this.state.inventory[itemId];
+        if (!item || item.status !== 'dropped') {
+            return null;
         }
 
-        pickupDroppedItem(itemId) {
-            this.normalizeInventory();
-            const item = this.state.inventory[itemId];
-            if (!item || item.status !== 'dropped') {
-                return null;
-            }
-
-            item.status = 'held';
-            delete item.dropLocation;
-            delete item.dropPosition;
-            delete item.dropSize;
-            delete item.dropInPuzzleArea;
-            if (!this.state.collectedItems.includes(itemId)) {
-                this.state.collectedItems.push(itemId);
-            }
-
-            this.saveProgress(false);
-            this.trigger('inventoryChanged');
-            return { id: itemId, ...item };
+        item.status = 'held';
+        delete item.dropLocation;
+        delete item.dropPosition;
+        delete item.dropSize;
+        delete item.dropInPuzzleArea;
+        if (!this.state.collectedItems.includes(itemId)) {
+            this.state.collectedItems.push(itemId);
         }
 
-        consumeItem(itemId) {
-            this.normalizeInventory();
-            const item = this.state.inventory[itemId];
-            if (!item) return;
+        this.saveProgress(false);
+        this.trigger('inventoryChanged');
+        return { id: itemId, ...item };
+    }
 
-            item.status = 'used';
-            delete item.dropLocation;
-            delete item.dropPosition;
-            delete item.dropSize;
-            delete item.dropInPuzzleArea;
+    consumeItem(itemId) {
+        this.normalizeInventory();
+        const item = this.state.inventory[itemId];
+        if (!item) return;
 
-            this.saveProgress(false);
-            this.trigger('inventoryChanged');
-        }
+        item.status = 'used';
+        delete item.dropLocation;
+        delete item.dropPosition;
+        delete item.dropSize;
+        delete item.dropInPuzzleArea;
+
+        this.saveProgress(false);
+        this.trigger('inventoryChanged');
+    }
 
     /**
      * Salvar progresso (servidor + localStorage)
      */
     async saveProgress(showMessage = true) {
-            try {
-                // Salvar localmente primeiro (fallback)
-                localStorage.setItem('vila_abandonada_phaser', JSON.stringify(this.state));
+        try {
+            // Salvar localmente primeiro (fallback)
+            localStorage.setItem('vila_abandonada_phaser', JSON.stringify(this.state));
 
-                // Salvar no servidor se estiver logado
-                const sessionToken = localStorage.getItem('session_token');
-                if (sessionToken) {
-                    await this.saveToServer();
-                }
-
-                if (showMessage) {
-                    console.log('✓ Progresso salvo');
-                }
-            } catch (e) {
-                console.error('Erro ao salvar progresso:', e);
+            // Salvar no servidor se estiver logado
+            const sessionToken = localStorage.getItem('session_token');
+            if (sessionToken) {
+                await this.saveToServer();
             }
+
+            if (showMessage) {
+                console.log('✓ Progresso salvo');
+            }
+        } catch (e) {
+            console.error('Erro ao salvar progresso:', e);
         }
+    }
 
     /**
      * Salvar no servidor
      */
     async saveToServer() {
-            try {
-                const sessionToken = localStorage.getItem('session_token');
-                if (!sessionToken) return;
+        try {
+            const sessionToken = localStorage.getItem('session_token');
+            if (!sessionToken) return;
 
-                const response = await fetch('api/save-progress.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        session_token: sessionToken,
-                        current_location: this.state.currentLocation,
-                        visited_locations: this.state.visitedLocations,
-                        collected_items: this.state.collectedItems,
-                        solved_puzzles: this.state.solvedPuzzles,
-                        inventory: this.state.inventory,
-                        has_key: this.state.hasKey,
-                        game_completed: this.state.gameCompleted,
-                        photograph_album: this.state.photographAlbum,
-                        destroyed_walls: this.state.destroyedWalls
-                    })
-                });
+            const response = await fetch('api/save-progress.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_token: sessionToken,
+                    current_location: this.state.currentLocation,
+                    visited_locations: this.state.visitedLocations,
+                    collected_items: this.state.collectedItems,
+                    solved_puzzles: this.state.solvedPuzzles,
+                    inventory: this.state.inventory,
+                    has_key: this.state.hasKey,
+                    game_completed: this.state.gameCompleted,
+                    photograph_album: this.state.photographAlbum,
+                    destroyed_walls: this.state.destroyedWalls
+                })
+            });
 
-                const data = await response.json();
-                if (data.success) {
-                    console.log('✓ Progresso salvo no servidor');
-                } else {
-                    console.warn('⚠️ Erro ao salvar no servidor:', data.message);
-                }
-            } catch (e) {
-                console.warn('⚠️ Não foi possível salvar no servidor. Progresso salvo localmente:', e.message);
+            const data = await response.json();
+            if (data.success) {
+                console.log('✓ Progresso salvo no servidor');
+            } else {
+                console.warn('⚠️ Erro ao salvar no servidor:', data.message);
             }
+        } catch (e) {
+            console.warn('⚠️ Não foi possível salvar no servidor. Progresso salvo localmente:', e.message);
         }
+    }
 
     /**
      * Carregar progresso (servidor tem prioridade)
      */
     async loadProgress() {
-            try {
-                // Tentar carregar do servidor primeiro
-                const sessionToken = localStorage.getItem('session_token');
-                if (sessionToken) {
-                    const serverData = await this.loadFromServer();
-                    if (serverData) {
-                        this.state = serverData;
-                        this.normalizeInventory();
-                        console.log('✓ Progresso carregado do servidor');
-                        // Sincronizar com localStorage
-                        localStorage.setItem('vila_abandonada_phaser', JSON.stringify(this.state));
-                        return true;
-                    }
-                }
-
-                // Fallback: carregar do localStorage
-                const saved = localStorage.getItem('vila_abandonada_phaser');
-                if (saved) {
-                    this.state = JSON.parse(saved);
+        try {
+            // Tentar carregar do servidor primeiro
+            const sessionToken = localStorage.getItem('session_token');
+            if (sessionToken) {
+                const serverData = await this.loadFromServer();
+                if (serverData) {
+                    this.state = serverData;
                     this.normalizeInventory();
+                    console.log('✓ Progresso carregado do servidor');
+                    // Sincronizar com localStorage
                     localStorage.setItem('vila_abandonada_phaser', JSON.stringify(this.state));
-                    console.log('✓ Progresso carregado do localStorage');
                     return true;
                 }
-            } catch (e) {
-                console.error('Erro ao carregar progresso:', e);
             }
-            return false;
+
+            // Fallback: carregar do localStorage
+            const saved = localStorage.getItem('vila_abandonada_phaser');
+            if (saved) {
+                this.state = JSON.parse(saved);
+                this.normalizeInventory();
+                localStorage.setItem('vila_abandonada_phaser', JSON.stringify(this.state));
+                console.log('✓ Progresso carregado do localStorage');
+                return true;
+            }
+        } catch (e) {
+            console.error('Erro ao carregar progresso:', e);
         }
+        return false;
+    }
 
     /**
      * Carregar do servidor
      */
     async loadFromServer() {
-            try {
-                const sessionToken = localStorage.getItem('session_token');
-                if (!sessionToken) return null;
+        try {
+            const sessionToken = localStorage.getItem('session_token');
+            if (!sessionToken) return null;
 
-                const response = await fetch('api/load-progress.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session_token: sessionToken })
-                });
+            const response = await fetch('api/load-progress.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_token: sessionToken })
+            });
 
-                const data = await response.json();
-                if (data.success && data.data) {
-                    const inventory = this.mapInventory(data.data.inventory || {});
-                    return {
-                        currentLocation: data.data.current_location,
-                        visitedLocations: data.data.visited_locations || ['floresta'],
-                        collectedItems: data.data.collected_items || [],
-                        solvedPuzzles: data.data.solved_puzzles || [],
-                        inventory: inventory,
-                        hasKey: !!data.data.has_key,
-                        gameCompleted: !!data.data.game_completed,
-                        photographAlbum: data.data.photograph_album || [],
-                        destroyedWalls: data.data.destroyed_walls || []
-                    };
-                }
-                return null;
-            } catch (e) {
-                console.error('Erro ao carregar do servidor:', e);
-                return null;
-            }
-        }
-
-        /**
-         * Resetar jogo
-         */
-        reset() {
-            this.state = {
-                currentLocation: 'floresta',
-                visitedLocations: ['floresta'],
-                collectedItems: [],
-                solvedPuzzles: [],
-                inventory: {},
-                hasKey: false,
-                gameCompleted: false
-            };
-            this.normalizeInventory();
-            this.saveProgress();
-            this.trigger('gameReset');
-            this.trigger('inventoryChanged');
-        }
-
-        normalizeInventory() {
-            this.state.inventory = this.mapInventory(this.state.inventory);
-        }
-
-        mapInventory(rawInventory) {
-            const normalized = {};
-
-            if (Array.isArray(rawInventory)) {
-                rawInventory.forEach(entry => {
-                    if (!entry) return;
-                    if (typeof entry === 'string') {
-                        const normalizedEntry = this.normalizeInventoryEntry(entry, { name: entry });
-                        if (normalizedEntry) {
-                            normalized[entry] = normalizedEntry;
-                        }
-                        return;
-                    }
-                    const id = entry.id || entry.itemId || entry.name;
-                    if (!id) return;
-                    const normalizedEntry = this.normalizeInventoryEntry(id, entry);
-                    if (normalizedEntry) {
-                        normalized[id] = normalizedEntry;
-                    }
-                });
-            } else if (rawInventory && typeof rawInventory === 'object') {
-                Object.entries(rawInventory).forEach(([id, value]) => {
-                    if (!value) return;
-                    if (typeof value === 'string') {
-                        const normalizedEntry = this.normalizeInventoryEntry(id, { name: value || id });
-                        if (normalizedEntry) {
-                            normalized[id] = normalizedEntry;
-                        }
-                        return;
-                    }
-                    const normalizedEntry = this.normalizeInventoryEntry(id, { id, ...value });
-                    if (normalizedEntry) {
-                        normalized[id] = normalizedEntry;
-                    }
-                });
-            }
-
-            return normalized;
-        }
-
-        normalizeInventoryEntry(itemId, raw = {}) {
-            if (!itemId) return null;
-
-            const entry = { ...raw };
-
-            if (entry.transform && typeof entry.transform === 'object') {
-                try {
-                    entry.transform = JSON.parse(JSON.stringify(entry.transform));
-                } catch (_) {
-                    entry.transform = { ...entry.transform };
-                }
-            }
-
-            if (entry.dropTransform && typeof entry.dropTransform === 'object') {
-                try {
-                    entry.dropTransform = JSON.parse(JSON.stringify(entry.dropTransform));
-                } catch (_) {
-                    entry.dropTransform = { ...entry.dropTransform };
-                }
-            }
-
-            entry.id = itemId;
-            entry.name = entry.name || itemId;
-            entry.description = entry.description || '';
-            entry.image = entry.image || '';
-
-            const size = entry.size && typeof entry.size === 'object' ? entry.size : {};
-            entry.size = {
-                width: Number(size.width) || 80,
-                height: Number(size.height) || 80
-            };
-
-            entry.status = entry.status || 'held';
-
-            if (entry.dropPosition && typeof entry.dropPosition === 'object') {
-                entry.dropPosition = {
-                    x: Number(entry.dropPosition.x) || 0,
-                    y: Number(entry.dropPosition.y) || 0
+            const data = await response.json();
+            if (data.success && data.data) {
+                const inventory = this.mapInventory(data.data.inventory || {});
+                return {
+                    currentLocation: data.data.current_location,
+                    visitedLocations: data.data.visited_locations || ['floresta'],
+                    collectedItems: data.data.collected_items || [],
+                    solvedPuzzles: data.data.solved_puzzles || [],
+                    inventory: inventory,
+                    hasKey: !!data.data.has_key,
+                    gameCompleted: !!data.data.game_completed,
+                    photographAlbum: data.data.photograph_album || [],
+                    destroyedWalls: data.data.destroyed_walls || []
                 };
             }
-
-            if (entry.dropSize && typeof entry.dropSize === 'object') {
-                entry.dropSize = {
-                    width: Number(entry.dropSize.width) || entry.size.width,
-                    height: Number(entry.dropSize.height) || entry.size.height
-                };
-            }
-
-            entry.dropLocation = entry.dropLocation || undefined;
-            entry.dropInPuzzleArea = !!entry.dropInPuzzleArea;
-
-            return entry;
+            return null;
+        } catch (e) {
+            console.error('Erro ao carregar do servidor:', e);
+            return null;
         }
-
-        /**
-         * Sistema de eventos
-         */
-        on(event, callback) {
-            if (!this.callbacks[event]) {
-                this.callbacks[event] = [];
-            }
-            this.callbacks[event].push(callback);
-        }
-
-        trigger(event, data) {
-            if (this.callbacks[event]) {
-                this.callbacks[event].forEach(callback => callback(data));
-            }
-        }
-
     }
 
-    // Instância global
-    const gameStateManager = new GameStateManager();
+    /**
+     * Resetar jogo
+     */
+    reset() {
+        this.state = {
+            currentLocation: 'floresta',
+            visitedLocations: ['floresta'],
+            collectedItems: [],
+            solvedPuzzles: [],
+            inventory: {},
+            hasKey: false,
+            gameCompleted: false
+        };
+        this.normalizeInventory();
+        this.saveProgress();
+        this.trigger('gameReset');
+        this.trigger('inventoryChanged');
+    }
+
+    normalizeInventory() {
+        this.state.inventory = this.mapInventory(this.state.inventory);
+    }
+
+    mapInventory(rawInventory) {
+        const normalized = {};
+
+        if (Array.isArray(rawInventory)) {
+            rawInventory.forEach(entry => {
+                if (!entry) return;
+                if (typeof entry === 'string') {
+                    const normalizedEntry = this.normalizeInventoryEntry(entry, { name: entry });
+                    if (normalizedEntry) {
+                        normalized[entry] = normalizedEntry;
+                    }
+                    return;
+                }
+                const id = entry.id || entry.itemId || entry.name;
+                if (!id) return;
+                const normalizedEntry = this.normalizeInventoryEntry(id, entry);
+                if (normalizedEntry) {
+                    normalized[id] = normalizedEntry;
+                }
+            });
+        } else if (rawInventory && typeof rawInventory === 'object') {
+            Object.entries(rawInventory).forEach(([id, value]) => {
+                if (!value) return;
+                if (typeof value === 'string') {
+                    const normalizedEntry = this.normalizeInventoryEntry(id, { name: value || id });
+                    if (normalizedEntry) {
+                        normalized[id] = normalizedEntry;
+                    }
+                    return;
+                }
+                const normalizedEntry = this.normalizeInventoryEntry(id, { id, ...value });
+                if (normalizedEntry) {
+                    normalized[id] = normalizedEntry;
+                }
+            });
+        }
+
+        return normalized;
+    }
+
+    normalizeInventoryEntry(itemId, raw = {}) {
+        if (!itemId) return null;
+
+        const entry = { ...raw };
+
+        if (entry.transform && typeof entry.transform === 'object') {
+            try {
+                entry.transform = JSON.parse(JSON.stringify(entry.transform));
+            } catch (_) {
+                entry.transform = { ...entry.transform };
+            }
+        }
+
+        if (entry.dropTransform && typeof entry.dropTransform === 'object') {
+            try {
+                entry.dropTransform = JSON.parse(JSON.stringify(entry.dropTransform));
+            } catch (_) {
+                entry.dropTransform = { ...entry.dropTransform };
+            }
+        }
+
+        entry.id = itemId;
+        entry.name = entry.name || itemId;
+        entry.description = entry.description || '';
+        entry.image = entry.image || '';
+
+        const size = entry.size && typeof entry.size === 'object' ? entry.size : {};
+        entry.size = {
+            width: Number(size.width) || 80,
+            height: Number(size.height) || 80
+        };
+
+        entry.status = entry.status || 'held';
+
+        if (entry.dropPosition && typeof entry.dropPosition === 'object') {
+            entry.dropPosition = {
+                x: Number(entry.dropPosition.x) || 0,
+                y: Number(entry.dropPosition.y) || 0
+            };
+        }
+
+        if (entry.dropSize && typeof entry.dropSize === 'object') {
+            entry.dropSize = {
+                width: Number(entry.dropSize.width) || entry.size.width,
+                height: Number(entry.dropSize.height) || entry.size.height
+            };
+        }
+
+        entry.dropLocation = entry.dropLocation || undefined;
+        entry.dropInPuzzleArea = !!entry.dropInPuzzleArea;
+
+        return entry;
+    }
+
+    /**
+     * Sistema de eventos
+     */
+    on(event, callback) {
+        if (!this.callbacks[event]) {
+            this.callbacks[event] = [];
+        }
+        this.callbacks[event].push(callback);
+    }
+
+    trigger(event, data) {
+        if (this.callbacks[event]) {
+            this.callbacks[event].forEach(callback => callback(data));
+        }
+    }
+
+}
+
+// Instância global
+const gameStateManager = new GameStateManager();
