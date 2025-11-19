@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -262,7 +263,9 @@
         }
 
         /* Items & Hotspots List */
-        .items-list, .hotspots-list, .connections-list {
+        .items-list,
+        .hotspots-list,
+        .connections-list {
             margin-top: 20px;
         }
 
@@ -524,6 +527,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Admin Authentication Check -->
     <script>
@@ -543,10 +547,14 @@
         <!-- Left Sidebar -->
         <div class="locations-sidebar">
             <div class="sidebar-header">
-                <a href="admin-panel.html" style="display: inline-block; padding: 8px 15px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 4px; margin-bottom: 15px; font-size: 14px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">← Painel Admin</a>
+                <a href="admin-panel.html"
+                    style="display: inline-block; padding: 8px 15px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 4px; margin-bottom: 15px; font-size: 14px; transition: all 0.3s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">← Painel Admin</a>
                 <h2>Locais do Jogo</h2>
                 <button class="add-location-btn" onclick="addNewLocation()">+ Adicionar Novo Local</button>
-                <button class="btn btn-danger" onclick="resetEditorData()" style="width: 100%; margin-top: 10px;">🔄 Resetar Dados do Editor</button>
+                <button class="btn btn-danger" onclick="resetEditorData()" style="width: 100%; margin-top: 10px;">🔄
+                    Resetar Dados do Editor</button>
             </div>
             <div class="locations-list" id="locationsList">
                 <!-- Populated by JS -->
@@ -567,6 +575,7 @@
                 <button class="tab-btn" onclick="switchTab('items')">💎 Itens</button>
                 <button class="tab-btn" onclick="switchTab('hotspots')">🎯 Hotspots</button>
                 <button class="tab-btn" onclick="switchTab('connections')">🔗 Conexões</button>
+                <button class="tab-btn" onclick="switchTab('walls')">🧱 Paredes</button>
             </div>
 
             <div class="tab-content">
@@ -580,26 +589,33 @@
 
                     <div class="form-group">
                         <label>Nome do Local</label>
-                        <input type="text" id="edit-name" placeholder="ex: Entrada da Floresta" onchange="saveBasicInfo()">
+                        <input type="text" id="edit-name" placeholder="ex: Entrada da Floresta"
+                            onchange="saveBasicInfo()">
                     </div>
 
                     <div class="form-group">
                         <label>Descrição</label>
-                        <textarea id="edit-description" placeholder="Descreva o local..." onchange="saveBasicInfo()"></textarea>
+                        <textarea id="edit-description" placeholder="Descreva o local..."
+                            onchange="saveBasicInfo()"></textarea>
                     </div>
 
                     <div class="form-group">
                         <label>Imagem do Local</label>
-                        <input type="text" id="edit-image" placeholder="ex: images/forest_entrance.jpg" onchange="saveBasicInfo()">
+                        <input type="text" id="edit-image" placeholder="ex: images/forest_entrance.jpg"
+                            onchange="saveBasicInfo()">
                         <div class="form-hint">Caminho relativo para a imagem</div>
 
                         <div style="margin-top: 10px;">
-                            <input type="file" id="location-image-upload" accept="image/*" style="display: none;" onchange="handleLocationImageUpload(event)">
-                            <button class="btn btn-secondary" onclick="document.getElementById('location-image-upload').click()">📁 Fazer Upload da Imagem</button>
+                            <input type="file" id="location-image-upload" accept="image/*" style="display: none;"
+                                onchange="handleLocationImageUpload(event)">
+                            <button class="btn btn-secondary"
+                                onclick="document.getElementById('location-image-upload').click()">📁 Fazer Upload da
+                                Imagem</button>
                         </div>
 
                         <div id="location-image-preview" style="margin-top: 15px; display: none;">
-                            <img id="location-preview-img" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                            <img id="location-preview-img"
+                                style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid #e0e0e0;">
                         </div>
                     </div>
 
@@ -614,11 +630,13 @@
                 <!-- Visual Positioning Tab -->
                 <div class="tab-panel" id="tab-visual">
                     <h3>Posicionamento Visual de Itens e Hotspots</h3>
-                    <p style="color: #666; margin-bottom: 20px;">Arraste itens PNG e desenhe áreas clicáveis sobre a imagem</p>
+                    <p style="color: #666; margin-bottom: 20px;">Arraste itens PNG e desenhe áreas clicáveis sobre a
+                        imagem</p>
 
                     <div style="display: grid; grid-template-columns: 250px 1fr 280px; gap: 20px;">
                         <!-- Left Panel: Items + Hotspots -->
-                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; max-height: 600px; overflow-y: auto;">
+                        <div
+                            style="background: #f9f9f9; padding: 15px; border-radius: 8px; max-height: 600px; overflow-y: auto;">
                             <h4 style="margin-bottom: 15px;">Itens Disponíveis</h4>
                             <div id="visual-items-list" style="margin-bottom: 20px;">
                                 <!-- Populated by JS -->
@@ -627,7 +645,8 @@
                             <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
 
                             <h4 style="margin-bottom: 10px;">🎯 Hotspots de Navegação</h4>
-                            <button class="btn btn-primary" onclick="startDrawingHotspot()" style="width: 100%; margin-bottom: 10px; font-size: 12px;">
+                            <button class="btn btn-primary" onclick="startDrawingHotspot()"
+                                style="width: 100%; margin-bottom: 10px; font-size: 12px;">
                                 ➕ Desenhar Área
                             </button>
                             <div id="visual-hotspots-list">
@@ -636,18 +655,19 @@
                         </div>
 
                         <!-- Canvas Area -->
-                        <div style="background: #1e1e1e; border-radius: 8px; padding: 20px; position: relative; overflow: visible;">
-                            <div id="visual-wrapper" style="position: relative; display: inline-block; max-width: 100%; overflow: visible;">
+                        <div
+                            style="background: #1e1e1e; border-radius: 8px; padding: 20px; position: relative; overflow: visible;">
+                            <div id="visual-wrapper"
+                                style="position: relative; display: inline-block; max-width: 100%; overflow: visible;">
                                 <img id="visual-location-image"
-                                     style="max-width: 100%; display: block; border-radius: 8px;"
-                                     src=""
-                                     alt="Imagem do local">
+                                    style="max-width: 100%; display: block; border-radius: 8px;" src=""
+                                    alt="Imagem do local">
                                 <div id="visual-hotspots-container"
-                                     style="position: absolute; top: 0; left: 0; pointer-events: auto; overflow: visible;">
+                                    style="position: absolute; top: 0; left: 0; pointer-events: auto; overflow: visible;">
                                     <!-- Hotspots drawn here -->
                                 </div>
                                 <div id="visual-items-container"
-                                     style="position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; perspective: 1000px;">
+                                    style="position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; perspective: 1000px;">
                                     <!-- Items positioned here -->
                                 </div>
                             </div>
@@ -658,7 +678,8 @@
                         </div>
 
                         <!-- Transform Controls Panel -->
-                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; max-height: 600px; overflow-y: auto;">
+                        <div
+                            style="background: #f9f9f9; padding: 15px; border-radius: 8px; max-height: 600px; overflow-y: auto;">
                             <h4 style="margin-bottom: 15px;">Transformações</h4>
                             <div id="transform-controls">
                                 <div style="color: #999; text-align: center; padding: 20px; font-size: 14px;">
@@ -741,7 +762,8 @@
                 <!-- Items Tab -->
                 <div class="tab-panel" id="tab-items">
                     <h3>Itens Colecionáveis</h3>
-                    <button class="btn btn-primary" onclick="addNewItem()" style="margin-bottom: 20px;">+ Adicionar Item</button>
+                    <button class="btn btn-primary" onclick="addNewItem()" style="margin-bottom: 20px;">+ Adicionar
+                        Item</button>
 
                     <div class="items-list" id="itemsList">
                         <!-- Populated by JS -->
@@ -751,7 +773,8 @@
                 <!-- Hotspots Tab -->
                 <div class="tab-panel" id="tab-hotspots">
                     <h3>Hotspots Interativos</h3>
-                    <button class="btn btn-primary" onclick="addNewHotspot()" style="margin-bottom: 20px;">+ Adicionar Hotspot</button>
+                    <button class="btn btn-primary" onclick="addNewHotspot()" style="margin-bottom: 20px;">+ Adicionar
+                        Hotspot</button>
 
                     <div class="hotspots-list" id="hotspotsList">
                         <!-- Populated by JS -->
@@ -761,9 +784,23 @@
                 <!-- Connections Tab -->
                 <div class="tab-panel" id="tab-connections">
                     <h3>Conexões com Outros Locais</h3>
-                    <p style="margin-bottom: 20px; color: #666;">Selecione os locais que podem ser acessados a partir deste local.</p>
+                    <p style="margin-bottom: 20px; color: #666;">Selecione os locais que podem ser acessados a partir
+                        deste local.</p>
 
                     <div class="connections-list" id="connectionsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Walls Tab -->
+                <div class="tab-panel" id="tab-walls">
+                    <h3>Paredes Destrutíveis</h3>
+                    <p style="margin-bottom: 20px; color: #666;">Configure paredes que podem ser destruídas por itens.
+                    </p>
+                    <button class="btn btn-primary" onclick="addNewDestructibleWall()" style="margin-bottom: 20px;">+
+                        Adicionar Parede</button>
+
+                    <div class="items-list" id="wallsList">
                         <!-- Populated by JS -->
                     </div>
                 </div>
@@ -937,7 +974,7 @@
         }
 
         // Initialize
-        window.onload = async function() {
+        window.onload = async function () {
             console.log('🔧 Iniciando editor...');
             await loadFromDatabase(true); // Carrega automaticamente do banco
         };
@@ -1143,6 +1180,9 @@
             // Connections
             renderConnectionsList();
 
+            // Walls
+            renderDestructibleWallsList();
+
             // Image preview
             loadImagePreview();
 
@@ -1203,7 +1243,7 @@
                 noImageDiv.style.display = 'none';
 
                 // Salvar dimensões se ainda não existirem
-                visualImage.onload = function() {
+                visualImage.onload = function () {
                     if (!location.imageDimensions) {
                         location.imageDimensions = {
                             width: visualImage.naturalWidth,
@@ -2206,7 +2246,7 @@
                         if (handle.includes('s')) handleEl.style.bottom = '-6px';
                         if (handle.includes('w')) handleEl.style.left = '-6px';
                         if (handle.includes('e')) handleEl.style.right = '-6px';
-                        
+
                         handleEl.addEventListener('mousedown', handleResizeMouseDown);
                         hotspotEl.appendChild(handleEl);
                     });
@@ -2224,7 +2264,7 @@
             isDraggingHotspot = true;
             const containerRect = document.getElementById('visual-hotspots-container').getBoundingClientRect();
             const hotspotData = gameLocations[currentLocationId].hotspots[index];
-            
+
             const startX = (hotspotData.position.x / 100) * containerRect.width;
             const startY = (hotspotData.position.y / 100) * containerRect.height;
 
@@ -2392,6 +2432,107 @@
         // Disponibilizar no console global
         window.debugLocation = debugLocation;
         window.gameLocations = gameLocations;
+
+        // ==================== DESTRUCTIBLE WALLS ====================
+        function renderDestructibleWallsList() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const list = document.getElementById('wallsList');
+            list.innerHTML = '';
+
+            if (!location.destructibleWalls || location.destructibleWalls.length === 0) {
+                list.innerHTML = '<div style="color: #999; font-size: 14px; margin-bottom: 15px;">Nenhuma parede configurada.</div>';
+                return;
+            }
+
+            location.destructibleWalls.forEach((wall, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'list-item';
+                itemDiv.innerHTML = `
+                    <div class="list-item-content">
+                        <div class="form-row-3">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 11px;">ID</label>
+                                <input type="text" value="${wall.id || ''}" onchange="updateDestructibleWall(${index}, 'id', this.value)" placeholder="wall_id">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 11px;">Item Necessário</label>
+                                <input type="text" value="${wall.requiredItem || 'gun'}" onchange="updateDestructibleWall(${index}, 'requiredItem', this.value)" placeholder="gun">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 11px;">Imagem</label>
+                                <input type="text" value="${wall.image || ''}" onchange="updateDestructibleWall(${index}, 'image', this.value)" placeholder="wall.png">
+                            </div>
+                        </div>
+                        <div class="form-row" style="margin-top: 10px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 11px;">Posição (X, Y %)</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="number" value="${wall.x || 0}" onchange="updateDestructibleWall(${index}, 'x', parseFloat(this.value))" style="width: 50%;">
+                                    <input type="number" value="${wall.y || 0}" onchange="updateDestructibleWall(${index}, 'y', parseFloat(this.value))" style="width: 50%;">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 11px;">Tamanho (W, H %)</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="number" value="${wall.width || 10}" onchange="updateDestructibleWall(${index}, 'width', parseFloat(this.value))" style="width: 50%;">
+                                    <input type="number" value="${wall.height || 20}" onchange="updateDestructibleWall(${index}, 'height', parseFloat(this.value))" style="width: 50%;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-item-actions" style="flex-direction: column;">
+                        <button class="btn btn-danger btn-small" onclick="deleteDestructibleWall(${index})">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(itemDiv);
+            });
+        }
+
+        function addNewDestructibleWall() {
+            if (!currentLocationId) return;
+            const location = gameLocations[currentLocationId];
+
+            if (!location.destructibleWalls) {
+                location.destructibleWalls = [];
+            }
+
+            location.destructibleWalls.push({
+                id: `wall_${Date.now()}`,
+                x: 50,
+                y: 50,
+                width: 15,
+                height: 25,
+                image: '',
+                requiredItem: 'gun'
+            });
+
+            autoSave();
+            renderDestructibleWallsList();
+        }
+
+        function updateDestructibleWall(index, field, value) {
+            if (!currentLocationId) return;
+            const location = gameLocations[currentLocationId];
+
+            if (location.destructibleWalls && location.destructibleWalls[index]) {
+                location.destructibleWalls[index][field] = value;
+                autoSave();
+            }
+        }
+
+        function deleteDestructibleWall(index) {
+            if (!currentLocationId) return;
+            if (!confirm('Tem certeza que deseja remover esta parede?')) return;
+
+            const location = gameLocations[currentLocationId];
+            if (location.destructibleWalls) {
+                location.destructibleWalls.splice(index, 1);
+                autoSave();
+                renderDestructibleWallsList();
+            }
+        }
 
         // Carregar dados ao iniciar
         window.addEventListener('DOMContentLoaded', () => {
@@ -3600,4 +3741,5 @@ if (typeof module !== 'undefined' && module.exports) {
         });
     </script>
 </body>
+
 </html>
