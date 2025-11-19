@@ -1567,6 +1567,68 @@
             container.style.transformOrigin = 'top left';
         }
 
+        // Render positioned walls on the visual editor
+        function renderPositionedWalls() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const container = document.getElementById('visual-walls-container');
+
+            if (!container) {
+                console.error('Container visual-items-container não encontrado!');
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (!Array.isArray(location.walls)) {
+                location.walls = [];
+            }
+
+            location.walls.forEach((wall, index) => {
+                ensureWallDefaults(wall);
+
+                const isSelected = selectedVisualType === 'wall' && selectedWallIndex === index;
+
+                const wallEl = document.createElement('div');
+                wallEl.dataset.visualType = 'wall';
+                wallEl.dataset.wallIndex = index;
+                wallEl.style.cssText = `
+                    position: absolute;
+                    left: ${wall.x}%;
+                    top: ${wall.y}%;
+                    width: ${wall.width}%;
+                    height: ${wall.height}%;
+                    background: rgba(255, 0, 0, 0.3);
+                    border: 2px dashed ${isSelected ? '#ff0000' : '#cc0000'};
+                    cursor: move;
+                    pointer-events: auto;
+                    z-index: 110;
+                    box-sizing: border-box;
+                `;
+
+                const label = document.createElement('div');
+                label.textContent = wall.id || `Parede ${index + 1}`;
+                label.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255, 0, 0, 0.7);
+                    color: white;
+                    padding: 4px 8px;
+                    font-size: 12px;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                    pointer-events: none;
+                `;
+
+                wallEl.appendChild(label);
+                wallEl.addEventListener('mousedown', startDragItem);
+                container.appendChild(wallEl);
+            });
+        }
+
         // Render positioned items on the image
         function renderPositionedItems() {
             if (!currentLocationId) return;
