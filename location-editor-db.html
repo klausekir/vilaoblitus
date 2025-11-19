@@ -666,6 +666,10 @@
                                     style="position: absolute; top: 0; left: 0; pointer-events: auto; overflow: visible;">
                                     <!-- Hotspots drawn here -->
                                 </div>
+                                <div id="visual-walls-container"
+                                    style="position: absolute; top: 0; left: 0; pointer-events: auto; overflow: visible; z-index: 40;">
+                                    <!-- Walls drawn here -->
+                                </div>
                                 <div id="visual-items-container"
                                     style="position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; perspective: 1000px;">
                                     <!-- Items positioned here -->
@@ -930,6 +934,10 @@
             if (selectedVisualType === 'puzzle' && location.puzzle) {
                 ensurePuzzleDefaults(location.puzzle);
                 return { type: 'puzzle', data: location.puzzle.visual, puzzle: location.puzzle };
+            }
+
+            if (selectedVisualType === 'wall' && selectedWallIndex !== null && location.destructibleWalls) {
+                return { type: 'wall', data: location.destructibleWalls[selectedWallIndex] };
             }
 
             return null;
@@ -1253,6 +1261,7 @@
                     }
                     renderPositionedItems();
                     renderPositionedHotspots();
+                    renderPositionedWalls();
                 };
 
                 // Render items list
@@ -1270,7 +1279,9 @@
                     }
                     renderPositionedItems();
                     renderPositionedHotspots();
+                    renderPositionedWalls();
                 }
+
             } else {
                 visualImage.style.display = 'none';
                 noImageDiv.style.display = 'block';
@@ -1625,7 +1636,55 @@
 
             const visual = getSelectedVisual();
             if (!visual) {
-                panel.innerHTML = '<div style="color: #999; text-align: center; padding: 20px; font-size: 14px;">Selecione um item ou enigma para editar</div>';
+                panel.innerHTML = '<div style="color: #999; text-align: center; padding: 20px; font-size: 14px;">Selecione um item, enigma ou parede para editar</div>';
+                return;
+            }
+
+            // Special handling for walls
+            if (visual.type === 'wall') {
+                const wall = visual.data;
+                panel.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <strong style="display: block; margin-bottom: 8px;">Parede: ${wall.id}</strong>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 10px;">Item necessário: ${wall.requiredItem || 'Nenhum'}</div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">Posição (%)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div>
+                                    <label style="font-size: 11px; color: #666;">X</label>
+                                    <input type="number" value="${wall.x}" step="0.1"
+                                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                           onchange="updateWallProperty('x', parseFloat(this.value))">
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; color: #666;">Y</label>
+                                    <input type="number" value="${wall.y}" step="0.1"
+                                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                           onchange="updateWallProperty('y', parseFloat(this.value))">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">Tamanho (%)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div>
+                                    <label style="font-size: 11px; color: #666;">Largura</label>
+                                    <input type="number" value="${wall.width}" step="0.1"
+                                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                           onchange="updateWallProperty('width', parseFloat(this.value))">
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; color: #666;">Altura</label>
+                                    <input type="number" value="${wall.height}" step="0.1"
+                                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                           onchange="updateWallProperty('height', parseFloat(this.value))">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
@@ -1710,7 +1769,7 @@
 
                     <div style="margin-bottom: 10px;">
                         <label style="font-size: 11px; color: #666;">Distorcer X (horizontal)</label>
-                        <input type="range" id="item-skew-x" min="-45" max="45" value="${transform.skewX || 0}"
+                        <input type="range" id="item-skew-x" min="-60" max="60" value="${transform.skewX || 0}"
                                style="width: 100%;"
                                oninput="updateItemTransform()">
                         <div style="text-align: center; font-size: 11px;" id="skew-x-value">${transform.skewX || 0}°</div>
@@ -1718,7 +1777,7 @@
 
                     <div>
                         <label style="font-size: 11px; color: #666;">Distorcer Y (vertical)</label>
-                        <input type="range" id="item-skew-y" min="-45" max="45" value="${transform.skewY || 0}"
+                        <input type="range" id="item-skew-y" min="-60" max="60" value="${transform.skewY || 0}"
                                style="width: 100%;"
                                oninput="updateItemTransform()">
                         <div style="text-align: center; font-size: 11px;" id="skew-y-value">${transform.skewY || 0}°</div>
@@ -1800,6 +1859,17 @@
                     </button>
                 </div>
             `;
+        }
+
+        function updateWallProperty(prop, value) {
+            if (!currentLocationId || selectedWallIndex === null) return;
+            const location = gameLocations[currentLocationId];
+            if (location.destructibleWalls && location.destructibleWalls[selectedWallIndex]) {
+                location.destructibleWalls[selectedWallIndex][prop] = value;
+                autoSave();
+                renderPositionedWalls();
+                renderDestructibleWallsList();
+            }
         }
 
         function updateItemSize() {
@@ -2102,22 +2172,22 @@
                 if (hotspot.action === 'navigate' && hotspot.position) {
                     const hotspotEl = document.createElement('div');
                     hotspotEl.style.cssText = `
-                        background: #fff;
-                        padding: 8px;
-                        margin-bottom: 8px;
-                        border-radius: 4px;
-                        border: 2px solid #28a745;
-                        font-size: 11px;
-                        cursor: pointer;
-                    `;
+            background: #fff;
+            padding: 8px;
+            margin - bottom: 8px;
+            border - radius: 4px;
+            border: 2px solid #28a745;
+            font - size: 11px;
+            cursor: pointer;
+            `;
                     hotspotEl.innerHTML = `
-                        <div style="font-weight: bold; margin-bottom: 4px;">📍 ${hotspot.name || 'Hotspot ' + (index + 1)}</div>
+                < div style = "font-weight: bold; margin-bottom: 4px;" >📍 ${hotspot.name || 'Hotspot ' + (index + 1)}</div >
                         <div style="color: #666; font-size: 10px;">→ ${hotspot.target || 'destino'}</div>
                         <div style="margin-top: 6px; display: flex; gap: 4px;">
                             <button onclick="editVisualHotspot(${index})" style="flex: 1; padding: 4px; font-size: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">✏️ Editar</button>
                             <button onclick="deleteVisualHotspot(${index})" style="flex: 1; padding: 4px; font-size: 10px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer;">🗑️</button>
                         </div>
-                    `;
+            `;
                     list.appendChild(hotspotEl);
                 }
             });
@@ -2177,49 +2247,49 @@
             console.log('📊 Total de hotspots:', location.hotspots.length);
 
             location.hotspots.forEach((hotspot, index) => {
-                console.log(`  [${index}] action: "${hotspot.action}", position:`, hotspot.position);
+                console.log(`  [${index}]action: "${hotspot.action}", position: `, hotspot.position);
 
                 // Aceita tanto 'navigate' quanto 'navigation'
                 const isNavigationHotspot = (hotspot.action === 'navigate' || hotspot.action === 'navigation');
                 if (!isNavigationHotspot || !hotspot.position) {
-                    console.log(`  ❌ [${index}] IGNORADO - isNav: ${isNavigationHotspot}, hasPos: ${!!hotspot.position}`);
+                    console.log(`  ❌[${index}] IGNORADO - isNav: ${isNavigationHotspot}, hasPos: ${!!hotspot.position} `);
                     return;
                 }
 
-                console.log(`  ✅ [${index}] RENDERIZANDO:`, hotspot.name);
+                console.log(`  ✅[${index}] RENDERIZANDO: `, hotspot.name);
 
                 const isSelected = index === selectedHotspotIndex;
 
                 const hotspotEl = document.createElement('div');
                 hotspotEl.dataset.hotspotIndex = index;
                 hotspotEl.style.cssText = `
-                    position: absolute;
-                    left: ${hotspot.position.x}%;
-                    top: ${hotspot.position.y}%;
-                    width: ${hotspot.position.width}%;
-                    height: ${hotspot.position.height}%;
-                    border: 3px ${isSelected ? '#ff4444' : 'dashed #28a745'};
-                    background: ${isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(40, 167, 69, 0.2)'};
-                    cursor: move;
-                    pointer-events: auto;
-                    z-index: 50;
-                `;
+            position: absolute;
+            left: ${hotspot.position.x}%;
+            top: ${hotspot.position.y}%;
+            width: ${hotspot.position.width}%;
+            height: ${hotspot.position.height}%;
+            border: 3px ${isSelected ? '#ff4444' : 'dashed #28a745'};
+            background: ${isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(40, 167, 69, 0.2)'};
+            cursor: move;
+            pointer - events: auto;
+            z - index: 50;
+            `;
 
                 const label = document.createElement('div');
                 label.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: ${isSelected ? 'rgba(204, 0, 0, 0.9)' : 'rgba(40, 167, 69, 0.9)'};
-                    color: white;
-                    padding: 6px 12px;
-                    border-radius: 4px;
-                    font-size: 14px;
-                    font-weight: bold;
-                    pointer-events: none;
-                    white-space: nowrap;
-                `;
+            position: absolute;
+            top: 50 %;
+            left: 50 %;
+            transform: translate(-50 %, -50 %);
+            background: ${isSelected ? 'rgba(204, 0, 0, 0.9)' : 'rgba(40, 167, 69, 0.9)'};
+            color: white;
+            padding: 6px 12px;
+            border - radius: 4px;
+            font - size: 14px;
+            font - weight: bold;
+            pointer - events: none;
+            white - space: nowrap;
+            `;
                 label.textContent = hotspot.name || 'Hotspot';
                 hotspotEl.appendChild(label);
 
@@ -2236,12 +2306,12 @@
                         handleEl.className = 'resize-handle';
                         handleEl.dataset.direction = handle;
                         handleEl.style.cssText = `
-                            position: absolute;
-                            width: 12px; height: 12px; 
-                            background: #ff4444; border: 1px solid white;
-                            z-index: 100;
-                            cursor: ${handle}-resize;
-                        `;
+            position: absolute;
+            width: 12px; height: 12px;
+            background: #ff4444; border: 1px solid white;
+            z - index: 100;
+            cursor: ${handle} -resize;
+            `;
                         if (handle.includes('n')) handleEl.style.top = '-6px';
                         if (handle.includes('s')) handleEl.style.bottom = '-6px';
                         if (handle.includes('w')) handleEl.style.left = '-6px';
@@ -2419,10 +2489,10 @@
 
             if (loc.hotspots) {
                 loc.hotspots.forEach((h, i) => {
-                    console.log(`  ${i}. "${h.name}" → ${h.target} (${h.action})`);
+                    console.log(`  ${i}."${h.name}" → ${h.target} (${h.action})`);
                     if (h.action === 'navigate') {
                         const temConexao = loc.connections?.includes(h.target);
-                        console.log(`     ${temConexao ? '✅' : '❌'} Conexão existe: ${temConexao}`);
+                        console.log(`     ${temConexao ? '✅' : '❌'} Conexão existe: ${temConexao} `);
                     }
                 });
             }
@@ -2432,6 +2502,222 @@
         // Disponibilizar no console global
         window.debugLocation = debugLocation;
         window.gameLocations = gameLocations;
+
+        // ==================== VISUAL WALLS ====================
+        let selectedWallIndex = null;
+        let isDraggingWall = false;
+        let isResizingWall = false;
+        let wallDragOffset = { x: 0, y: 0 };
+        let wallResizeHandle = null;
+
+        function selectWall(index) {
+            selectedVisualType = 'wall';
+            selectedWallIndex = index;
+            selectedItemIndex = null;
+            renderPositionedWalls();
+            renderTransformControls();
+        }
+
+        function renderPositionedWalls() {
+            if (!currentLocationId) return;
+
+            const location = gameLocations[currentLocationId];
+            const container = document.getElementById('visual-walls-container');
+            if (!container) return;
+
+            const visualImage = document.getElementById('visual-location-image');
+            const wrapper = document.getElementById('visual-wrapper');
+            if (!visualImage || !visualImage.naturalWidth || !wrapper) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const imgRect = visualImage.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const scale = imgRect.width / (visualImage.naturalWidth || imgRect.width);
+
+            container.style.width = visualImage.naturalWidth + 'px';
+            container.style.height = visualImage.naturalHeight + 'px';
+            container.style.transform = `scale(${scale})`;
+            container.style.transformOrigin = 'top left';
+            container.style.left = (imgRect.left - wrapperRect.left) + 'px';
+            container.style.top = (imgRect.top - wrapperRect.top) + 'px';
+
+            container.innerHTML = '';
+
+            if (!location.destructibleWalls) return;
+
+            location.destructibleWalls.forEach((wall, index) => {
+                const isSelected = index === selectedWallIndex;
+
+                const wallEl = document.createElement('div');
+                wallEl.dataset.wallIndex = index;
+                wallEl.style.cssText = `
+            position: absolute;
+            left: ${wall.x}%;
+            top: ${wall.y}%;
+            width: ${wall.width}%;
+            height: ${wall.height}%;
+            border: 3px ${isSelected ? '#ff4444' : 'solid #555'};
+            background: ${isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(85, 85, 85, 0.5)'};
+            cursor: move;
+            pointer - events: auto;
+            z - index: 40;
+            `;
+
+                if (wall.image) {
+                    wallEl.style.backgroundImage = `url(${wall.image})`;
+                    wallEl.style.backgroundSize = 'cover';
+                }
+
+                const label = document.createElement('div');
+                label.style.cssText = `
+            position: absolute;
+            top: 50 %;
+            left: 50 %;
+            transform: translate(-50 %, -50 %);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border - radius: 4px;
+            font - size: 12px;
+            pointer - events: none;
+            white - space: nowrap;
+            `;
+                label.textContent = wall.id || 'Parede';
+                wallEl.appendChild(label);
+
+                wallEl.addEventListener('mousedown', handleWallMouseDown);
+
+                if (isSelected) {
+                    const handles = ['nw', 'ne', 'sw', 'se'];
+                    handles.forEach(handle => {
+                        const handleEl = document.createElement('div');
+                        handleEl.className = 'resize-handle';
+                        handleEl.dataset.direction = handle;
+                        handleEl.style.cssText = `
+            position: absolute;
+            width: 12px; height: 12px;
+            background: #ff4444; border: 1px solid white;
+            z - index: 100;
+            cursor: ${handle} -resize;
+            `;
+                        if (handle.includes('n')) handleEl.style.top = '-6px';
+                        if (handle.includes('s')) handleEl.style.bottom = '-6px';
+                        if (handle.includes('w')) handleEl.style.left = '-6px';
+                        if (handle.includes('e')) handleEl.style.right = '-6px';
+
+                        handleEl.addEventListener('mousedown', handleWallResizeMouseDown);
+                        wallEl.appendChild(handleEl);
+                    });
+                }
+
+                container.appendChild(wallEl);
+            });
+        }
+
+        function handleWallMouseDown(e) {
+            e.stopPropagation();
+            const index = parseInt(e.target.closest('[data-wall-index]').dataset.wallIndex);
+            selectWall(index);
+
+            isDraggingWall = true;
+            const containerRect = document.getElementById('visual-walls-container').getBoundingClientRect();
+            const wall = gameLocations[currentLocationId].destructibleWalls[index];
+
+            const startX = (wall.x / 100) * containerRect.width;
+            const startY = (wall.y / 100) * containerRect.height;
+
+            wallDragOffset.x = e.clientX - containerRect.left - startX;
+            wallDragOffset.y = e.clientY - containerRect.top - startY;
+
+            document.addEventListener('mousemove', handleWallMouseMove);
+            document.addEventListener('mouseup', handleWallMouseUp);
+        }
+
+        function handleWallMouseMove(e) {
+            if (!isDraggingWall) return;
+            e.stopPropagation();
+
+            const container = document.getElementById('visual-walls-container');
+            const containerRect = container.getBoundingClientRect();
+            const wall = gameLocations[currentLocationId].destructibleWalls[selectedWallIndex];
+
+            let newX = e.clientX - containerRect.left - wallDragOffset.x;
+            let newY = e.clientY - containerRect.top - wallDragOffset.y;
+
+            let newXPercent = (newX / containerRect.width) * 100;
+            let newYPercent = (newY / containerRect.height) * 100;
+
+            wall.x = newXPercent;
+            wall.y = newYPercent;
+
+            renderPositionedWalls();
+        }
+
+        function handleWallMouseUp(e) {
+            if (isDraggingWall) {
+                isDraggingWall = false;
+                autoSave();
+                renderDestructibleWallsList(); // Update list values
+            }
+            document.removeEventListener('mousemove', handleWallMouseMove);
+            document.removeEventListener('mouseup', handleWallMouseUp);
+        }
+
+        function handleWallResizeMouseDown(e) {
+            e.stopPropagation();
+            isResizingWall = true;
+            wallResizeHandle = e.target.dataset.direction;
+
+            document.addEventListener('mousemove', handleWallResizeMouseMove);
+            document.addEventListener('mouseup', handleWallResizeMouseUp);
+        }
+
+        function handleWallResizeMouseMove(e) {
+            if (!isResizingWall) return;
+            e.stopPropagation();
+
+            const container = document.getElementById('visual-walls-container');
+            const containerRect = container.getBoundingClientRect();
+            const wall = gameLocations[currentLocationId].destructibleWalls[selectedWallIndex];
+
+            const mouseX = e.clientX - containerRect.left;
+            const mouseY = e.clientY - containerRect.top;
+
+            const mouseXPercent = (mouseX / containerRect.width) * 100;
+            const mouseYPercent = (mouseY / containerRect.height) * 100;
+
+            const right = wall.x + wall.width;
+            const bottom = wall.y + wall.height;
+
+            if (wallResizeHandle.includes('e')) {
+                wall.width = Math.max(1, mouseXPercent - wall.x);
+            }
+            if (wallResizeHandle.includes('s')) {
+                wall.height = Math.max(1, mouseYPercent - wall.y);
+            }
+            if (wallResizeHandle.includes('w')) {
+                wall.width = Math.max(1, right - mouseXPercent);
+                wall.x = mouseXPercent;
+            }
+            if (wallResizeHandle.includes('n')) {
+                wall.height = Math.max(1, bottom - mouseYPercent);
+                wall.y = mouseYPercent;
+            }
+
+            renderPositionedWalls();
+        }
+
+        function handleWallResizeMouseUp(e) {
+            if (isResizingWall) {
+                isResizingWall = false;
+                autoSave();
+                renderDestructibleWallsList(); // Update list values
+            }
+            document.removeEventListener('mousemove', handleWallResizeMouseMove);
+            document.removeEventListener('mouseup', handleWallResizeMouseUp);
+        }
 
         // ==================== DESTRUCTIBLE WALLS ====================
         function renderDestructibleWallsList() {
@@ -2450,7 +2736,7 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'list-item';
                 itemDiv.innerHTML = `
-                    <div class="list-item-content">
+                < div class="list-item-content" >
                         <div class="form-row-3">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label style="font-size: 11px;">ID</label>
@@ -2510,6 +2796,7 @@
 
             autoSave();
             renderDestructibleWallsList();
+            renderPositionedWalls();
         }
 
         function updateDestructibleWall(index, field, value) {
@@ -2519,6 +2806,7 @@
             if (location.destructibleWalls && location.destructibleWalls[index]) {
                 location.destructibleWalls[index][field] = value;
                 autoSave();
+                renderPositionedWalls();
             }
         }
 
@@ -2531,6 +2819,7 @@
                 location.destructibleWalls.splice(index, 1);
                 autoSave();
                 renderDestructibleWallsList();
+                renderPositionedWalls();
             }
         }
 
