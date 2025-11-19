@@ -992,6 +992,11 @@
             locationOrder = Object.keys(gameLocations);
         }
 
+        // Debounce timer for database sync
+        let autoSaveTimer = null;
+        let lastSyncTime = 0;
+        const SYNC_DEBOUNCE_MS = 3000; // 3 segundos de debounce
+
         // Auto-save to localStorage
         async function autoSave() {
             console.log('[GEMINI_DEBUG] Autosaving data...', { locations: gameLocations, order: locationOrder });
@@ -1000,10 +1005,24 @@
                 order: locationOrder
             };
             try {
+                // Salvar localmente imediatamente
                 await saveToIndexedDB('editorData', saveData);
-                // Também sincronizar com o banco de dados silenciosamente
-                await syncToDatabase(true); // true = silent mode
                 showSaveIndicator();
+
+                // Debounce para sincronização com banco de dados
+                if (autoSaveTimer) {
+                    clearTimeout(autoSaveTimer);
+                }
+
+                autoSaveTimer = setTimeout(async () => {
+                    const now = Date.now();
+                    // Só sincroniza se passou tempo suficiente desde a última sync
+                    if (now - lastSyncTime > SYNC_DEBOUNCE_MS) {
+                        console.log('🔄 Sincronizando com banco de dados...');
+                        await syncToDatabase(true); // true = silent mode
+                        lastSyncTime = now;
+                    }
+                }, SYNC_DEBOUNCE_MS);
             } catch (e) {
                 console.error('Erro ao salvar:', e);
             }
