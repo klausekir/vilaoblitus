@@ -26,6 +26,7 @@ class LocationScene extends Phaser.Scene {
         this._boundSceneItemDragMove = (event) => this.handleSceneItemDragMove(event);
         this._boundSceneItemDragEnd = (event) => this.handleSceneItemDragEnd(event);
         this._sceneDragListenersAttached = false;
+        this.destructibleWalls = [];
     }
 
     init(data) {
@@ -48,6 +49,9 @@ class LocationScene extends Phaser.Scene {
         this.droppedItemSprites = [];
         // Renderizar background
         this.renderBackground();
+
+        // Renderizar paredes destrutíveis
+        this.renderDestructibleWalls();
 
         // Renderizar enigma (se existir) antes de itens/hotspots
         this.renderPuzzle();
@@ -1137,7 +1141,7 @@ class LocationScene extends Phaser.Scene {
 
         const expectedRaw = Array.isArray(puzzle.correctSequence) ? puzzle.correctSequence
             : Array.isArray(puzzle.sequence) ? puzzle.sequence
-            : [];
+                : [];
         const expectedSequence = expectedRaw.map(step => Number(step)).filter(step => Number.isFinite(step));
 
         if (!expectedSequence.length) {
@@ -1603,6 +1607,14 @@ class LocationScene extends Phaser.Scene {
         const localY = ((pointer.y - rect.top) / rect.height) * baseHeight;
 
         const worldPoint = this.cameras.main.getWorldPoint(localX, localY);
+
+        // Verificar interação com paredes destrutíveis
+        const wallHit = this.checkWallInteraction(worldPoint.x, worldPoint.y);
+        if (wallHit) {
+            this.handleWallInteraction(wallHit, itemId);
+            return;
+        }
+
         const bounds = this.getBackgroundBounds();
 
         if (!this.isPointInsideBackground(worldPoint.x, worldPoint.y, bounds)) {
@@ -1721,32 +1733,140 @@ class LocationScene extends Phaser.Scene {
         uiManager.renderInventory();
     }
 
-    updatePuzzleVisual(isSolved) {
-        if (!this.puzzleSprite || !this.locationData.puzzle) return;
-        const visual = this.locationData.puzzle.visual;
-        let textureKey = null;
+    renderDestructibleWalls() {
+        // Limpar paredes antigas
+        if (this.destructibleWalls) {
+            this.destructibleWalls.forEach(wall => wall.destroy());
+        }
+        this.destructibleWalls = [];
 
-        if (isSolved && visual.afterImage) {
-            textureKey = `puzzle_${this.locationData.id}_after`;
-        } else if (!isSolved && visual.beforeImage) {
-            textureKey = `puzzle_${this.locationData.id}_before`;
+        const walls = this.locationData.destructibleWalls || [];
+        if (!walls.length) return;
+
+        const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
+
+        walls.forEach(wallData => {
+            // Se já foi destruída, não renderizar (ou renderizar escombros se quiser)
+            if (gameStateManager.isWallDestroyed(this.currentLocation, wallData.id)) {
+                return;
+            }
+
+            const x = bgX + (wallData.x / 100) * bgWidth;
+            const y = bgY + (wallData.y / 100) * bgHeight;
+            const width = (wallData.width / 100) * bgWidth;
+            const height = (wallData.height / 100) * bgHeight;
+
+            let wallSprite;
+            if (wallData.image && this.textures.exists(wallData.image)) {
+                wallSprite = this.add.image(x + width / 2, y + height / 2, wallData.image);
+                wallSprite.setDisplaySize(width, height);
+            } else {
+                // Placeholder visual
+                wallSprite = this.add.rectangle(x + width / 2, y + height / 2, width, height, 0x555555);
+                wallSprite.setStrokeStyle(2, 0x000000);
+            }
+
+            wallSprite.setOrigin(0.5);
+            wallSprite.setDepth(25); // Acima do background, abaixo de itens
+
+            // Tornar interativo para feedback visual (opcional)
+            wallSprite.setInteractive();
+
+            // Salvar referência e dados
+            wallSprite.wallData = wallData;
+            this.destructibleWalls.push(wallSprite);
+        });
+    }
+
+    checkWallInteraction(worldX, worldY) {
+        if (!this.destructibleWalls) return null;
+
+        for (const wallSprite of this.destructibleWalls) {
+            const bounds = wallSprite.getBounds();
+            if (bounds.contains(worldX, worldY)) {
+                return wallSprite.wallData;
+            }
+        }
+        return null;
+    }
+
+    handleWallInteraction(wallData, itemId) {
+        const requiredItem = wallData.requiredItem || 'gun'; // Default para 'gun'
+
+        if (itemId !== requiredItem) {
+            uiManager.showNotification('Este item não parece funcionar aqui.');
+            return;
         }
 
-        if (textureKey && this.textures.exists(textureKey)) {
-            this.puzzleSprite.setTexture(textureKey);
-            this.puzzleSprite.setDisplaySize(visual.size?.width || this.puzzleSprite.displayWidth, visual.size?.height || this.puzzleSprite.displayHeight);
-        }
+        // Calcular posição de origem (inventário/mouse) e destino (parede)
+        // Como é drag and drop, a origem é onde o mouse está agora (aproximadamente)
+        const pointer = this.input.activePointer;
+        const startX = pointer.worldX; // Ou uma posição fixa fora da tela se preferir
+        const startY = this.cameras.main.height; // Simular vindo de baixo (inventário)
 
-        this.applyPuzzleTransforms(this.puzzleSprite, visual.transform);
+        const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
+        const targetX = bgX + (wallData.x / 100) * bgWidth + ((wallData.width / 100) * bgWidth) / 2;
+        const targetY = bgY + (wallData.y / 100) * bgHeight + ((wallData.height / 100) * bgHeight) / 2;
 
-        const displayWidth = this.puzzleSprite.displayWidth;
-        const displayHeight = this.puzzleSprite.displayHeight;
-        this.puzzleHitArea = {
-            x: this.puzzleSprite.x - displayWidth / 2,
-            y: this.puzzleSprite.y - displayHeight / 2,
-            width: displayWidth,
-            height: displayHeight
-        };
+        this.fireProjectile(startX, startY, targetX, targetY, () => {
+            // Callback quando o projétil atingir
+            this.destroyWall(wallData);
+        });
+    }
+
+    fireProjectile(startX, startY, targetX, targetY, onHit) {
+        // Criar sprite do projétil
+        const projectile = this.add.circle(startX, startY, 5, 0xffff00);
+        projectile.setDepth(200);
+
+        // Calcular ângulo
+        const angle = Phaser.Math.Angle.Between(startX, startY, targetX, targetY);
+
+        // Efeito de rastro (opcional, simples)
+        const particles = this.add.particles(0, 0, 'flare', {
+            speed: 100,
+            scale: { start: 0.5, end: 0 },
+            blendMode: 'ADD',
+            follow: projectile
+        });
+
+        // Tween de movimento
+        this.tweens.add({
+            targets: projectile,
+            x: targetX,
+            y: targetY,
+            duration: 300, // Rápido
+            ease: 'Linear',
+            onComplete: () => {
+                projectile.destroy();
+                if (particles) particles.destroy();
+
+                // Efeito de explosão
+                const explosion = this.add.circle(targetX, targetY, 10, 0xffaa00);
+                this.tweens.add({
+                    targets: explosion,
+                    scale: 5,
+                    alpha: 0,
+                    duration: 200,
+                    onComplete: () => explosion.destroy()
+                });
+
+                if (onHit) onHit();
+            }
+        });
+    }
+
+    destroyWall(wallData) {
+        // Tocar som (se houver)
+        // this.sound.play('explosion'); 
+
+        // Atualizar estado
+        gameStateManager.destroyWall(this.currentLocation, wallData.id);
+
+        // Atualizar visual (remover parede)
+        this.renderDestructibleWalls();
+
+        uiManager.showNotification('Caminho liberado!');
     }
 
     navigateToLocation(targetLocationId, hotspot) {

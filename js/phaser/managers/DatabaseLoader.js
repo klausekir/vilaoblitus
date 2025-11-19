@@ -125,7 +125,8 @@ class DatabaseLoader {
                 description: location.description,
                 image: location.background_image,
                 hotspots: this.convertHotspots(hotspots),  // Só hotspots de navegação
-                items: items  // Items separados
+                items: items,  // Items separados
+                destructibleWalls: location.destructible_walls || [] // Paredes destrutíveis
             };
 
             if (location.puzzle) {
