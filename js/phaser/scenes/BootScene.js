@@ -143,6 +143,10 @@ class BootScene extends Phaser.Scene {
         puzzleBeforeSources.forEach((src, id) => this.load.image(`puzzle_${id}_before`, src));
         puzzleAfterSources.forEach((src, id) => this.load.image(`puzzle_${id}_after`, src));
         rewardSources.forEach((src, id) => this.load.image(`puzzle_reward_${id}`, src));
+
+        // Load static assets
+        this.load.image('projectile_bullet', 'images/effects/bullet.png');
+        this.load.image('wall_texture', 'images/objects/wall_texture.png');
     }
 
     async create() {
