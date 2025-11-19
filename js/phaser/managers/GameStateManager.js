@@ -11,7 +11,8 @@ class GameStateManager {
             solvedPuzzles: [],
             inventory: {},
             hasKey: false,
-            gameCompleted: false
+            gameCompleted: false,
+            photographAlbum: [] // Sistema de câmera/fotografias
         };
 
         this.callbacks = {};
@@ -173,6 +174,94 @@ class GameStateManager {
      */
     isPuzzleSolved(puzzleId) {
         return this.state.solvedPuzzles.includes(puzzleId);
+    }
+
+    /**
+     * SISTEMA DE FOTOGRAFIAS
+     */
+
+    /**
+     * Tirar fotografia de uma pista
+     */
+    takePhotograph(locationId, objectId, imageUrl, caption, clueData = null) {
+        // Garantir que photographAlbum existe
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
+        }
+
+        // Verificar se já fotografou este objeto
+        const existingPhoto = this.state.photographAlbum.find(
+            p => p.location === locationId && p.object === objectId
+        );
+
+        if (existingPhoto) {
+            return { success: false, message: 'Você já fotografou isto.' };
+        }
+
+        const photo = {
+            id: `photo_${Date.now()}`,
+            location: locationId,
+            object: objectId,
+            image: imageUrl,
+            caption: caption,
+            clueData: clueData, // Dados adicionais da pista (símbolos, códigos, etc)
+            timestamp: Date.now()
+        };
+
+        this.state.photographAlbum.push(photo);
+        this.saveProgress();
+        this.trigger('photographTaken', photo);
+
+        return { success: true, photo: photo };
+    }
+
+    /**
+     * Obter todas as fotografias
+     */
+    getPhotographs() {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
+        }
+        return this.state.photographAlbum;
+    }
+
+    /**
+     * Obter fotografias de uma localização específica
+     */
+    getPhotographsByLocation(locationId) {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
+        }
+        return this.state.photographAlbum.filter(p => p.location === locationId);
+    }
+
+    /**
+     * Verificar se já fotografou um objeto
+     */
+    hasPhotograph(locationId, objectId) {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
+        }
+        return this.state.photographAlbum.some(
+            p => p.location === locationId && p.object === objectId
+        );
+    }
+
+    /**
+     * Remover fotografia
+     */
+    removePhotograph(photoId) {
+        if (!this.state.photographAlbum) {
+            this.state.photographAlbum = [];
+        }
+        const index = this.state.photographAlbum.findIndex(p => p.id === photoId);
+        if (index >= 0) {
+            this.state.photographAlbum.splice(index, 1);
+            this.saveProgress();
+            this.trigger('photographRemoved', photoId);
+            return true;
+        }
+        return false;
     }
 
     /**
