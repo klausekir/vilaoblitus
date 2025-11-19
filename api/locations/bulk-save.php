@@ -42,6 +42,7 @@ try {
     $hotspotCount = 0;
     $itemCount = 0;
     $puzzleCount = 0;
+    $wallCount = 0;
 
     // Prepared statements (reutilizáveis)
     $locationStmt = $pdo->prepare("
@@ -86,6 +87,14 @@ try {
     $puzzleDeleteStmt = $pdo->prepare("
         DELETE FROM location_puzzles
         WHERE location_id = ?
+    ");
+
+    $deleteWallsStmt = $pdo->prepare("DELETE FROM destructible_walls WHERE location_id = ?");
+
+    $wallStmt = $pdo->prepare("
+        INSERT INTO destructible_walls
+        (location_id, wall_id, x, y, width, height, image, required_item)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     // Processar todas as localizações
@@ -197,19 +206,47 @@ try {
             // Remove puzzle if not present in payload
             $puzzleDeleteStmt->execute([$locationId]);
         }
+
+        // Handle destructible walls
+        $deleteWallsStmt->execute([$locationId]);
+        
+        if (!empty($loc['destructible_walls'])) {
+            foreach ($loc['destructible_walls'] as $wall) {
+                $wallId = $wall['id'] ?? ('wall_' . uniqid());
+                $x = $wall['x'] ?? 0;
+                $y = $wall['y'] ?? 0;
+                $width = $wall['width'] ?? 10;
+                $height = $wall['height'] ?? 20;
+                $image = $wall['image'] ?? null;
+                $requiredItem = $wall['requiredItem'] ?? 'gun';
+
+                $wallStmt->execute([
+                    $locationId,
+                    $wallId,
+                    $x,
+                    $y,
+                    $width,
+                    $height,
+                    $image,
+                    $requiredItem
+                ]);
+                $wallCount++;
+            }
+        }
     }
 
     // Commit tudo de uma vez!
     $pdo->commit();
 
-    error_log("✅ BULK SAVE - Sucesso! $successCount localizações, $hotspotCount hotspots, $itemCount items, $puzzleCount puzzles");
+    error_log("✅ BULK SAVE - Sucesso! $successCount localizações, $hotspotCount hotspots, $itemCount items, $puzzleCount puzzles, $wallCount walls");
 
     sendResponse(true, [
         'locations' => $successCount,
         'hotspots' => $hotspotCount,
         'items' => $itemCount,
-        'puzzles' => $puzzleCount
-    ], "Saved $successCount locations, $hotspotCount hotspots, $itemCount items e $puzzleCount enigmas com sucesso");
+        'puzzles' => $puzzleCount,
+        'walls' => $wallCount
+    ], "Saved $successCount locations, $hotspotCount hotspots, $itemCount items, $puzzleCount enigmas e $wallCount paredes com sucesso");
 
 } catch (Exception $e) {
     // Rollback em caso de erro

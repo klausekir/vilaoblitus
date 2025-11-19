@@ -135,6 +135,28 @@ try {
                 error_log("⚠️ LIST API - Falha ao decodificar puzzle_data para location {$location['id']}: " . json_last_error_msg());
             }
         }
+
+        // Load destructible walls
+        $wallStmt = $pdo->prepare("
+            SELECT wall_id as id, x, y, width, height, image, required_item as requiredItem
+            FROM destructible_walls
+            WHERE location_id = ?
+        ");
+        $wallStmt->execute([$location['id']]);
+        $walls = $wallStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Convert numeric strings to numbers
+        foreach ($walls as &$wall) {
+            $wall['x'] = (float) $wall['x'];
+            $wall['y'] = (float) $wall['y'];
+            $wall['width'] = (float) $wall['width'];
+            $wall['height'] = (float) $wall['height'];
+        }
+        
+        $location['destructible_walls'] = $walls;
+        if (count($walls) > 0) {
+            error_log("  └─ Localização {$location['id']}: " . count($walls) . " paredes destrutíveis");
+        }
     }
 
     // Get all connections

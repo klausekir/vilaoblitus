@@ -3846,7 +3846,8 @@ if (typeof module !== 'undefined' && module.exports) {
                         connections: [],
                         hotspots: hotspots,
                         items: items,
-                        imageDimensions: { width: 1024, height: 1024 }
+                        imageDimensions: { width: 1024, height: 1024 },
+                        destructibleWalls: loc.destructible_walls || []  // ✅ Carregar paredes do banco
                     };
 
                     if (loc.puzzle) {
@@ -3972,7 +3973,8 @@ if (typeof module !== 'undefined' && module.exports) {
                         description: loc.description || 'Descrição...',
                         background_image: loc.image || '',
                         hotspots: allHotspots,
-                        puzzle: loc.puzzle || null
+                        puzzle: loc.puzzle || null,
+                        destructible_walls: loc.destructibleWalls || []  // ✅ Salvar paredes no banco
                     });
                 }
 
