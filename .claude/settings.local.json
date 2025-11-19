@@ -14,7 +14,8 @@
       "Bash(python scrape_appunwrapper.py sk_UaBeCkUrc9EwTJ4RaCJZYb4q4C7DrKHI6Z11jqyuz11XrImMfdOojmn6PYtC1q0t)",
       "Bash(python scrape_appunwrapper.py:*)",
       "Bash(python:*)",
-      "Bash(start test-puzzles.html)"
+      "Bash(start test-puzzles.html)",
+      "Bash(node --check:*)"
     ],
     "deny": [],
     "ask": []

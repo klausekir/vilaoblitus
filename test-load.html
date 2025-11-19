@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Carregamento</title>
+</head>
+<body>
+    <h1>Teste de Carregamento dos Scripts</h1>
+    <div id="log" style="font-family: monospace; white-space: pre;"></div>
+
+    <script>
+        function log(msg, success = true) {
+            const div = document.getElementById('log');
+            div.innerHTML += (success ? '✅ ' : '❌ ') + msg + '\n';
+        }
+
+        window.onerror = function(msg, url, line) {
+            log('ERRO: ' + msg + ' em ' + url + ':' + line, false);
+        };
+    </script>
+
+    <!-- Phaser -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"
+            onload="log('Phaser carregado')"
+            onerror="log('Phaser FALHOU', false)"></script>
+
+    <!-- Map -->
+    <script src="js/map.js"
+            onload="log('map.js carregado')"
+            onerror="log('map.js FALHOU', false)"></script>
+
+    <!-- Managers -->
+    <script src="js/phaser/managers/DatabaseLoader.js"
+            onload="log('DatabaseLoader.js carregado')"
+            onerror="log('DatabaseLoader.js FALHOU', false)"></script>
+
+    <script src="js/phaser/managers/GameStateManager.js"
+            onload="log('GameStateManager.js carregado')"
+            onerror="log('GameStateManager.js FALHOU', false)"></script>
+
+    <script src="js/phaser/managers/UIManager.js"
+            onload="log('UIManager.js carregado')"
+            onerror="log('UIManager.js FALHOU', false)"></script>
+
+    <script src="js/phaser/managers/PhotographAlbumUI.js"
+            onload="log('PhotographAlbumUI.js carregado')"
+            onerror="log('PhotographAlbumUI.js FALHOU', false)"></script>
+
+    <!-- Puzzles -->
+    <script src="js/phaser/puzzles/RotatingDiscsPuzzle.js"
+            onload="log('RotatingDiscsPuzzle.js carregado')"
+            onerror="log('RotatingDiscsPuzzle.js FALHOU', false)"></script>
+
+    <script src="js/phaser/puzzles/PuzzleManager.js"
+            onload="log('PuzzleManager.js carregado')"
+            onerror="log('PuzzleManager.js FALHOU', false)"></script>
+
+    <script src="js/puzzle-examples.js"
+            onload="log('puzzle-examples.js carregado')"
+            onerror="log('puzzle-examples.js FALHOU', false)"></script>
+
+    <!-- Scenes -->
+    <script src="js/phaser/scenes/BootScene.js"
+            onload="log('BootScene.js carregado')"
+            onerror="log('BootScene.js FALHOU', false)"></script>
+
+    <script src="js/phaser/scenes/LocationScene.v2.js"
+            onload="log('LocationScene.v2.js carregado')"
+            onerror="log('LocationScene.v2.js FALHOU', false)"></script>
+
+    <script>
+        log('--- VERIFICAÇÃO ---');
+        log('typeof BootScene: ' + typeof BootScene);
+        log('typeof LocationScene: ' + typeof LocationScene);
+        log('typeof PuzzleManager: ' + typeof PuzzleManager);
+        log('typeof gameStateManager: ' + typeof gameStateManager);
+    </script>
+</body>
+</html>
