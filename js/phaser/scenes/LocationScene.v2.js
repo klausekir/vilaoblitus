@@ -336,6 +336,11 @@ class LocationScene extends Phaser.Scene {
         this.applySpriteTransform(sprite, transform);
     }
 
+    updatePuzzleVisual(solved = false) {
+        // Re-renderizar o puzzle para atualizar visual (ex: baú fechado -> aberto)
+        this.renderPuzzle();
+    }
+
     flashPuzzleSprite(color = 0xf0a500) {
         if (!this.puzzleSprite) return;
         this.puzzleSprite.setTint(color);
@@ -1219,7 +1224,13 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
-        const missing = required.filter(id => !gameStateManager.isItemPlacedAtLocation(id, this.currentLocation, true));
+        // Verificar quais itens já foram dropados na área do puzzle
+        const droppedItems = gameStateManager.getDroppedItems(this.currentLocation)
+            .filter(item => item.dropInPuzzleArea)
+            .map(item => item.id);
+
+        const missing = required.filter(id => !droppedItems.includes(id));
+
         if (missing.length > 0) {
             uiManager.showNotification(`Falta posicionar: ${missing.join(', ')}`, 2500);
             this.flashPuzzleSprite(0xffc107);
