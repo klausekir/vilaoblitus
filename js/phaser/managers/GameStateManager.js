@@ -438,16 +438,19 @@ class GameStateManager {
             localStorage.setItem('vila_abandonada_phaser', JSON.stringify(this.state));
 
             // Salvar no servidor se estiver logado
+            let serverSaved = false;
             const sessionToken = localStorage.getItem('session_token');
             if (sessionToken) {
-                await this.saveToServer();
+                serverSaved = await this.saveToServer();
             }
 
             if (showMessage) {
                 console.log('✓ Progresso salvo');
             }
+            return serverSaved;
         } catch (e) {
             console.error('Erro ao salvar progresso:', e);
+            return false;
         }
     }
 
@@ -457,7 +460,10 @@ class GameStateManager {
     async saveToServer() {
         try {
             const sessionToken = localStorage.getItem('session_token');
-            if (!sessionToken) return;
+            if (!sessionToken) {
+                console.warn('[SAVE_DEBUG] No session token found');
+                return false;
+            }
 
             const response = await fetch('api/save-progress.php', {
                 method: 'POST',
@@ -477,13 +483,18 @@ class GameStateManager {
             });
 
             const data = await response.json();
+            console.log('[SAVE_DEBUG] Save response:', data);
+
             if (data.success) {
                 console.log('✓ Progresso salvo no servidor');
+                return true;
             } else {
                 console.warn('⚠️ Erro ao salvar no servidor:', data.message);
+                return false;
             }
         } catch (e) {
             console.warn('⚠️ Não foi possível salvar no servidor. Progresso salvo localmente:', e.message);
+            return false;
         }
     }
 
@@ -577,9 +588,10 @@ class GameStateManager {
         };
         this.normalizeInventory();
         console.log('[SAVE_DEBUG] State reset. Saving to server...');
-        await this.saveProgress();
+        const success = await this.saveProgress();
         this.trigger('gameReset');
         this.trigger('inventoryChanged');
+        return success;
     }
 
     normalizeInventory() {
