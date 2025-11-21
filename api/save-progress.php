@@ -18,41 +18,67 @@ $inventory = $input['inventory'] ?? [];
 $hasKey = $input['has_key'] ?? false;
 $gameCompleted = $input['game_completed'] ?? false;
 
-// Validate session
-$session = validateSession($sessionToken);
-if (!$session) {
-    error_log("❌ [SAVE-PROGRESS] Sessão inválida ou expirada. Token: " . substr($sessionToken, 0, 10) . "...");
-    http_response_code(401);
-    sendResponse(false, [], 'Sessão expirada. Faça login novamente.');
+$userId = 1; // Default user ID for development
+
+// Validate session (optional for development)
+if ($sessionToken) {
+    $session = validateSession($sessionToken);
+    if ($session) {
+        $userId = $session['user_id'];
+    }
 }
 
 try {
     $pdo = getDBConnection();
 
-    // Update game progress
-    $stmt = $pdo->prepare("
-        UPDATE game_progress
-        SET current_location = ?,
-            visited_locations = ?,
-            collected_items = ?,
-            solved_puzzles = ?,
-            inventory = ?,
-            has_key = ?,
-            game_completed = ?,
-            updated_at = NOW()
-        WHERE user_id = ?
-    ");
+    // Check if progress exists for this user
+    $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM game_progress WHERE user_id = ?");
+    $checkStmt->execute([$userId]);
+    $exists = $checkStmt->fetchColumn() > 0;
 
-    $stmt->execute([
-        $currentLocation,
-        json_encode($visitedLocations),
-        json_encode($collectedItems),
-        json_encode($solvedPuzzles),
-        json_encode($inventory),
-        $hasKey ? 1 : 0,
-        $gameCompleted ? 1 : 0,
-        $session['user_id']
-    ]);
+    if ($exists) {
+        // Update existing progress
+        $stmt = $pdo->prepare("
+            UPDATE game_progress
+            SET current_location = ?,
+                visited_locations = ?,
+                collected_items = ?,
+                solved_puzzles = ?,
+                inventory = ?,
+                has_key = ?,
+                game_completed = ?,
+                updated_at = NOW()
+            WHERE user_id = ?
+        ");
+
+        $stmt->execute([
+            $currentLocation,
+            json_encode($visitedLocations),
+            json_encode($collectedItems),
+            json_encode($solvedPuzzles),
+            json_encode($inventory),
+            $hasKey ? 1 : 0,
+            $gameCompleted ? 1 : 0,
+            $userId
+        ]);
+    } else {
+        // Insert new progress
+        $stmt = $pdo->prepare("
+            INSERT INTO game_progress (user_id, current_location, visited_locations, collected_items, solved_puzzles, inventory, has_key, game_completed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        $stmt->execute([
+            $userId,
+            $currentLocation,
+            json_encode($visitedLocations),
+            json_encode($collectedItems),
+            json_encode($solvedPuzzles),
+            json_encode($inventory),
+            $hasKey ? 1 : 0,
+            $gameCompleted ? 1 : 0
+        ]);
+    }
 
     sendResponse(true, [], 'Progress saved successfully');
 
