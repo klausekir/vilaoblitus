@@ -255,8 +255,24 @@ class LocationScene extends Phaser.Scene {
             this.puzzleSprite.displayWidth = sourceWidth * finalScale;
             this.puzzleSprite.displayHeight = sourceHeight * finalScale;
         } else {
-            this.puzzleSprite = this.add.rectangle(x, y, targetWidth, targetHeight, 0x8b4513, 0.65);
-            this.puzzleSprite.setStrokeStyle(2, 0xf0a500);
+            // Fallback for missing image
+            this.puzzleSprite = this.add.container(x, y);
+
+            const bg = this.add.rectangle(0, 0, targetWidth, targetHeight, 0x8b4513, 0.65);
+            bg.setStrokeStyle(2, 0xf0a500);
+
+            const text = this.add.text(0, 0, 'MISSING\nASSET', {
+                fontSize: '14px',
+                color: '#ff0000',
+                align: 'center',
+                fontStyle: 'bold'
+            });
+            text.setOrigin(0.5);
+
+            this.puzzleSprite.add([bg, text]);
+            this.puzzleSprite.setSize(targetWidth, targetHeight);
+
+            console.warn(`[PUZZLE] Missing texture for puzzle ${puzzle.id}. IsSolved: ${isSolved}, TextureKey: ${textureKey}`);
         }
 
         this.applyPuzzleTransforms(this.puzzleSprite, visual.transform);
