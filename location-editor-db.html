@@ -1137,10 +1137,19 @@
             }
         }
 
+        let saveIndicatorTimer = null;
         function showSaveIndicator() {
             const indicator = document.getElementById('saveIndicator');
             indicator.classList.add('show');
-            setTimeout(() => indicator.classList.remove('show'), 2000);
+
+            if (saveIndicatorTimer) {
+                clearTimeout(saveIndicatorTimer);
+            }
+
+            saveIndicatorTimer = setTimeout(() => {
+                indicator.classList.remove('show');
+                saveIndicatorTimer = null;
+            }, 2000);
         }
 
         // Render locations list
