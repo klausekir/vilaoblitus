@@ -225,12 +225,6 @@ class LocationScene extends Phaser.Scene {
 
         let isSolved = puzzle.id ? gameStateManager.isPuzzleSolved(puzzle.id) : false;
 
-        // DEBUG: Forçar não resolvido para item_combination para testar visual
-        if (puzzle.type === 'item_combination') {
-            console.log('[PUZZLE_DEBUG] Forcing isSolved = false for item_combination');
-            isSolved = false;
-        }
-
         console.log(`[PUZZLE_DEBUG] Rendering puzzle: ${puzzle.id} (${puzzle.type})`);
         console.log(`[PUZZLE_DEBUG] Is Solved: ${isSolved}`);
         console.log(`[PUZZLE_DEBUG] Visual:`, visual);
