@@ -1383,7 +1383,7 @@ class UIManager {
         }
     }
 }
-        }
+
 
 // Instância global
 const uiManager = new UIManager();
