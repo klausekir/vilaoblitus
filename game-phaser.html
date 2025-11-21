@@ -42,6 +42,31 @@
     <!-- Game Map Data (fallback if database fails) -->
     <script src="js/map.js"></script>
 
+    <!-- Build version for cache busting -->
+    <script>
+        window.GAME_BUILD_VERSION = '20251121';
+    </script>
+
+    <!-- Phaser Game Managers -->
+    <script src="js/phaser/managers/DatabaseLoader.js?v=20251121"></script>
+    <script src="js/phaser/managers/GameStateManager.js?v=20251121"></script>
+    <script src="js/phaser/managers/UIManager.js?v=20251121"></script>
+    <script src="js/phaser/managers/PhotographAlbumUI.js?v=20251121"></script>
+
+    <!-- Puzzle System -->
+    <script src="js/phaser/puzzles/RotatingDiscsPuzzle.js?v=20251121"></script>
+    <script src="js/phaser/puzzles/PuzzleManager.js?v=20251121"></script>
+    <script src="js/puzzle-examples.js?v=20251121"></script>
+
+    <!-- Phaser Scenes -->
+    <script src="js/phaser/scenes/BootScene.js?v=20251121"></script>
+    <script src="js/phaser/scenes/LocationScene.v2.js?v=20251121"></script>
+
+    <!-- Authentication Check -->
+    <script>
+        const sessionToken = localStorage.getItem('session_token');
+        const username = localStorage.getItem('username');
+
         if (!sessionToken) {
             window.location.href = 'login.php';
         } else {
