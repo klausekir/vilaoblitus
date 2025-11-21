@@ -497,6 +497,8 @@ class GameStateManager {
             if (sessionToken) {
                 const serverData = await this.loadFromServer();
                 if (serverData) {
+                    console.log('[SAVE_DEBUG] Data loaded from server:', serverData);
+                    console.log('[SAVE_DEBUG] Solved puzzles from server:', serverData.solvedPuzzles);
                     this.state = serverData;
                     this.normalizeInventory();
                     console.log('✓ Progresso carregado do servidor');
@@ -561,6 +563,7 @@ class GameStateManager {
      * Resetar jogo
      */
     reset() {
+        console.log('[SAVE_DEBUG] Resetting game state...');
         this.state = {
             currentLocation: 'floresta',
             visitedLocations: ['floresta'],
@@ -568,9 +571,12 @@ class GameStateManager {
             solvedPuzzles: [],
             inventory: {},
             hasKey: false,
-            gameCompleted: false
+            gameCompleted: false,
+            photographAlbum: [],
+            destroyedWalls: []
         };
         this.normalizeInventory();
+        console.log('[SAVE_DEBUG] State reset. Saving to server...');
         this.saveProgress();
         this.trigger('gameReset');
         this.trigger('inventoryChanged');
