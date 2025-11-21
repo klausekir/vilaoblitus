@@ -229,6 +229,29 @@ class LocationScene extends Phaser.Scene {
         console.log(`[PUZZLE_DEBUG] Is Solved: ${isSolved}`);
         if (isSolved) {
             console.log('[PUZZLE_DEBUG] Solved Puzzles List:', gameStateManager.state.solvedPuzzles);
+
+            // Safeguard: Se o puzzle é de combinação de itens e está marcado como resolvido,
+            // mas o jogador ainda tem os itens no inventário (held), então há uma inconsistência.
+            // Forçar estado não resolvido para permitir que o jogador resolva corretamente.
+            if (puzzle.type === 'item_combination' && puzzle.requiredItems && puzzle.requiredItems.length > 0) {
+                const hasRequiredItems = puzzle.requiredItems.some(itemId => {
+                    const item = gameStateManager.getInventoryItem(itemId);
+                    return item && item.status === 'held';
+                });
+
+                if (hasRequiredItems) {
+                    console.warn(`[PUZZLE] Inconsistência detectada: ${puzzle.id} está resolvido mas itens ainda estão no inventário. Forçando não-resolvido.`);
+                    isSolved = false;
+
+                    // Auto-corrigir o estado removendo da lista de resolvidos
+                    const index = gameStateManager.state.solvedPuzzles.indexOf(puzzle.id);
+                    if (index > -1) {
+                        gameStateManager.state.solvedPuzzles.splice(index, 1);
+                        // Não salvamos imediatamente para evitar spam de saves, 
+                        // o estado será corrigido quando o jogador resolver o puzzle de verdade.
+                    }
+                }
+            }
         }
         console.log(`[PUZZLE_DEBUG] Visual:`, visual);
 
