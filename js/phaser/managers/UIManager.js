@@ -1354,22 +1354,37 @@ class UIManager {
     async resetGame() {
         if (confirm('Tem certeza que deseja resetar o jogo? Todo progresso será perdido.')) {
             this.showNotification('Resetando...');
+            const success = await gameStateManager.reset();
 
-            /**
-             * Logout
-             */
-            logout() {
-                if (confirm('Deseja realmente sair do jogo?')) {
-                    localStorage.removeItem('session_token');
-                    localStorage.removeItem('user_id');
-                    localStorage.removeItem('username');
-                    localStorage.removeItem('email');
-                    localStorage.removeItem('is_admin');
-                    window.location.href = 'index.html';
-                }
+            if (success) {
+                this.showNotification('✓ Jogo resetado!');
+                // Pequeno delay para garantir que o servidor processou
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                this.showNotification('⚠️ Erro ao salvar reset no servidor!');
+                alert('Erro ao resetar no servidor. Verifique o console para detalhes.');
             }
         }
+    }
 
-        // Instância global
-        const uiManager = new UIManager();
-        window.uiManager = uiManager;
+    /**
+     * Logout
+     */
+    logout() {
+        if (confirm('Deseja realmente sair do jogo?')) {
+            localStorage.removeItem('session_token');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('username');
+            localStorage.removeItem('email');
+            localStorage.removeItem('is_admin');
+            window.location.href = 'index.html';
+        }
+    }
+}
+        }
+
+// Instância global
+const uiManager = new UIManager();
+window.uiManager = uiManager;
