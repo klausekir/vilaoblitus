@@ -624,7 +624,7 @@
                         <label for="edit-unlocked">Local desbloqueado no início do jogo</label>
                     </div>
 
-                    <button class="btn btn-success" onclick="saveBasicInfo()">💾 Salvar Informações</button>
+
                 </div>
 
                 <!-- Visual Positioning Tab -->
@@ -4155,69 +4155,58 @@ if (typeof module !== 'undefined' && module.exports) {
                     // Combinar hotspots de navegação + items
                     const allHotspots = [...navigationHotspots, ...itemHotspots];
 
-                    allLocations.push({
-                        id: loc.id,
-                        name: loc.name,
-                        description: loc.description || 'Descrição...',
-                        background_image: loc.image || '',
-                        hotspots: allHotspots,
-                        puzzle: loc.puzzle || null,
-                        destructible_walls: loc.destructibleWalls || []  // ✅ Salvar paredes no banco
-                    });
-                }
-
-                console.log(`📤 Enviando ${allLocations.length} localizações em uma única requisição...`);
-
-                // UMA ÚNICA REQUISIÇÃO para TODAS as localizações!
-                const response = await fetch('api/locations/bulk-save.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ locations: allLocations, order: locationOrder })
-                });
-
-                if (!response.ok) {
-                    const text = await response.text();
-                    console.error(`❌ HTTP ${response.status}:`, text);
-                    if (!silent) {
-                        showToast('❌ Erro ao salvar: ' + text.substring(0, 100), 'error');
+                    const response = await fetch('api/save_locations.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            locations: gameLocations,
+                            order: locationOrder
+                        })
+                    }); if (!response.ok) {
+                        const text = await response.text();
+                        console.error(`❌ HTTP ${response.status}:`, text);
+                        if (!silent) {
+                            showToast('❌ Erro ao salvar: ' + text.substring(0, 100), 'error');
+                        }
+                        return;
                     }
-                    return;
-                }
 
-                const result = await response.json();
-                console.log(`📨 Resposta da API:`, result);
+                    const result = await response.json();
+                    console.log(`📨 Resposta da API:`, result);
 
-                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
 
-                if (result.success) {
-                    console.log(`✅ Sucesso! ${result.data.locations} localizações, ${result.data.hotspots} hotspots em ${elapsed}s`);
-                    if (!silent) {
-                        showToast(`✅ ${result.data.locations} localizações e ${result.data.hotspots} hotspots salvos em ${elapsed}s!`, 'success');
+                    if (result.success) {
+                        console.log(`✅ Sucesso! ${result.data.locations} localizações, ${result.data.hotspots} hotspots em ${elapsed}s`);
+                        if (!silent) {
+                            showToast(`✅ ${result.data.locations} localizações e ${result.data.hotspots} hotspots salvos em ${elapsed}s!`, 'success');
+                        }
+                    } else {
+                        console.error(`❌ Erro:`, result.message);
+                        if (!silent) {
+                            showToast(`❌ Erro: ${result.message}`, 'error');
+                        }
                     }
-                } else {
-                    console.error(`❌ Erro:`, result.message);
-                    if (!silent) {
-                        showToast(`❌ Erro: ${result.message}`, 'error');
-                    }
-                }
 
-            } catch (error) {
-                console.error('❌ Erro ao sincronizar:', error);
-                if (!silent) {
-                    showToast('❌ Erro ao sincronizar: ' + error.message, 'error');
+                } catch (error) {
+                    console.error('❌ Erro ao sincronizar:', error);
+                    if (!silent) {
+                        showToast('❌ Erro ao sincronizar: ' + error.message, 'error');
+                    }
                 }
             }
-        }
 
         // Ajustar escala quando janela redimensiona
         let editorResizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(editorResizeTimeout);
-            editorResizeTimeout = setTimeout(() => {
-                adjustEditorContainer();
-                renderPositionedHotspots();
-            }, 100);
-        });
+            window.addEventListener('resize', () => {
+                clearTimeout(editorResizeTimeout);
+                editorResizeTimeout = setTimeout(() => {
+                    adjustEditorContainer();
+                    renderPositionedHotspots();
+                }, 100);
+            });
     </script>
 </body>
 
