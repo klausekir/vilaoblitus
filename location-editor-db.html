@@ -3165,7 +3165,7 @@
         }
 
         // Save basic info
-        function saveBasicInfo() {
+        function saveBasicInfo(triggerAutoSave = true) {
             if (!currentLocationId) return;
 
             const oldId = currentLocationId;
@@ -3181,13 +3181,19 @@
 
             // If ID changed, update the object key and all connections
             if (oldId !== newId) {
+                if (gameLocations[newId]) {
+                    showToast('❌ ID já existe!', 'error');
+                    return;
+                }
+
                 gameLocations[newId] = location;
                 delete gameLocations[oldId];
 
                 // Update connections in all locations
                 Object.values(gameLocations).forEach(loc => {
                     if (loc.connections) {
-                        loc.connections = loc.connections.map(conn => conn === oldId ? newId : conn);
+                        const idx = loc.connections.indexOf(oldId);
+                        if (idx > -1) loc.connections[idx] = newId;
                     }
                     if (loc.hotspots) {
                         loc.hotspots.forEach(hotspot => {
@@ -3205,9 +3211,11 @@
                 }
             }
 
-            autoSave();
+            if (triggerAutoSave) {
+                autoSave();
+                showToast('✓ Informações salvas!');
+            }
             renderLocationsList();
-            showToast('✓ Informações salvas!');
         }
 
         // Toggle puzzle editor
@@ -4070,7 +4078,7 @@ if (typeof module !== 'undefined' && module.exports) {
             // IMPORTANTE: Salvar informações básicas da localização atual ANTES de sincronizar
             if (currentLocationId) {
                 console.log('💾 Salvando informações da localização atual antes de sincronizar...');
-                saveBasicInfo();
+                saveBasicInfo(false); // false = não disparar autoSave novamente (evita loop infinito)
             }
 
             if (Object.keys(gameLocations).length === 0) {
