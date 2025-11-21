@@ -511,6 +511,11 @@ class PuzzleManager {
         // Salvar no estado
         gameStateManager.solvePuzzle(config.id);
 
+        // Atualizar visual do puzzle na cena (ex: baú fechado -> aberto)
+        if (this.scene && typeof this.scene.renderPuzzle === 'function') {
+            this.scene.renderPuzzle();
+        }
+
         // Callback
         if (config.onSolved) {
             setTimeout(() => {
