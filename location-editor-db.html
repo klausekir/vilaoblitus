@@ -1078,8 +1078,7 @@
 
         // Debounce timer for database sync
         let autoSaveTimer = null;
-        let lastSyncTime = 0;
-        const SYNC_DEBOUNCE_MS = 3000; // 3 segundos de debounce
+        const SYNC_DEBOUNCE_MS = 2000; // 2 segundos de debounce
 
         // Auto-save to localStorage
         async function autoSave() {
@@ -1099,12 +1098,12 @@
                 }
 
                 autoSaveTimer = setTimeout(async () => {
-                    const now = Date.now();
-                    // Só sincroniza se passou tempo suficiente desde a última sync
-                    if (now - lastSyncTime > SYNC_DEBOUNCE_MS) {
-                        console.log('🔄 Sincronizando com banco de dados...');
+                    console.log('🔄 Sincronizando com banco de dados...');
+                    try {
                         await syncToDatabase(true); // true = silent mode
-                        lastSyncTime = now;
+                        console.log('✅ Sincronização concluída!');
+                    } catch (error) {
+                        console.error('❌ Erro na sincronização:', error);
                     }
                 }, SYNC_DEBOUNCE_MS);
             } catch (e) {
