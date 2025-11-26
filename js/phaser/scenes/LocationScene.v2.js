@@ -1692,6 +1692,13 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
+        // Lista de ferramentas/armas que só podem ser usadas em paredes
+        const toolsOnly = ['gun', 'martelo', 'picareta', 'machado', 'britadeira'];
+        if (toolsOnly.includes(itemId)) {
+            uiManager.showNotification('Este item só pode ser usado em paredes destrutíveis.');
+            return;
+        }
+
         const bounds = this.getBackgroundBounds();
 
         if (!this.isPointInsideBackground(worldPoint.x, worldPoint.y, bounds)) {
@@ -1848,6 +1855,20 @@ class LocationScene extends Phaser.Scene {
 
             // Tornar interativo para feedback visual (opcional)
             wallSprite.setInteractive();
+
+            // Adicionar handler de click na parede
+            wallSprite.on('pointerdown', () => {
+                const requiredItem = wallData.requiredItem || 'gun';
+                const hasRequiredItem = gameStateManager.hasItem(requiredItem);
+
+                if (hasRequiredItem) {
+                    // Jogador tem o item necessário, destruir a parede
+                    this.handleWallInteraction(wallData, requiredItem);
+                } else {
+                    // Não tem o item, mostrar mensagem
+                    uiManager.showNotification(`Você precisa de: ${requiredItem}`);
+                }
+            });
 
             // Salvar referência e dados
             wallSprite.wallData = wallData;
