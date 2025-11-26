@@ -736,6 +736,10 @@
                                     <div>🔧 Combinar Itens</div>
                                     <small>Items necessários</small>
                                 </div>
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('egyptian')">
+                                    <div>𓂀 Parede Egípcia</div>
+                                    <small>Rotacionar peças</small>
+                                </div>
                             </div>
                         </div>
 
@@ -3317,6 +3321,21 @@
                     <div class="form-group">
                         <label>Itens Necessários (IDs separados por vírgula)</label>
                         <input type="text" id="puzzle-required-items" placeholder="item1, item2" onchange="savePuzzle()">
+                    </div>
+                `,
+                egyptian: `
+                    <div class="form-group">
+                        <label>Título</label>
+                        <input type="text" id="puzzle-title" placeholder="Parede Egípcia Antiga" onchange="savePuzzle()">
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="puzzle-description" placeholder="Símbolos egípcios gravados na parede..." onchange="savePuzzle()"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Dicas (JSON array - opcional)</label>
+                        <textarea id="puzzle-hints" placeholder='[{"text": "Procure os papiros..."}]' onchange="savePuzzle()"></textarea>
+                        <div class="form-hint">Formato: Array de objetos com propriedade "text"</div>
                     </div>
                 `
             };

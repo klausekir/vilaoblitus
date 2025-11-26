@@ -20,6 +20,8 @@ class PuzzleManager {
         }
 
         switch (config.type) {
+            case 'egyptian':
+                return this.createEgyptianPuzzle(config);
             case 'rotating_discs':
                 return this.createRotatingDiscsPuzzle(config);
             case 'code':
@@ -34,6 +36,22 @@ class PuzzleManager {
                 console.error('Tipo de puzzle desconhecido:', config.type);
                 return null;
         }
+    }
+
+    /**
+     * PUZZLE 0: Parede Egípcia
+     */
+    createEgyptianPuzzle(config) {
+        const puzzle = new EgyptianPuzzle(this.scene, config);
+        const centerX = this.scene.scale.width / 2;
+        const centerY = this.scene.scale.height / 2;
+
+        puzzle.create(centerX, centerY);
+        this.activePuzzle = puzzle;
+        this.addHintButtonToContainer(puzzle.container, config);
+        this.startHintTimer(config);
+
+        return puzzle;
     }
 
     /**

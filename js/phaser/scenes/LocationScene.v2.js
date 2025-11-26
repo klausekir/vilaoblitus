@@ -1670,6 +1670,37 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
+        // Puzzles do PuzzleManager (Phaser)
+        const phaserPuzzleTypes = ['egyptian', 'rotating_discs', 'pattern', 'sequence_buttons'];
+        if (phaserPuzzleTypes.includes(puzzleType)) {
+            console.log('[PUZZLE]', 'abrindo puzzle do PuzzleManager', puzzleType);
+
+            if (!this.puzzleManager) {
+                this.puzzleManager = new PuzzleManager(this);
+            }
+
+            const puzzleConfig = {
+                ...puzzle,
+                onSolved: () => {
+                    gameStateManager.solvePuzzle(puzzle.id);
+                    uiManager.showNotification('✅ Enigma resolvido!');
+
+                    if (puzzle.reward) {
+                        setTimeout(() => {
+                            gameStateManager.collectItem(puzzle.reward);
+                            uiManager.showNotification(`Você ganhou: ${puzzle.reward.name}`);
+                        }, 1500);
+                    }
+
+                    setTimeout(() => this.updatePuzzleVisual(), 2000);
+                }
+            };
+
+            this.puzzleManager.createPuzzle(puzzleConfig);
+            this.flashPuzzleSprite(0xf0a500);
+            return;
+        }
+
         uiManager.showNotification('Este tipo de enigma ainda não está disponível.');
         console.warn('[PUZZLE]', 'tipo não suportado', puzzleType, puzzle);
         this.flashPuzzleSprite();
