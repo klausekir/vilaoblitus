@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Inventário</title>
+</head>
+<body>
+    <h1>Reset Inventário</h1>
+    <button onclick="resetar()" style="padding: 20px; font-size: 18px; background: #ff4444; color: white; border: none; border-radius: 8px; cursor: pointer;">
+        🗑️ Limpar Inventário e Progresso
+    </button>
+    <p id="resultado"></p>
+    
+    <script>
+        function resetar() {
+            if (confirm('Isso vai limpar TODO o progresso do jogo. Confirma?')) {
+                localStorage.removeItem('game_state');
+                document.getElementById('resultado').innerHTML = '✅ Progresso limpo! Recarregue o jogo.';
+                setTimeout(() => {
+                    window.location.href = 'game-phaser.html';
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>

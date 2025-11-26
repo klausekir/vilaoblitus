@@ -4121,6 +4121,8 @@ if (typeof module !== 'undefined' && module.exports) {
                                 name: h.label || h.item_id,
                                 description: h.description || '',
                                 image: h.item_image || '',  // ✅ Incluir imagem do JOIN
+                                isDisplayItem: h.is_display_item === 1 || h.is_display_item === '1' || h.is_display_item === true,
+                                displayImage: h.display_image || null,
                                 position: {
                                     x: parseFloat(h.x) || 50,
                                     y: parseFloat(h.y) || 50
