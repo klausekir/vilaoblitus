@@ -64,7 +64,9 @@ class GameStateManager {
             description: item.description,
             image: item.image,
             size: item.size || { width: 80, height: 80 },
-            status: 'held'
+            status: 'held',
+            isDisplayItem: item.isDisplayItem || false,
+            displayImage: item.displayImage || null
         };
 
         if (item.transform && typeof item.transform === 'object') {

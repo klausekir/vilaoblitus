@@ -668,10 +668,17 @@ class UIManager {
         grid.innerHTML = '';
 
         items.forEach(item => {
-            console.log('[INVENTORY] Item:', item.id, 'isDisplayItem:', item.isDisplayItem, 'displayImage:', item.displayImage);
             const itemDiv = document.createElement('div');
             itemDiv.className = 'inventory-item';
             itemDiv.dataset.itemId = item.id;
+
+            console.log('[INVENTORY] Processando item:', {
+                id: item.id,
+                name: item.name,
+                isDisplayItem: item.isDisplayItem,
+                displayImage: item.displayImage,
+                hasProperty: item.hasOwnProperty('isDisplayItem')
+            });
 
             if (item.image) {
                 const img = document.createElement('img');
