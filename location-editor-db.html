@@ -3612,10 +3612,11 @@
             location.items.forEach((item, index) => {
                 const itemEl = document.createElement('div');
                 itemEl.className = 'list-item';
+                const displayBadge = item.isDisplayItem ? '<span style="background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">📄 Exibição</span>' : '';
                 itemEl.innerHTML = `
                     <div class="list-item-content">
-                        <div class="list-item-title">${item.name}</div>
-                        <div class="list-item-details">ID: ${item.id}</div>
+                        <div class="list-item-title">${item.name} ${displayBadge}</div>
+                        <div class="list-item-details">ID: ${item.id}${item.displayImage ? ` • Imagem: ${item.displayImage}` : ''}</div>
                     </div>
                     <div class="list-item-actions">
                         <button class="btn btn-secondary btn-small" onclick="editItem(${index})">✏️ Editar</button>
@@ -3655,8 +3656,24 @@
             const newName = prompt('Nome do item:', item.name);
             if (newName === null) return;
 
+            const newImage = prompt('Imagem do item (PNG do ícone no inventário):', item.image || '');
+
+            const isDisplayItem = confirm('Este item é um ITEM DE EXIBIÇÃO (mapa, papel, foto)?\n\nQuando clicado no inventário, abrirá uma imagem em tela cheia para visualização.\n\nClique OK para SIM, Cancelar para NÃO.');
+
+            let displayImage = item.displayImage || '';
+            if (isDisplayItem) {
+                displayImage = prompt('Imagem de EXIBIÇÃO (imagem grande que aparece ao clicar no inventário):', displayImage);
+            }
+
             item.id = newId;
             item.name = newName;
+            if (newImage) item.image = newImage;
+            item.isDisplayItem = isDisplayItem;
+            if (isDisplayItem && displayImage) {
+                item.displayImage = displayImage;
+            } else {
+                delete item.displayImage;
+            }
 
             autoSave();
             renderItemsList();
