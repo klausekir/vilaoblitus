@@ -4155,16 +4155,29 @@ if (typeof module !== 'undefined' && module.exports) {
                     // Combinar hotspots de navegação + items
                     const allHotspots = [...navigationHotspots, ...itemHotspots];
 
-                    const response = await fetch('api/save_locations.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            locations: gameLocations,
-                            order: locationOrder
-                        })
-                    }); if (!response.ok) {
+                    allLocations.push({
+                        id: locationId,
+                        name: loc.name,
+                        description: loc.description,
+                        background_image: loc.background || loc.image,
+                        hotspots: allHotspots,
+                        puzzle: loc.puzzle,
+                        destructible_walls: loc.destructible_walls || []
+                    });
+                }
+
+                const response = await fetch('api/locations/bulk-save.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        locations: allLocations,
+                        order: locationOrder
+                    })
+                });
+
+                if (!response.ok) {
                         const text = await response.text();
                         console.error(`❌ HTTP ${response.status}:`, text);
                         if (!silent) {

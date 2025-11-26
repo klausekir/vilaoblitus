@@ -15,7 +15,8 @@
       "Bash(python scrape_appunwrapper.py:*)",
       "Bash(python:*)",
       "Bash(start test-puzzles.html)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
