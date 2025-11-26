@@ -48,7 +48,6 @@ class PuzzleManager {
 
         puzzle.create(centerX, centerY);
         this.activePuzzle = puzzle;
-        this.addHintButtonToContainer(puzzle.container, config);
         this.startHintTimer(config);
 
         return puzzle;
