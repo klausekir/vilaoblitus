@@ -568,6 +568,45 @@ class UIManager {
     }
 
     /**
+     * Exibir item em tela cheia (mapas, papéis, fotos)
+     */
+    showItemDisplay(item) {
+        if (!item.isDisplayItem || !item.displayImage) {
+            console.warn('[ITEM DISPLAY] Item não é de exibição ou não tem imagem:', item);
+            return;
+        }
+
+        const modal = document.getElementById('item-display-modal');
+        const image = document.getElementById('item-display-image');
+        const closeBtn = document.getElementById('item-display-close');
+
+        if (!modal || !image || !closeBtn) {
+            console.error('[ITEM DISPLAY] Elementos do modal não encontrados');
+            return;
+        }
+
+        image.src = item.displayImage;
+        image.alt = item.name;
+        modal.classList.add('active');
+
+        // Fechar ao clicar no botão ou fora da imagem
+        const closeModal = () => {
+            modal.classList.remove('active');
+            closeBtn.removeEventListener('click', closeModal);
+            modal.removeEventListener('click', clickOutside);
+        };
+
+        const clickOutside = (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', clickOutside);
+    }
+
+    /**
      * Atualizar informações do local
      */
     updateLocationInfo(location) {
@@ -644,8 +683,21 @@ class UIManager {
             label.textContent = item.name;
             itemDiv.appendChild(label);
 
+            // Drag & drop
             itemDiv.addEventListener('pointerdown', (event) => this.startInventoryDrag(item, event));
             itemDiv.addEventListener('touchstart', (event) => this.startInventoryDrag(item, event), { passive: false });
+
+            // Clique duplo para itens de exibição (mapas, papéis, fotos)
+            if (item.isDisplayItem && item.displayImage) {
+                itemDiv.style.cursor = 'pointer';
+                itemDiv.title = `Clique 2x para ver ${item.name}`;
+
+                itemDiv.addEventListener('dblclick', (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    this.showItemDisplay(item);
+                });
+            }
 
             grid.appendChild(itemDiv);
         });

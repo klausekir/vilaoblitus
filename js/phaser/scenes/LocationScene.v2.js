@@ -1682,7 +1682,9 @@ class LocationScene extends Phaser.Scene {
             const puzzleConfig = {
                 ...puzzle,
                 onSolved: () => {
+                    console.log('[PUZZLE] onSolved callback executado para:', puzzle.id);
                     gameStateManager.solvePuzzle(puzzle.id);
+                    console.log('[PUZZLE] Puzzle marcado como resolvido');
                     uiManager.showNotification('✅ Enigma resolvido!');
 
                     if (puzzle.reward) {
@@ -1692,7 +1694,11 @@ class LocationScene extends Phaser.Scene {
                         }, 1500);
                     }
 
-                    setTimeout(() => this.updatePuzzleVisual(), 2000);
+                    console.log('[PUZZLE] Agendando atualização visual em 2 segundos...');
+                    setTimeout(() => {
+                        console.log('[PUZZLE] Chamando updatePuzzleVisual()...');
+                        this.updatePuzzleVisual();
+                    }, 2000);
                 }
             };
 
