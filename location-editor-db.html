@@ -2738,11 +2738,11 @@
             top: ${wall.y}%;
             width: ${wall.width}%;
             height: ${wall.height}%;
-            border: 3px ${isSelected ? '#ff4444' : 'solid #555'};
+            border: 3px solid ${isSelected ? '#ff4444' : '#555'};
             background: ${isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(85, 85, 85, 0.5)'};
             cursor: move;
-            pointer - events: auto;
-            z - index: 40;
+            pointer-events: auto;
+            z-index: 40;
             `;
 
                 if (wall.image) {
@@ -4162,7 +4162,7 @@ if (typeof module !== 'undefined' && module.exports) {
                         background_image: loc.background || loc.image,
                         hotspots: allHotspots,
                         puzzle: loc.puzzle,
-                        destructible_walls: loc.destructible_walls || []
+                        destructible_walls: loc.destructibleWalls || []
                     });
                 }
 
