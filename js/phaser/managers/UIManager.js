@@ -571,6 +571,9 @@ class UIManager {
      * Exibir item em tela cheia (mapas, papéis, fotos)
      */
     showItemDisplay(item) {
+        console.log('[ITEM DISPLAY] Tentando abrir item:', item);
+        console.log('[ITEM DISPLAY] isDisplayItem:', item.isDisplayItem, 'displayImage:', item.displayImage);
+
         if (!item.isDisplayItem || !item.displayImage) {
             console.warn('[ITEM DISPLAY] Item não é de exibição ou não tem imagem:', item);
             return;
@@ -585,6 +588,7 @@ class UIManager {
             return;
         }
 
+        console.log('[ITEM DISPLAY] Abrindo modal com imagem:', item.displayImage);
         image.src = item.displayImage;
         image.alt = item.name;
         modal.classList.add('active');
@@ -650,6 +654,8 @@ class UIManager {
         const grid = document.getElementById('inventory-grid');
         const empty = document.getElementById('inventory-empty');
 
+        console.log('[INVENTORY] Renderizando inventário:', items);
+
         if (items.length === 0) {
             grid.style.display = 'none';
             empty.style.display = 'block';
@@ -662,6 +668,7 @@ class UIManager {
         grid.innerHTML = '';
 
         items.forEach(item => {
+            console.log('[INVENTORY] Item:', item.id, 'isDisplayItem:', item.isDisplayItem, 'displayImage:', item.displayImage);
             const itemDiv = document.createElement('div');
             itemDiv.className = 'inventory-item';
             itemDiv.dataset.itemId = item.id;
