@@ -3485,7 +3485,10 @@
             const location = gameLocations[currentLocationId];
 
             if (!hasPuzzle) {
+                console.log('[SAVE] ❌ Removendo puzzle da localização:', currentLocationId);
+                console.log('[SAVE] 🔍 Puzzle antes de deletar:', location.puzzle);
                 delete location.puzzle;
+                console.log('[SAVE] 🔍 Puzzle depois de deletar:', location.puzzle);
                 autoSave();
                 showToast('✓ Enigma removido!');
                 if (selectedVisualType === 'puzzle') {
@@ -4192,8 +4195,11 @@ if (typeof module !== 'undefined' && module.exports) {
                     };
 
                     if (loc.puzzle) {
+                        console.log(`[LOAD] 🎯 Localização ${loc.id} TEM puzzle:`, loc.puzzle);
                         gameLocations[loc.id].puzzle = loc.puzzle;
                         ensurePuzzleDefaults(gameLocations[loc.id].puzzle);
+                    } else {
+                        console.log(`[LOAD] ⭕ Localização ${loc.id} NÃO tem puzzle`);
                     }
 
                     locationOrder.push(loc.id);
