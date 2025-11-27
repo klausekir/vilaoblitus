@@ -124,7 +124,7 @@ class LocationScene extends Phaser.Scene {
     setupDoubleClickZoom() {
         // Estado do zoom
         this.isZoomed = false;
-        this.zoomLevel = 2; // 2x zoom
+        this.zoomLevel = 3; // 3x zoom
         this.originalZoom = 1;
 
         // Variáveis para detectar duplo clique manual
