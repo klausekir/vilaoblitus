@@ -201,7 +201,10 @@ class LocationScene extends Phaser.Scene {
     }
 
     renderPuzzle() {
+        console.log('[PUZZLE][RENDER] 🎬 Iniciando renderPuzzle()');
+
         if (this.puzzleSprite) {
+            console.log('[PUZZLE][RENDER] ❌ Destruindo sprite antigo');
             this.puzzleSprite.destroy();
             this.puzzleSprite = null;
         }
@@ -224,6 +227,9 @@ class LocationScene extends Phaser.Scene {
         const y = bgY + (visual.position.y / 100) * bgHeight;
 
         let isSolved = puzzle.id ? gameStateManager.isPuzzleSolved(puzzle.id) : false;
+        console.log('[PUZZLE][RENDER] 🔍 Puzzle ID:', puzzle.id);
+        console.log('[PUZZLE][RENDER] 🔍 isSolved:', isSolved);
+        console.log('[PUZZLE][RENDER] 🔍 solvedPuzzles:', gameStateManager.state.solvedPuzzles);
 
         console.log(`[PUZZLE_DEBUG] Rendering puzzle: ${puzzle.id} (${puzzle.type})`);
         console.log(`[PUZZLE_DEBUG] Is Solved: ${isSolved}`);
@@ -1896,7 +1902,8 @@ class LocationScene extends Phaser.Scene {
             // Adicionar handler de click na parede
             wallSprite.on('pointerdown', () => {
                 const requiredItem = wallData.requiredItem || 'gun';
-                const hasRequiredItem = gameStateManager.hasItem(requiredItem);
+                const item = gameStateManager.getInventoryItem(requiredItem);
+                const hasRequiredItem = item && item.status === 'held';
 
                 if (hasRequiredItem) {
                     // Jogador tem o item necessário, destruir a parede
