@@ -263,17 +263,24 @@ class LocationScene extends Phaser.Scene {
 
         let textureKey = null;
 
+        console.log('[PUZZLE][RENDER] 🖼️ visual.beforeImage:', visual.beforeImage);
+        console.log('[PUZZLE][RENDER] 🖼️ visual.afterImage:', visual.afterImage);
+
         if (isSolved && visual.afterImage) {
             textureKey = `puzzle_${this.locationData.id}_after`;
-            console.log(`[PUZZLE_DEBUG] Using AFTER image: ${textureKey}`);
+            console.log(`[PUZZLE][RENDER] ✅ Using AFTER image: ${textureKey}`);
         } else if (!isSolved && visual.beforeImage) {
             textureKey = `puzzle_${this.locationData.id}_before`;
-            console.log(`[PUZZLE_DEBUG] Using BEFORE image: ${textureKey}`);
+            console.log(`[PUZZLE][RENDER] ⏳ Using BEFORE image: ${textureKey}`);
         } else {
-            console.log(`[PUZZLE_DEBUG] No image condition met. Solved: ${isSolved}, After: ${!!visual.afterImage}, Before: ${!!visual.beforeImage}`);
+            console.log(`[PUZZLE][RENDER] ⚠️ No image condition met. Solved: ${isSolved}, After: ${!!visual.afterImage}, Before: ${!!visual.beforeImage}`);
         }
 
+        console.log('[PUZZLE][RENDER] 🔑 textureKey final:', textureKey);
+        console.log('[PUZZLE][RENDER] 📦 Texture exists?', textureKey ? this.textures.exists(textureKey) : 'N/A');
+
         if (textureKey && this.textures.exists(textureKey)) {
+            console.log('[PUZZLE][RENDER] ✅ Criando sprite com textura:', textureKey);
             this.puzzleSprite = this.add.image(x, y, textureKey);
 
             const sourceWidth = this.puzzleSprite.width || targetWidth || 1;
@@ -394,8 +401,10 @@ class LocationScene extends Phaser.Scene {
     }
 
     updatePuzzleVisual(solved = false) {
+        console.log('[PUZZLE][UPDATE] 🔄 updatePuzzleVisual() chamado! solved=', solved);
         // Re-renderizar o puzzle para atualizar visual (ex: baú fechado -> aberto)
         this.renderPuzzle();
+        console.log('[PUZZLE][UPDATE] ✅ renderPuzzle() executado');
     }
 
     flashPuzzleSprite(color = 0xf0a500) {
@@ -1688,9 +1697,14 @@ class LocationScene extends Phaser.Scene {
             const puzzleConfig = {
                 ...puzzle,
                 onSolved: () => {
-                    console.log('[PUZZLE] onSolved callback executado para:', puzzle.id);
+                    console.log('[PUZZLE][CALLBACK] 🎉 onSolved callback executado para:', puzzle.id);
+                    console.log('[PUZZLE][CALLBACK] 📊 Estado ANTES de marcar:', gameStateManager.state.solvedPuzzles);
+
                     gameStateManager.solvePuzzle(puzzle.id);
-                    console.log('[PUZZLE] Puzzle marcado como resolvido');
+
+                    console.log('[PUZZLE][CALLBACK] 📊 Estado DEPOIS de marcar:', gameStateManager.state.solvedPuzzles);
+                    console.log('[PUZZLE][CALLBACK] ✅ Puzzle marcado como resolvido');
+
                     uiManager.showNotification('✅ Enigma resolvido!');
 
                     if (puzzle.reward) {
@@ -1700,9 +1714,9 @@ class LocationScene extends Phaser.Scene {
                         }, 1500);
                     }
 
-                    console.log('[PUZZLE] Agendando atualização visual em 2 segundos...');
+                    console.log('[PUZZLE][CALLBACK] ⏰ Agendando atualização visual em 2 segundos...');
                     setTimeout(() => {
-                        console.log('[PUZZLE] Chamando updatePuzzleVisual()...');
+                        console.log('[PUZZLE][CALLBACK] ⏰ 2 segundos passaram! Chamando updatePuzzleVisual()...');
                         this.updatePuzzleVisual();
                     }, 2000);
                 }
