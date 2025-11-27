@@ -4272,14 +4272,16 @@ if (typeof module !== 'undefined' && module.exports) {
                     }));
 
                     // IMPORTANTE: Converter items para hotspots do tipo 'item'
-                    const itemHotspots = (loc.items || []).map(item => ({
-                        type: 'item',
-                        item_id: item.id,
-                        label: item.name,
-                        description: item.description,
-                        item_image: item.image,
-                        is_display_item: item.isDisplayItem ? 1 : 0,
-                        display_image: item.displayImage || null,
+                    const itemHotspots = (loc.items || []).map(item => {
+                        console.log('[SAVE DEBUG] Item:', item.id, 'isDisplayItem:', item.isDisplayItem, 'displayImage:', item.displayImage);
+                        return {
+                            type: 'item',
+                            item_id: item.id,
+                            label: item.name,
+                            description: item.description,
+                            item_image: item.image,
+                            is_display_item: item.isDisplayItem ? 1 : 0,
+                            display_image: item.displayImage || null,
                         x: item.position.x,
                         y: item.position.y,
                         width: item.size.width,
@@ -4297,7 +4299,8 @@ if (typeof module !== 'undefined' && module.exports) {
                         shadow_blur: item.transform?.shadowBlur || 0,
                         shadow_offset_x: item.transform?.shadowOffsetX || 0,
                         shadow_offset_y: item.transform?.shadowOffsetY || 0
-                    }));
+                        };
+                    });
 
                     // Combinar hotspots de navegação + items
                     const allHotspots = [...navigationHotspots, ...itemHotspots];
