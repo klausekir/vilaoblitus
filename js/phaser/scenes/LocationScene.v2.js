@@ -127,50 +127,66 @@ class LocationScene extends Phaser.Scene {
         this.zoomLevel = 2; // 2x zoom
         this.originalZoom = 1;
 
-        // Adicionar listener de duplo clique
-        this.input.on('pointerdblclick', (pointer) => {
-            console.log('[ZOOM] 🔍 Duplo clique detectado em:', pointer.worldX, pointer.worldY);
+        // Variáveis para detectar duplo clique manual
+        this.lastClickTime = 0;
+        this.doubleClickDelay = 300; // ms
 
-            const camera = this.cameras.main;
+        // Adicionar listener de clique
+        this.input.on('pointerdown', (pointer) => {
+            const currentTime = this.time.now;
+            const timeSinceLastClick = currentTime - this.lastClickTime;
 
-            if (!this.isZoomed) {
-                // Fazer zoom na posição clicada
-                console.log('[ZOOM] ➕ Aplicando zoom 2x');
-
-                // Animar zoom
-                this.tweens.add({
-                    targets: camera,
-                    zoom: this.zoomLevel,
-                    duration: 500,
-                    ease: 'Cubic.easeInOut'
-                });
-
-                // Centralizar câmera na posição clicada (com animação)
-                camera.pan(pointer.worldX, pointer.worldY, 500, 'Cubic.easeInOut');
-
-                this.isZoomed = true;
+            // Se clicou duas vezes dentro de 300ms = duplo clique
+            if (timeSinceLastClick < this.doubleClickDelay) {
+                console.log('[ZOOM] 🔍 Duplo clique detectado em:', pointer.worldX, pointer.worldY);
+                this.handleDoubleClick(pointer);
+                this.lastClickTime = 0; // Reset para evitar triplo clique
             } else {
-                // Voltar ao zoom normal
-                console.log('[ZOOM] ➖ Voltando ao zoom normal');
-
-                // Animar zoom out
-                this.tweens.add({
-                    targets: camera,
-                    zoom: this.originalZoom,
-                    duration: 500,
-                    ease: 'Cubic.easeInOut'
-                });
-
-                // Recentralizar câmera no centro da cena
-                const centerX = this.cameras.main.width / 2;
-                const centerY = this.cameras.main.height / 2;
-                camera.pan(centerX, centerY, 500, 'Cubic.easeInOut');
-
-                this.isZoomed = false;
+                this.lastClickTime = currentTime;
             }
         });
 
         console.log('[ZOOM] ✅ Sistema de zoom com duplo clique configurado');
+    }
+
+    handleDoubleClick(pointer) {
+        const camera = this.cameras.main;
+
+        if (!this.isZoomed) {
+            // Fazer zoom na posição clicada
+            console.log('[ZOOM] ➕ Aplicando zoom 2x');
+
+            // Animar zoom
+            this.tweens.add({
+                targets: camera,
+                zoom: this.zoomLevel,
+                duration: 500,
+                ease: 'Cubic.easeInOut'
+            });
+
+            // Centralizar câmera na posição clicada (com animação)
+            camera.pan(pointer.worldX, pointer.worldY, 500, 'Cubic.easeInOut');
+
+            this.isZoomed = true;
+        } else {
+            // Voltar ao zoom normal
+            console.log('[ZOOM] ➖ Voltando ao zoom normal');
+
+            // Animar zoom out
+            this.tweens.add({
+                targets: camera,
+                zoom: this.originalZoom,
+                duration: 500,
+                ease: 'Cubic.easeInOut'
+            });
+
+            // Recentralizar câmera no centro da cena
+            const centerX = this.cameras.main.width / 2;
+            const centerY = this.cameras.main.height / 2;
+            camera.pan(centerX, centerY, 500, 'Cubic.easeInOut');
+
+            this.isZoomed = false;
+        }
     }
 
     // Helper: calcula dimensões e posição do background
