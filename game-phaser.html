@@ -116,24 +116,25 @@
 
     <!-- Build version for cache busting -->
     <script>
-        window.GAME_BUILD_VERSION = '20251121';
+        window.GAME_BUILD_VERSION = Date.now(); // Timestamp automático
+        const v = window.GAME_BUILD_VERSION;
     </script>
 
     <!-- Phaser Game Managers -->
-    <script src="js/phaser/managers/DatabaseLoader.js?v=20251126_DISPLAY"></script>
-    <script src="js/phaser/managers/GameStateManager.js?v=20251126_DISPLAY"></script>
-    <script src="js/phaser/managers/UIManager.js?v=888888888"></script>
-    <script src="js/phaser/managers/PhotographAlbumUI.js?v=20251121"></script>
+    <script>document.write('<script src="js/phaser/managers/DatabaseLoader.js?v=' + v + '"><\/script>');</script>
+    <script>document.write('<script src="js/phaser/managers/GameStateManager.js?v=' + v + '"><\/script>');</script>
+    <script>document.write('<script src="js/phaser/managers/UIManager.js?v=' + v + '"><\/script>');</script>
+    <script>document.write('<script src="js/phaser/managers/PhotographAlbumUI.js?v=' + v + '"><\/script>');</script>
 
     <!-- Puzzle System -->
-    <script src="js/phaser/puzzles/RotatingDiscsPuzzle.js?v=20251121"></script>
-    <script src="js/phaser/puzzles/EgyptianPuzzle.js?v=20251126_FIX2"></script>
-    <script src="js/phaser/puzzles/PuzzleManager.js?v=20251126_FIX"></script>
-    <script src="js/puzzle-examples.js?v=20251121"></script>
+    <script>document.write('<script src="js/phaser/puzzles/RotatingDiscsPuzzle.js?v=' + v + '"><\/script>');</script>
+    <script>document.write('<script src="js/phaser/puzzles/EgyptianPuzzle.js?v=' + v + '"><\/script>');</script>
+    <script>document.write('<script src="js/phaser/puzzles/PuzzleManager.js?v=' + v + '"><\/script>');</script>
+    <script>document.write('<script src="js/puzzle-examples.js?v=' + v + '"><\/script>');</script>
 
     <!-- Phaser Scenes -->
-    <script src="js/phaser/scenes/BootScene.js?v=20251121"></script>
-    <script src="js/phaser/scenes/LocationScene.v2.js?v=20251126_DEBUG2"></script>
+    <script>document.write('<script src="js/phaser/scenes/BootScene.js?v=' + v + '"><\/script>');</script>
+    <script>document.write('<script src="js/phaser/scenes/LocationScene.v2.js?v=' + v + '"><\/script>');</script>
 
     <!-- Authentication Check -->
     <script>
