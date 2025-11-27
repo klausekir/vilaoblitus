@@ -11,6 +11,11 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, PUT');
 header('Access-Control-Allow-Headers: Content-Type');
 
+// Desabilitar cache
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 require_once '../config.php';
 
 // Get database connection
@@ -89,8 +94,8 @@ try {
         error_log("💾 SAVE API - Salvando " . count($hotspots) . " hotspots para: $locationId");
         $hotspotStmt = $pdo->prepare("
             INSERT INTO hotspots
-            (location_id, type, x, y, width, height, label, description, target_location, item_id, interaction_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (location_id, type, x, y, width, height, label, description, target_location, item_id, is_display_item, display_image, interaction_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         foreach ($hotspots as $hotspot) {
@@ -112,6 +117,8 @@ try {
                 $hotspot['description'] ?? null,
                 $hotspot['target_location'] ?? null,
                 $hotspot['item_id'] ?? null,
+                $hotspot['is_display_item'] ?? 0,
+                $hotspot['display_image'] ?? null,
                 $interactionData
             ]);
         }

@@ -8,6 +8,11 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 
+// Desabilitar cache
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 require_once '../config.php';
 
 // Get database connection
@@ -53,6 +58,8 @@ try {
             description,
             target_location,
             item_id,
+            is_display_item,
+            display_image,
             interaction_data
         FROM hotspots
         WHERE location_id = ?

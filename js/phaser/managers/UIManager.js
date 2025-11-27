@@ -702,39 +702,21 @@ class UIManager {
                 itemDiv.style.cursor = 'pointer';
                 itemDiv.title = `Clique para ver ${item.name}`;
 
-                // Para itens de exibição: click abre imagem, drag ainda funciona
-                let clickStartX = 0;
-                let clickStartY = 0;
-                let dragStarted = false;
+                // Itens de exibição APENAS abrem imagem, nunca são arrastados
+                itemDiv.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    this.showItemDisplay(item);
+                });
 
+                // Bloquear drag em itens de exibição
                 itemDiv.addEventListener('pointerdown', (event) => {
-                    clickStartX = event.clientX;
-                    clickStartY = event.clientY;
-                    dragStarted = false;
+                    event.stopPropagation();
                 });
-
-                itemDiv.addEventListener('pointermove', (event) => {
-                    if (!dragStarted) {
-                        const distX = Math.abs(event.clientX - clickStartX);
-                        const distY = Math.abs(event.clientY - clickStartY);
-                        if (distX > 10 || distY > 10) {
-                            // Usuário está arrastando, iniciar drag
-                            dragStarted = true;
-                            this.startInventoryDrag(item, event);
-                        }
-                    }
-                });
-
-                itemDiv.addEventListener('pointerup', (event) => {
-                    if (!dragStarted) {
-                        // Foi um click, não um drag - abrir imagem
-                        event.stopPropagation();
-                        event.preventDefault();
-                        this.showItemDisplay(item);
-                    }
-                });
-
-                itemDiv.addEventListener('touchstart', (event) => this.startInventoryDrag(item, event), { passive: false });
+                itemDiv.addEventListener('touchstart', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }, { passive: false });
             } else {
                 // Itens normais: drag normal
                 itemDiv.addEventListener('pointerdown', (event) => this.startInventoryDrag(item, event));
