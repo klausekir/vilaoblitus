@@ -74,6 +74,9 @@ class LocationScene extends Phaser.Scene {
 
         // Setup zoom com duplo clique
         this.setupDoubleClickZoom();
+
+        // Setup drag para mover a câmera quando em zoom
+        this.setupDragPan();
     }
 
     handleResize(gameSize) {
@@ -129,18 +132,35 @@ class LocationScene extends Phaser.Scene {
         // Variáveis para detectar duplo clique manual
         this.lastClickTime = 0;
         this.doubleClickDelay = 300; // ms
+        this.clickStartX = 0;
+        this.clickStartY = 0;
 
-        // Adicionar listener de clique
+        // Salvar posição inicial do clique
         this.input.on('pointerdown', (pointer) => {
-            const currentTime = this.time.now;
-            const timeSinceLastClick = currentTime - this.lastClickTime;
+            this.clickStartX = pointer.x;
+            this.clickStartY = pointer.y;
+        });
 
-            // Se clicou duas vezes dentro de 300ms = duplo clique
-            if (timeSinceLastClick < this.doubleClickDelay) {
-                this.handleDoubleClick(pointer);
-                this.lastClickTime = 0; // Reset para evitar triplo clique
-            } else {
-                this.lastClickTime = currentTime;
+        // Verificar duplo clique apenas no pointerup (se não houve drag)
+        this.input.on('pointerup', (pointer) => {
+            // Calcular distância entre pointerdown e pointerup
+            const dragDistance = Phaser.Math.Distance.Between(
+                this.clickStartX, this.clickStartY,
+                pointer.x, pointer.y
+            );
+
+            // Só considera clique se não moveu muito (menos de 10 pixels)
+            if (dragDistance < 10) {
+                const currentTime = this.time.now;
+                const timeSinceLastClick = currentTime - this.lastClickTime;
+
+                // Se clicou duas vezes dentro de 300ms = duplo clique
+                if (timeSinceLastClick < this.doubleClickDelay) {
+                    this.handleDoubleClick(pointer);
+                    this.lastClickTime = 0; // Reset para evitar triplo clique
+                } else {
+                    this.lastClickTime = currentTime;
+                }
             }
         });
 
@@ -182,6 +202,50 @@ class LocationScene extends Phaser.Scene {
 
             this.isZoomed = false;
         }
+    }
+
+    setupDragPan() {
+        // Variáveis para controlar o drag
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.cameraStartX = 0;
+        this.cameraStartY = 0;
+
+        // Listener para início do drag (pointerdown)
+        this.input.on('pointerdown', (pointer) => {
+            // Só permite drag se estiver em zoom
+            if (this.isZoomed) {
+                this.isDragging = true;
+                this.dragStartX = pointer.x;
+                this.dragStartY = pointer.y;
+                this.cameraStartX = this.cameras.main.scrollX;
+                this.cameraStartY = this.cameras.main.scrollY;
+            }
+        });
+
+        // Listener para movimento do drag (pointermove)
+        this.input.on('pointermove', (pointer) => {
+            if (this.isDragging && this.isZoomed) {
+                // Calcular o delta do movimento
+                const deltaX = (pointer.x - this.dragStartX) / this.cameras.main.zoom;
+                const deltaY = (pointer.y - this.dragStartY) / this.cameras.main.zoom;
+
+                // Atualizar posição da câmera
+                this.cameras.main.scrollX = this.cameraStartX - deltaX;
+                this.cameras.main.scrollY = this.cameraStartY - deltaY;
+            }
+        });
+
+        // Listener para fim do drag (pointerup)
+        this.input.on('pointerup', () => {
+            this.isDragging = false;
+        });
+
+        // Listener para quando o pointer sai da tela
+        this.input.on('pointerout', () => {
+            this.isDragging = false;
+        });
     }
 
     // Helper: calcula dimensões e posição do background
