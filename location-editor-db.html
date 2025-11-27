@@ -3503,8 +3503,16 @@
                 return;
             }
 
+            // Gerar ID automático se estiver vazio
+            let puzzleId = document.getElementById('puzzle-id').value.trim();
+            if (!puzzleId) {
+                puzzleId = currentLocationId + '_puzzle';
+                document.getElementById('puzzle-id').value = puzzleId;
+                console.log('[PUZZLE] ID vazio! Gerando automaticamente:', puzzleId);
+            }
+
             const puzzle = {
-                id: document.getElementById('puzzle-id').value,
+                id: puzzleId,
                 type: currentPuzzleType
             };
 

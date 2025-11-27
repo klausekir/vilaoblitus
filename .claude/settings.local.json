@@ -16,7 +16,8 @@
       "Bash(python:*)",
       "Bash(start test-puzzles.html)",
       "Bash(node --check:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []
