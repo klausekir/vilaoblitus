@@ -1700,36 +1700,43 @@ class LocationScene extends Phaser.Scene {
                     console.log('[PUZZLE][CALLBACK] 🎉 onSolved callback executado para:', puzzle.id);
                     console.log('[PUZZLE][CALLBACK] 📊 Estado ANTES de marcar:', gameStateManager.state.solvedPuzzles);
 
-                    // Calcular posição para dropar a recompensa (ao lado do baú)
-                    let rewardOptions = {};
-                    if (puzzle.reward && puzzle.visual && puzzle.visual.position) {
-                        const puzzleX = puzzle.visual.position.x;
-                        const puzzleY = puzzle.visual.position.y;
-
-                        // Dropar item 15% à direita do baú, mesma altura
-                        rewardOptions.dropPosition = {
-                            x: puzzleX + 15,
-                            y: puzzleY
-                        };
-                        rewardOptions.dropLocation = this.currentLocation;
-
-                        console.log('[PUZZLE][CALLBACK] 🎁 Dropando recompensa em:', rewardOptions.dropPosition);
-                    }
-
-                    // Resolver puzzle e dropar recompensa no cenário
-                    gameStateManager.solvePuzzle(puzzle.id, puzzle.reward, this.currentLocation, rewardOptions);
+                    // Resolver puzzle primeiro (sem recompensa ainda)
+                    gameStateManager.solvePuzzle(puzzle.id);
 
                     console.log('[PUZZLE][CALLBACK] 📊 Estado DEPOIS de marcar:', gameStateManager.state.solvedPuzzles);
                     console.log('[PUZZLE][CALLBACK] ✅ Puzzle marcado como resolvido');
 
                     uiManager.showNotification('✅ Enigma resolvido!');
 
+                    // Dropar recompensa DEPOIS que o baú abre (2.5 segundos)
                     if (puzzle.reward) {
                         setTimeout(() => {
+                            const puzzleX = puzzle.visual.position.x;
+                            const puzzleY = puzzle.visual.position.y;
+
+                            // Dropar item na frente do baú (15% abaixo)
+                            const dropPosition = {
+                                x: puzzleX,
+                                y: puzzleY + 15
+                            };
+
+                            console.log('[PUZZLE][CALLBACK] 🎁 Dropando recompensa na frente do baú:', dropPosition);
+
+                            // Adicionar recompensa ao inventário com status 'dropped'
+                            gameStateManager.normalizeInventory();
+                            gameStateManager.state.inventory[puzzle.reward.id] = {
+                                ...puzzle.reward,
+                                status: 'dropped',
+                                dropLocation: this.currentLocation,
+                                dropPosition: dropPosition
+                            };
+                            gameStateManager.saveProgress();
+
                             uiManager.showNotification(`🎁 ${puzzle.reward.name} apareceu!`);
+
                             // Atualizar itens no cenário para mostrar a recompensa
                             this.renderDroppedItems();
-                        }, 500);
+                        }, 2500);
                     }
 
                     console.log('[PUZZLE][CALLBACK] ⏰ Agendando atualização visual em 2 segundos...');
