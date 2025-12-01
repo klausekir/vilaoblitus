@@ -623,6 +623,22 @@
                         <label for="edit-unlocked">Local desbloqueado no início do jogo</label>
                     </div>
 
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="edit-final-scene" onchange="saveBasicInfo(); toggleCreditsSection()">
+                        <label for="edit-final-scene">🎬 Cena Final (Mostrar Créditos Estilo Star Wars)</label>
+                    </div>
+
+                    <div id="credits-section" style="display: none; margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4a90e2;">
+                        <h4 style="margin-bottom: 15px; color: #2a5885;">✨ Créditos Finais</h4>
+                        <div style="margin-bottom: 10px;">
+                            <button class="btn btn-primary" onclick="addCreditLine()" style="width: 100%;">
+                                ➕ Adicionar Texto
+                            </button>
+                        </div>
+                        <div id="credits-list" style="margin-top: 15px;">
+                            <!-- Credits populated by JS -->
+                        </div>
+                    </div>
 
                 </div>
 
@@ -3640,6 +3656,102 @@
         }
 
         // Save basic info
+        function toggleCreditsSection() {
+            const isChecked = document.getElementById('edit-final-scene').checked;
+            const section = document.getElementById('credits-section');
+            section.style.display = isChecked ? 'block' : 'none';
+        }
+
+        function addCreditLine() {
+            const container = document.getElementById('credits-list');
+            const index = container.children.length;
+
+            const creditEl = document.createElement('div');
+            creditEl.style.cssText = `
+                background: white;
+                padding: 15px;
+                margin-bottom: 10px;
+                border-radius: 6px;
+                border: 1px solid #ddd;
+            `;
+            creditEl.dataset.index = index;
+
+            creditEl.innerHTML = `
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                    <strong>Texto ${index + 1}</strong>
+                    <button class="btn btn-danger btn-small" onclick="removeCreditLine(${index})" style="margin-left: auto;">🗑️</button>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 12px; color: #666;">Texto:</label>
+                    <textarea id="credit-text-${index}" placeholder="Digite o texto do crédito..." onchange="saveBasicInfo()"
+                              style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; min-height: 60px;"></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div>
+                        <label style="font-size: 12px; color: #666;">Fonte:</label>
+                        <input type="text" id="credit-font-${index}" placeholder="Arial, sans-serif" onchange="saveBasicInfo()"
+                               style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #666;">Tamanho:</label>
+                        <input type="text" id="credit-size-${index}" placeholder="48px" value="48px" onchange="saveBasicInfo()"
+                               style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div>
+                        <label style="font-size: 12px; color: #666;">Cor:</label>
+                        <input type="text" id="credit-color-${index}" placeholder="#feda4a" value="#feda4a" onchange="saveBasicInfo()"
+                               style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #666;">Peso:</label>
+                        <select id="credit-weight-${index}" onchange="saveBasicInfo()"
+                                style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                            <option value="normal">Normal</option>
+                            <option value="bold" selected>Bold</option>
+                            <option value="lighter">Lighter</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(creditEl);
+            saveBasicInfo();
+        }
+
+        function removeCreditLine(index) {
+            const container = document.getElementById('credits-list');
+            const element = container.querySelector(`[data-index="${index}"]`);
+            if (element) {
+                element.remove();
+                // Reindexar
+                Array.from(container.children).forEach((el, i) => {
+                    el.dataset.index = i;
+                });
+                saveBasicInfo();
+            }
+        }
+
+        function collectCreditsData() {
+            const container = document.getElementById('credits-list');
+            const credits = [];
+
+            Array.from(container.children).forEach((el, index) => {
+                const text = document.getElementById(`credit-text-${index}`)?.value || '';
+                const font = document.getElementById(`credit-font-${index}`)?.value || 'Arial, sans-serif';
+                const fontSize = document.getElementById(`credit-size-${index}`)?.value || '48px';
+                const color = document.getElementById(`credit-color-${index}`)?.value || '#feda4a';
+                const fontWeight = document.getElementById(`credit-weight-${index}`)?.value || 'bold';
+
+                if (text.trim()) {
+                    credits.push({ text, font, fontSize, color, fontWeight });
+                }
+            });
+
+            return credits;
+        }
+
         function saveBasicInfo(triggerAutoSave = true) {
             if (!currentLocationId) return;
 
@@ -3653,6 +3765,14 @@
             location.description = document.getElementById('edit-description').value;
             location.image = document.getElementById('edit-image').value;
             location.unlocked = document.getElementById('edit-unlocked').checked;
+            location.isFinalScene = document.getElementById('edit-final-scene').checked;
+
+            // Salvar créditos se for cena final
+            if (location.isFinalScene) {
+                location.credits = collectCreditsData();
+            } else {
+                delete location.credits;
+            }
 
             // If ID changed, update the object key and all connections
             if (oldId !== newId) {

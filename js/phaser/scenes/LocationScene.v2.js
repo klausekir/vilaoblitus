@@ -63,6 +63,11 @@ class LocationScene extends Phaser.Scene {
         this.renderDroppedItems();
         this.highlightPendingPuzzleReward();
 
+        // Verificar se é cena final e mostrar créditos
+        if (this.locationData.isFinalScene) {
+            this.showStarWarsCredits();
+        }
+
         // Atualizar UI
         uiManager.updateLocationInfo(this.locationData);
 
@@ -2595,6 +2600,83 @@ class LocationScene extends Phaser.Scene {
                 this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
             }
         }
+    }
+
+    showStarWarsCredits() {
+        const credits = this.locationData.credits || [];
+        if (credits.length === 0) return;
+
+        // Criar container de créditos com perspectiva 3D
+        const creditsContainer = document.createElement('div');
+        creditsContainer.id = 'star-wars-credits';
+        creditsContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 10000;
+            overflow: hidden;
+            perspective: 400px;
+        `;
+
+        // Container interno com a animação de perspectiva
+        const scrollContainer = document.createElement('div');
+        scrollContainer.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+            animation: starWarsScroll 60s linear forwards;
+        `;
+
+        // Adicionar cada texto com sua fonte
+        credits.forEach(credit => {
+            const textEl = document.createElement('div');
+            textEl.style.cssText = `
+                color: ${credit.color || '#feda4a'};
+                font-family: ${credit.font || 'Arial, sans-serif'};
+                font-size: ${credit.fontSize || '48px'};
+                font-weight: ${credit.fontWeight || 'bold'};
+                margin-bottom: 80px;
+                line-height: 1.5;
+                text-shadow: 0 0 10px rgba(254, 218, 74, 0.5);
+            `;
+            textEl.textContent = credit.text;
+            scrollContainer.appendChild(textEl);
+        });
+
+        creditsContainer.appendChild(scrollContainer);
+
+        // Adicionar keyframes para animação
+        if (!document.getElementById('star-wars-animation')) {
+            const style = document.createElement('style');
+            style.id = 'star-wars-animation';
+            style.textContent = `
+                @keyframes starWarsScroll {
+                    0% {
+                        transform: translateX(-50%) translateY(100%) rotateX(20deg);
+                    }
+                    100% {
+                        transform: translateX(-50%) translateY(-100%) rotateX(20deg);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(creditsContainer);
+
+        // Remover após animação
+        setTimeout(() => {
+            if (creditsContainer.parentNode) {
+                creditsContainer.remove();
+            }
+        }, 60000);
     }
 
     shutdown() {
