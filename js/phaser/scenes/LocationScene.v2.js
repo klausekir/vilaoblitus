@@ -2050,19 +2050,6 @@ class LocationScene extends Phaser.Scene {
             wallSprite.setDepth(25); // Acima do background, abaixo de itens
             wallSprite.setInteractive();
 
-            // Adicionar handler de click
-            wallSprite.on('pointerdown', () => {
-                const requiredItem = wallData.requiredItem || 'gun';
-                const item = gameStateManager.getInventoryItem(requiredItem);
-                const hasRequiredItem = item && item.status === 'held';
-
-                if (hasRequiredItem) {
-                    this.handleWallInteraction(wallData, requiredItem);
-                } else {
-                    uiManager.showNotification(`Você precisa de: ${requiredItem}`);
-                }
-            });
-
             // Salvar referência
             wallSprite.wallData = wallData;
             this.destructibleWalls.push(wallSprite);
@@ -2312,6 +2299,30 @@ class LocationScene extends Phaser.Scene {
 
     openPuzzle(puzzleId) {
         this.promptPuzzleInteraction(puzzleId);
+    }
+
+    handleInventoryDrop(itemId, pointerPosition) {
+        // Converter posição do pointer (tela) para coordenadas do mundo Phaser
+        const worldX = this.cameras.main.scrollX + pointerPosition.x;
+        const worldY = this.cameras.main.scrollY + pointerPosition.y;
+
+        // Verificar se o item foi solto sobre uma parede
+        const wallData = this.checkWallInteraction(worldX, worldY);
+
+        if (wallData) {
+            const requiredItem = wallData.requiredItem || 'gun';
+
+            if (itemId === requiredItem) {
+                // Item correto! Quebrar a parede
+                this.handleWallInteraction(wallData, itemId);
+            } else {
+                // Item incorreto
+                uiManager.showNotification(`Este item não funciona aqui. Você precisa de: ${requiredItem}`);
+            }
+        } else {
+            // Não foi solto sobre uma parede
+            uiManager.showNotification('Use o item em algo.', 2000);
+        }
     }
 
     shutdown() {
