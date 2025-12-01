@@ -1626,14 +1626,37 @@
             const tplWidth = templateImage.width;
             const tplHeight = templateImage.height;
 
-            // Reduzir escala para performance (processa mais rápido)
-            const scale = 0.25; // Processar em 25% do tamanho
+            // FASE 1: Busca grossa (rápida)
+            const coarseScale = 0.25;
+            const coarseResult = coarseSearch(bgImage, templateImage, coarseScale);
+
+            if (!coarseResult) return null;
+
+            // FASE 2: Busca fina ao redor do melhor resultado (precisa)
+            const fineScale = 0.5;
+            const searchRadius = 50; // pixels na escala original
+            const fineResult = fineSearch(
+                bgImage, templateImage,
+                coarseResult.x, coarseResult.y,
+                searchRadius, fineScale
+            );
+
+            if (!fineResult) return coarseResult;
+
+            return fineResult;
+        }
+
+        function coarseSearch(bgImage, templateImage, scale) {
+            const bgWidth = bgImage.width;
+            const bgHeight = bgImage.height;
+            const tplWidth = templateImage.width;
+            const tplHeight = templateImage.height;
+
             const scaledBgW = Math.floor(bgWidth * scale);
             const scaledBgH = Math.floor(bgHeight * scale);
             const scaledTplW = Math.floor(tplWidth * scale);
             const scaledTplH = Math.floor(tplHeight * scale);
 
-            // Preparar canvas do background
             const bgCanvas = document.createElement('canvas');
             bgCanvas.width = scaledBgW;
             bgCanvas.height = scaledBgH;
@@ -1641,7 +1664,6 @@
             bgCtx.drawImage(bgImage, 0, 0, scaledBgW, scaledBgH);
             const bgData = bgCtx.getImageData(0, 0, scaledBgW, scaledBgH);
 
-            // Preparar canvas do template
             const tplCanvas = document.createElement('canvas');
             tplCanvas.width = scaledTplW;
             tplCanvas.height = scaledTplH;
@@ -1653,16 +1675,12 @@
             let bestX = 0;
             let bestY = 0;
 
-            // Sliding window - buscar em toda a imagem
-            const stepSize = 5; // Pular pixels para ir mais rápido
+            const stepSize = 8; // Maior step = mais rápido
             for (let y = 0; y < scaledBgH - scaledTplH; y += stepSize) {
                 for (let x = 0; x < scaledBgW - scaledTplW; x += stepSize) {
-                    // Calcular similaridade apenas nas bordas (onde deve casar)
                     const score = calculateEdgeSimilarity(
-                        bgData, tplData,
-                        x, y,
-                        scaledBgW, scaledBgH,
-                        scaledTplW, scaledTplH
+                        bgData, tplData, x, y,
+                        scaledBgW, scaledBgH, scaledTplW, scaledTplH
                     );
 
                     if (score > bestScore) {
@@ -1673,25 +1691,85 @@
                 }
             }
 
-            // Converter de volta para escala original
             const finalX = Math.round(bestX / scale);
             const finalY = Math.round(bestY / scale);
-            const finalW = tplWidth;
-            const finalH = tplHeight;
-
-            // Normalizar confidence (0 a 1)
             const confidence = Math.min(1, Math.max(0, bestScore / 255));
 
-            if (confidence < 0.3) {
-                // Confiança muito baixa
-                return null;
-            }
+            if (confidence < 0.2) return null;
 
             return {
                 x: finalX,
                 y: finalY,
-                width: finalW,
-                height: finalH,
+                width: tplWidth,
+                height: tplHeight,
+                confidence: confidence
+            };
+        }
+
+        function fineSearch(bgImage, templateImage, centerX, centerY, radius, scale) {
+            const bgWidth = bgImage.width;
+            const bgHeight = bgImage.height;
+            const tplWidth = templateImage.width;
+            const tplHeight = templateImage.height;
+
+            const scaledBgW = Math.floor(bgWidth * scale);
+            const scaledBgH = Math.floor(bgHeight * scale);
+            const scaledTplW = Math.floor(tplWidth * scale);
+            const scaledTplH = Math.floor(tplHeight * scale);
+
+            const bgCanvas = document.createElement('canvas');
+            bgCanvas.width = scaledBgW;
+            bgCanvas.height = scaledBgH;
+            const bgCtx = bgCanvas.getContext('2d');
+            bgCtx.drawImage(bgImage, 0, 0, scaledBgW, scaledBgH);
+            const bgData = bgCtx.getImageData(0, 0, scaledBgW, scaledBgH);
+
+            const tplCanvas = document.createElement('canvas');
+            tplCanvas.width = scaledTplW;
+            tplCanvas.height = scaledTplH;
+            const tplCtx = tplCanvas.getContext('2d');
+            tplCtx.drawImage(templateImage, 0, 0, scaledTplW, scaledTplH);
+            const tplData = tplCtx.getImageData(0, 0, scaledTplW, scaledTplH);
+
+            // Definir área de busca
+            const scaledCenterX = Math.floor(centerX * scale);
+            const scaledCenterY = Math.floor(centerY * scale);
+            const scaledRadius = Math.floor(radius * scale);
+
+            const minX = Math.max(0, scaledCenterX - scaledRadius);
+            const maxX = Math.min(scaledBgW - scaledTplW, scaledCenterX + scaledRadius);
+            const minY = Math.max(0, scaledCenterY - scaledRadius);
+            const maxY = Math.min(scaledBgH - scaledTplH, scaledCenterY + scaledRadius);
+
+            let bestScore = -Infinity;
+            let bestX = scaledCenterX;
+            let bestY = scaledCenterY;
+
+            // Busca refinada pixel a pixel
+            for (let y = minY; y < maxY; y += 1) {
+                for (let x = minX; x < maxX; x += 1) {
+                    const score = calculateEdgeSimilarity(
+                        bgData, tplData, x, y,
+                        scaledBgW, scaledBgH, scaledTplW, scaledTplH
+                    );
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestX = x;
+                        bestY = y;
+                    }
+                }
+            }
+
+            const finalX = Math.round(bestX / scale);
+            const finalY = Math.round(bestY / scale);
+            const confidence = Math.min(1, Math.max(0, bestScore / 255));
+
+            return {
+                x: finalX,
+                y: finalY,
+                width: tplWidth,
+                height: tplHeight,
                 confidence: confidence
             };
         }
