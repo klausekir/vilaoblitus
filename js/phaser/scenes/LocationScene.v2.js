@@ -2009,24 +2009,34 @@ class LocationScene extends Phaser.Scene {
             const width = (wallData.width / 100) * bgWidth;
             const height = (wallData.height / 100) * bgHeight;
 
-            let wallSprite;
-            if (wallData.image && this.textures.exists(wallData.image)) {
-                wallSprite = this.add.image(x + width / 2, y + height / 2, wallData.image);
-                wallSprite.setDisplaySize(width, height);
+            // Criar elemento HTML para a parede (igual aos itens)
+            const wallEl = document.createElement('div');
+            wallEl.style.position = 'absolute';
+            wallEl.style.left = x + 'px';
+            wallEl.style.top = y + 'px';
+            wallEl.style.width = width + 'px';
+            wallEl.style.height = height + 'px';
+            wallEl.style.zIndex = '25';
+            wallEl.style.cursor = 'pointer';
+            wallEl.dataset.wallId = wallData.id;
+
+            if (wallData.image) {
+                const img = document.createElement('img');
+                img.src = wallData.image;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.pointerEvents = 'none';
+                wallEl.appendChild(img);
             } else {
-                // Use generic wall texture
-                wallSprite = this.add.image(x + width / 2, y + height / 2, 'wall_texture');
-                wallSprite.setDisplaySize(width, height);
+                // Fallback: usar textura padrão ou cor
+                wallEl.style.backgroundColor = 'rgba(139, 90, 43, 0.8)';
+                wallEl.style.border = '2px solid #654321';
             }
 
-            wallSprite.setOrigin(0.5);
-            wallSprite.setDepth(25); // Acima do background, abaixo de itens
-
-            // Tornar interativo para feedback visual (opcional)
-            wallSprite.setInteractive();
-
             // Adicionar handler de click na parede
-            wallSprite.on('pointerdown', () => {
+            wallEl.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const requiredItem = wallData.requiredItem || 'gun';
                 const item = gameStateManager.getInventoryItem(requiredItem);
                 const hasRequiredItem = item && item.status === 'held';
@@ -2040,19 +2050,32 @@ class LocationScene extends Phaser.Scene {
                 }
             });
 
-            // Salvar referência e dados
-            wallSprite.wallData = wallData;
-            this.destructibleWalls.push(wallSprite);
+            // Adicionar ao container de itens
+            const itemsContainer = document.getElementById('items-container');
+            if (itemsContainer) {
+                itemsContainer.appendChild(wallEl);
+            }
+
+            // Salvar referência
+            this.destructibleWalls.push({
+                element: wallEl,
+                wallData: wallData,
+                destroy: () => wallEl.remove()
+            });
         });
     }
 
     checkWallInteraction(worldX, worldY) {
         if (!this.destructibleWalls) return null;
 
-        for (const wallSprite of this.destructibleWalls) {
-            const bounds = wallSprite.getBounds();
-            if (bounds.contains(worldX, worldY)) {
-                return wallSprite.wallData;
+        for (const wall of this.destructibleWalls) {
+            const el = wall.element;
+            const rect = el.getBoundingClientRect();
+            const x = worldX - this.cameras.main.scrollX;
+            const y = worldY - this.cameras.main.scrollY;
+
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                return wall.wallData;
             }
         }
         return null;
@@ -2126,14 +2149,16 @@ class LocationScene extends Phaser.Scene {
     }
 
     destroyWall(wallData) {
-        // Encontrar o sprite da parede
-        const wallSprite = this.destructibleWalls.find(w => w.wallData.id === wallData.id);
+        // Encontrar o elemento HTML da parede
+        const wall = this.destructibleWalls.find(w => w.wallData.id === wallData.id);
 
-        if (wallSprite) {
-            const wallX = wallSprite.x;
-            const wallY = wallSprite.y;
-            const wallWidth = wallSprite.displayWidth || 100;
-            const wallHeight = wallSprite.displayHeight || 100;
+        if (wall) {
+            const wallEl = wall.element;
+            const rect = wallEl.getBoundingClientRect();
+            const wallX = rect.left + rect.width / 2;
+            const wallY = rect.top + rect.height / 2;
+            const wallWidth = rect.width;
+            const wallHeight = rect.height;
 
             // 1. Efeito de tremor na câmera
             this.cameras.main.shake(200, 0.005);
@@ -2184,24 +2209,20 @@ class LocationScene extends Phaser.Scene {
                 onComplete: () => flash.destroy()
             });
 
-            // 4. Animação de "tremer" e esmaecer a parede
-            this.tweens.add({
-                targets: wallSprite,
-                alpha: 0,
-                scaleX: wallSprite.scaleX * 1.05,
-                scaleY: wallSprite.scaleY * 1.05,
-                duration: 1200,
-                ease: 'Power2',
-                onComplete: () => {
-                    gameStateManager.destroyWall(this.currentLocation, wallData.id);
-                    this.renderDestructibleWalls();
-                }
-            });
+            // 4. Animação de "esmaecer" a parede usando CSS
+            wallEl.style.transition = 'opacity 1.2s, transform 1.2s';
+            wallEl.style.opacity = '0';
+            wallEl.style.transform = 'scale(1.05)';
+
+            setTimeout(() => {
+                gameStateManager.destroyWall(this.currentLocation, wallData.id);
+                this.renderDestructibleWalls();
+            }, 1200);
 
             // Tocar som de pedra quebrando (se houver)
             // this.sound.play('rock_break');
         } else {
-            // Fallback se não achar o sprite (ex: erro de sync)
+            // Fallback se não achar o elemento (ex: erro de sync)
             gameStateManager.destroyWall(this.currentLocation, wallData.id);
             this.renderDestructibleWalls();
         }
