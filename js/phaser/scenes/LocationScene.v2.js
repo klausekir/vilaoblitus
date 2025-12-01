@@ -2438,17 +2438,34 @@ class LocationScene extends Phaser.Scene {
         const nextDigit = (currentDigit + 1) % 10;
         this.padlockCurrentCode[index] = nextDigit.toString();
 
-        // Atualizar visualmente
+        // Atualizar visualmente com animação de flip/giro
         if (this.padlockDigitSprites && this.padlockDigitSprites[index]) {
             const sprite = this.padlockDigitSprites[index];
-            sprite.text.setText(nextDigit.toString());
 
-            // Animação de escala
+            // Animação de flip vertical (como contador mecânico)
             this.tweens.add({
-                targets: [sprite.background, sprite.text],
-                scaleX: 1.2,
-                scaleY: 1.2,
-                duration: 150,
+                targets: sprite.text,
+                scaleY: 0,
+                duration: 100,
+                ease: 'Power2',
+                onComplete: () => {
+                    // Trocar o número no meio do flip
+                    sprite.text.setText(nextDigit.toString());
+                    // Voltar ao normal
+                    this.tweens.add({
+                        targets: sprite.text,
+                        scaleY: 1,
+                        duration: 100,
+                        ease: 'Power2'
+                    });
+                }
+            });
+
+            // Pulso de cor na borda
+            this.tweens.add({
+                targets: sprite.background,
+                alpha: 0.6,
+                duration: 100,
                 yoyo: true,
                 ease: 'Power2'
             });
