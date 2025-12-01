@@ -2490,22 +2490,60 @@ class LocationScene extends Phaser.Scene {
             // Código correto! Resolver o puzzle
             uiManager.showNotification('✅ Código correto! Cadeado destrancado!');
 
-            // Remover caixinhas de dígitos com animação
+            // EXPLOSÃO dos dígitos! 💥
             if (this.padlockDigitSprites) {
-                this.padlockDigitSprites.forEach(sprite => {
+                // Direções de explosão para cada dígito
+                const explosionDirections = [
+                    { x: -200, y: -150, rotation: -720 },  // Dígito 1: esquerda-cima
+                    { x: -100, y: -200, rotation: -540 },  // Dígito 2: cima-esquerda
+                    { x: 0, y: -250, rotation: 360 },      // Dígito 3: direto pra cima
+                    { x: 100, y: -200, rotation: 540 },    // Dígito 4: cima-direita
+                    { x: 200, y: -150, rotation: 720 }     // Dígito 5: direita-cima
+                ];
+
+                this.padlockDigitSprites.forEach((sprite, index) => {
+                    const direction = explosionDirections[index];
+                    const delay = index * 50; // Explosão escalonada
+
+                    // Flash inicial
                     this.tweens.add({
                         targets: [sprite.background, sprite.text],
                         alpha: 0,
-                        scaleX: 0,
-                        scaleY: 0,
-                        duration: 500,
-                        ease: 'Power2',
-                        onComplete: () => {
-                            if (sprite.background) sprite.background.destroy();
-                            if (sprite.text) sprite.text.destroy();
-                        }
+                        duration: 100,
+                        yoyo: true,
+                        repeat: 2,
+                        delay: delay
                     });
+
+                    // Explosão com rotação
+                    setTimeout(() => {
+                        const startX = sprite.text.x;
+                        const startY = sprite.text.y;
+
+                        this.tweens.add({
+                            targets: [sprite.background, sprite.text],
+                            x: startX + direction.x,
+                            y: startY + direction.y,
+                            alpha: 0,
+                            scaleX: 2,
+                            scaleY: 2,
+                            duration: 800,
+                            ease: 'Power3.easeOut',
+                            onComplete: () => {
+                                if (sprite.background) sprite.background.destroy();
+                                if (sprite.text) sprite.text.destroy();
+                            }
+                        });
+
+                        this.tweens.add({
+                            targets: sprite.text,
+                            angle: direction.rotation,
+                            duration: 800,
+                            ease: 'Power2'
+                        });
+                    }, delay + 200);
                 });
+
                 this.padlockDigitSprites = null;
             }
 
@@ -2513,7 +2551,7 @@ class LocationScene extends Phaser.Scene {
             setTimeout(() => {
                 gameStateManager.solvePuzzle(puzzle.id);
                 this.updatePuzzleVisual(true);
-            }, 600);
+            }, 1200);
         }
     }
 
