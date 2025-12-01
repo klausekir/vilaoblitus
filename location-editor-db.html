@@ -960,6 +960,10 @@
                 return { type: 'wall', data: location.destructibleWalls[selectedWallIndex] };
             }
 
+            if (selectedVisualType === 'digit' && selectedItemIndex !== null && location.puzzle?.digitPositions) {
+                return { type: 'digit', data: location.puzzle.digitPositions[selectedItemIndex], index: selectedItemIndex };
+            }
+
             return null;
         }
 
@@ -1879,6 +1883,73 @@
 
         // Render positioned walls on the visual editor
         // Render positioned items on the image
+        function renderPadlockDigitBoxes(puzzle, container) {
+            // Garantir que digitPositions existe
+            if (!puzzle.digitPositions) {
+                puzzle.digitPositions = [
+                    { x: puzzle.visual.position.x - 8, y: puzzle.visual.position.y + 12 },
+                    { x: puzzle.visual.position.x - 4, y: puzzle.visual.position.y + 12 },
+                    { x: puzzle.visual.position.x, y: puzzle.visual.position.y + 12 },
+                    { x: puzzle.visual.position.x + 4, y: puzzle.visual.position.y + 12 },
+                    { x: puzzle.visual.position.x + 8, y: puzzle.visual.position.y + 12 }
+                ];
+            }
+
+            const digitSize = puzzle.digitSize || { width: 40, height: 50 };
+
+            puzzle.digitPositions.forEach((pos, index) => {
+                const isSelected = selectedVisualType === 'digit' && selectedItemIndex === index;
+
+                const digitEl = document.createElement('div');
+                digitEl.dataset.visualType = 'digit';
+                digitEl.dataset.digitIndex = index;
+                digitEl.style.cssText = `
+                    position: absolute;
+                    left: ${pos.x}%;
+                    top: ${pos.y}%;
+                    width: ${digitSize.width}px;
+                    height: ${digitSize.height}px;
+                    transform: translate(-50%, -50%);
+                    cursor: move;
+                    pointer-events: auto;
+                    z-index: 130;
+                    background: rgba(0, 0, 0, 0.7);
+                    border: 3px solid ${isSelected ? '#00ff00' : '#f0a500'};
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #f0a500;
+                    ${isSelected ? 'box-shadow: 0 0 0 3px #00ff00;' : ''}
+                `;
+                digitEl.textContent = index.toString();
+
+                const label = document.createElement('div');
+                label.textContent = `Dígito ${index + 1}`;
+                label.style.cssText = `
+                    position: absolute;
+                    bottom: -25px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 255, 0, 0.9);
+                    color: #000;
+                    padding: 4px 8px;
+                    font-size: 10px;
+                    border-radius: 4px;
+                    white-space: nowrap;
+                    pointer-events: none;
+                    font-weight: 600;
+                `;
+                digitEl.appendChild(label);
+
+                digitEl.addEventListener('mousedown', startDragItem);
+
+                container.appendChild(digitEl);
+            });
+        }
+
         function renderPositionedItems() {
             if (!currentLocationId) return;
 
@@ -1967,6 +2038,11 @@
                 puzzleEl.addEventListener('mousedown', startDragItem);
 
                 container.appendChild(puzzleEl);
+
+                // Renderizar caixinhas de dígitos para cadeado de 5 dígitos
+                if (location.puzzle.type === 'padlock_5digit') {
+                    renderPadlockDigitBoxes(location.puzzle, container);
+                }
             }
 
             location.items.forEach((item, index) => {
@@ -2053,6 +2129,46 @@
             const visual = getSelectedVisual();
             if (!visual) {
                 panel.innerHTML = '<div style="color: #999; text-align: center; padding: 20px; font-size: 14px;">Selecione um item, enigma ou parede para editar</div>';
+                return;
+            }
+
+            // Special handling for digits
+            if (visual.type === 'digit') {
+                const digitIndex = selectedItemIndex;
+                const location = gameLocations[currentLocationId];
+                const pos = location.puzzle.digitPositions[digitIndex];
+
+                panel.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <strong style="display: block; margin-bottom: 8px;">🔢 Dígito ${digitIndex + 1}</strong>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 10px;">Posicione sobre a imagem do cadeado</div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">Posição (%)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div>
+                                    <label style="font-size: 11px; color: #666;">X</label>
+                                    <input type="number" value="${pos.x.toFixed(1)}" step="0.1"
+                                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                           onchange="updateDigitPosition(${digitIndex}, 'x', parseFloat(this.value))">
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; color: #666;">Y</label>
+                                    <input type="number" value="${pos.y.toFixed(1)}" step="0.1"
+                                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                           onchange="updateDigitPosition(${digitIndex}, 'y', parseFloat(this.value))">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: #f0f8ff; padding: 12px; border-radius: 6px; border-left: 4px solid #00bfff;">
+                            <div style="font-size: 12px; color: #333; margin-bottom: 5px; font-weight: 600;">💡 Dica</div>
+                            <div style="font-size: 11px; color: #555; line-height: 1.4;">
+                                Arraste o dígito para a posição correta sobre a imagem do cadeado. As 5 caixinhas aparecerão no jogo exatamente nas posições que você definir aqui.
+                            </div>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
@@ -2504,6 +2620,11 @@
                 }
             } else if (visualType === 'puzzle') {
                 selectPuzzleVisual();
+            } else if (visualType === 'digit') {
+                const index = parseInt(draggedItem.dataset.digitIndex);
+                if (!Number.isNaN(index)) {
+                    selectDigit(index);
+                }
             }
 
             const container = document.getElementById('visual-items-container');
@@ -2535,6 +2656,13 @@
         function selectPuzzleVisual() {
             selectedVisualType = 'puzzle';
             selectedItemIndex = null;
+            renderTransformControls();
+            highlightSelectedVisual();
+        }
+
+        function selectDigit(digitIndex) {
+            selectedVisualType = 'digit';
+            selectedItemIndex = digitIndex;
             renderTransformControls();
             highlightSelectedVisual();
         }
@@ -2572,6 +2700,11 @@
             } else if (visualType === 'puzzle' && location.puzzle) {
                 ensurePuzzleDefaults(location.puzzle);
                 location.puzzle.visual.position = { x: newX, y: newY };
+            } else if (visualType === 'digit' && location.puzzle) {
+                const index = parseInt(draggedItem.dataset.digitIndex);
+                if (!Number.isNaN(index) && location.puzzle.digitPositions && location.puzzle.digitPositions[index]) {
+                    location.puzzle.digitPositions[index] = { x: newX, y: newY };
+                }
             }
 
             autoSave();
