@@ -3829,6 +3829,21 @@
             return names[type] || type;
         }
 
+        // Toggle padlock action fields
+        function togglePadlockActionFields() {
+            const actionType = document.getElementById('puzzle-unlock-action-type')?.value;
+            const backgroundGroup = document.getElementById('padlock-new-background-group');
+            const locationGroup = document.getElementById('padlock-target-location-group');
+
+            if (actionType === 'changeBackground') {
+                if (backgroundGroup) backgroundGroup.style.display = 'block';
+                if (locationGroup) locationGroup.style.display = 'none';
+            } else if (actionType === 'navigate') {
+                if (backgroundGroup) backgroundGroup.style.display = 'none';
+                if (locationGroup) locationGroup.style.display = 'block';
+            }
+        }
+
         // Save puzzle
         function savePuzzle() {
 
