@@ -2762,12 +2762,6 @@
 
                 const wallEl = document.createElement('div');
                 wallEl.dataset.wallIndex = index;
-
-                // Definir imagem de fundo ou cor
-                const backgroundStyle = wall.image
-                    ? `background-image: url(${wall.image}); background-size: cover; background-position: center; background-repeat: no-repeat;`
-                    : `background: ${isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(85, 85, 85, 0.5)'};`;
-
                 wallEl.style.cssText = `
             position: absolute;
             left: ${wall.x}%;
@@ -2775,11 +2769,33 @@
             width: ${wall.width}%;
             height: ${wall.height}%;
             border: 3px solid ${isSelected ? '#ff4444' : '#555'};
-            ${backgroundStyle}
             cursor: move;
             pointer-events: auto;
             z-index: 40;
+            overflow: hidden;
             `;
+
+                // Adicionar imagem como elemento <img> se existir
+                if (wall.image) {
+                    const img = document.createElement('img');
+                    img.src = wall.image;
+                    img.style.cssText = `
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                pointer-events: none;
+                display: block;
+                `;
+                    img.onerror = function() {
+                        // Se a imagem não carregar, mostrar background colorido
+                        wallEl.style.background = isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(85, 85, 85, 0.5)';
+                        this.style.display = 'none';
+                    };
+                    wallEl.appendChild(img);
+                } else {
+                    // Sem imagem, usar cor de fundo
+                    wallEl.style.background = isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(85, 85, 85, 0.5)';
+                }
 
                 const label = document.createElement('div');
                 label.style.cssText = `
