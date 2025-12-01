@@ -1572,67 +1572,6 @@
         }
 
         // Render positioned walls on the visual editor
-        function renderPositionedWalls() {
-            if (!currentLocationId) return;
-
-            const location = gameLocations[currentLocationId];
-            const container = document.getElementById('visual-walls-container');
-
-            if (!container) {
-                console.error('Container visual-items-container não encontrado!');
-                return;
-            }
-
-            container.innerHTML = '';
-
-            if (!Array.isArray(location.walls)) {
-                location.walls = [];
-            }
-
-            location.walls.forEach((wall, index) => {
-                ensureWallDefaults(wall);
-
-                const isSelected = selectedVisualType === 'wall' && selectedWallIndex === index;
-
-                const wallEl = document.createElement('div');
-                wallEl.dataset.visualType = 'wall';
-                wallEl.dataset.wallIndex = index;
-                wallEl.style.cssText = `
-                    position: absolute;
-                    left: ${wall.x}%;
-                    top: ${wall.y}%;
-                    width: ${wall.width}%;
-                    height: ${wall.height}%;
-                    background: rgba(255, 0, 0, 0.3);
-                    border: 2px dashed ${isSelected ? '#ff0000' : '#cc0000'};
-                    cursor: move;
-                    pointer-events: auto;
-                    z-index: 110;
-                    box-sizing: border-box;
-                `;
-
-                const label = document.createElement('div');
-                label.textContent = wall.id || `Parede ${index + 1}`;
-                label.style.cssText = `
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(255, 0, 0, 0.7);
-                    color: white;
-                    padding: 4px 8px;
-                    font-size: 12px;
-                    border-radius: 4px;
-                    white-space: nowrap;
-                    pointer-events: none;
-                `;
-
-                wallEl.appendChild(label);
-                wallEl.addEventListener('mousedown', startDragItem);
-                container.appendChild(wallEl);
-            });
-        }
-
         // Render positioned items on the image
         function renderPositionedItems() {
             if (!currentLocationId) return;
@@ -1814,11 +1753,24 @@
             // Special handling for walls
             if (visual.type === 'wall') {
                 const wall = visual.data;
+                const previewHtml = wall.image
+                    ? `<img src="${wall.image}" style="max-width: 100%; max-height: 100px; image-rendering: crisp-edges; border: 2px solid #ddd; border-radius: 4px;">`
+                    : '<div style="color: #999; font-size: 12px; padding: 20px; background: #f5f5f5; border-radius: 4px; text-align: center;">Sem imagem atribuída</div>';
+
                 panel.innerHTML = `
                     <div style="margin-bottom: 15px;">
                         <strong style="display: block; margin-bottom: 8px;">Parede: ${wall.id}</strong>
                         <div style="font-size: 11px; color: #666; margin-bottom: 10px;">Item necessário: ${wall.requiredItem || 'Nenhum'}</div>
-                        
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">Imagem da Parede</label>
+                            ${previewHtml}
+                            <input type="text" value="${wall.image || ''}"
+                                   placeholder="caminho/da/imagem.png"
+                                   style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; margin-top: 8px; font-size: 12px;"
+                                   onchange="updateWallProperty('image', this.value)">
+                        </div>
+
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">Posição (%)</label>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -2040,6 +1992,7 @@
                 autoSave();
                 renderPositionedWalls();
                 renderDestructibleWallsList();
+                renderTransformControls(); // Atualizar preview da imagem
             }
         }
 
