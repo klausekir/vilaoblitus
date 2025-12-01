@@ -443,11 +443,21 @@ class LocationScene extends Phaser.Scene {
             this.puzzleSprite.setInteractive({ useHandCursor: true });
             this.puzzleSprite.on('pointerdown', () => {
                 if (gameStateManager.isPuzzleSolved(puzzle.id)) {
-                    uiManager.showNotification('Este enigma já foi resolvido.');
+                    // Se for cadeado de 5 dígitos e está resolvido (aberto), executar ação especial
+                    if (puzzle.type === 'padlock_5digit' && puzzle.onUnlockedAction) {
+                        this.handlePadlockUnlockedAction(puzzle);
+                    } else {
+                        uiManager.showNotification('Este enigma já foi resolvido.');
+                    }
                     return;
                 }
                 this.promptPuzzleInteraction(puzzle.id);
             });
+        }
+
+        // Renderizar caixinhas de números para cadeado de 5 dígitos
+        if (puzzle.type === 'padlock_5digit' && !isSolved) {
+            this.renderPadlockDigits(puzzle, visual, bgX, bgY, bgWidth, bgHeight);
         }
     }
 
@@ -1755,6 +1765,12 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
+        if (puzzleType === 'padlock_5digit') {
+            uiManager.showNotification('Clique nos dígitos para girar os números.');
+            this.flashPuzzleSprite();
+            return;
+        }
+
         const supportedTypes = ['code', 'math', 'direction', 'riddle', 'sequence_symbols'];
         if (supportedTypes.includes(puzzleType)) {
             const openDialog = () => {
@@ -2325,6 +2341,161 @@ class LocationScene extends Phaser.Scene {
         }
     }
 
+    renderPadlockDigits(puzzle, visual, bgX, bgY, bgWidth, bgHeight) {
+        // Limpar dígitos anteriores se existirem
+        if (this.padlockDigitElements) {
+            this.padlockDigitElements.forEach(el => el.remove());
+        }
+        this.padlockDigitElements = [];
+        this.padlockCurrentCode = ['0', '0', '0', '0', '0'];
+
+        // Posição das caixinhas (pode ser configurada no editor)
+        const digitPositions = puzzle.digitPositions || [
+            { x: visual.position.x - 8, y: visual.position.y + 12 },
+            { x: visual.position.x - 4, y: visual.position.y + 12 },
+            { x: visual.position.x, y: visual.position.y + 12 },
+            { x: visual.position.x + 4, y: visual.position.y + 12 },
+            { x: visual.position.x + 8, y: visual.position.y + 12 }
+        ];
+
+        const digitSize = puzzle.digitSize || { width: 40, height: 50 };
+
+        digitPositions.forEach((pos, index) => {
+            const screenX = bgX + (pos.x / 100) * bgWidth;
+            const screenY = bgY + (pos.y / 100) * bgHeight;
+
+            const digitBox = document.createElement('div');
+            digitBox.style.cssText = `
+                position: absolute;
+                left: ${screenX - digitSize.width / 2}px;
+                top: ${screenY - digitSize.height / 2}px;
+                width: ${digitSize.width}px;
+                height: ${digitSize.height}px;
+                background: rgba(0, 0, 0, 0.8);
+                border: 3px solid #f0a500;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 28px;
+                font-weight: bold;
+                color: #f0a500;
+                cursor: pointer;
+                user-select: none;
+                transition: all 0.2s;
+                z-index: 1000;
+            `;
+            digitBox.textContent = '0';
+            digitBox.dataset.index = index;
+
+            digitBox.addEventListener('mouseenter', () => {
+                digitBox.style.transform = 'scale(1.1)';
+                digitBox.style.borderColor = '#ff0';
+            });
+
+            digitBox.addEventListener('mouseleave', () => {
+                digitBox.style.transform = 'scale(1)';
+                digitBox.style.borderColor = '#f0a500';
+            });
+
+            digitBox.addEventListener('click', () => {
+                this.incrementPadlockDigit(index, puzzle);
+            });
+
+            document.body.appendChild(digitBox);
+            this.padlockDigitElements.push(digitBox);
+        });
+    }
+
+    incrementPadlockDigit(index, puzzle) {
+        const currentDigit = parseInt(this.padlockCurrentCode[index]);
+        const nextDigit = (currentDigit + 1) % 10;
+        this.padlockCurrentCode[index] = nextDigit.toString();
+
+        // Atualizar visualmente
+        if (this.padlockDigitElements && this.padlockDigitElements[index]) {
+            this.padlockDigitElements[index].textContent = nextDigit;
+
+            // Animação de rotação
+            this.padlockDigitElements[index].style.transform = 'rotateX(360deg) scale(1.1)';
+            setTimeout(() => {
+                this.padlockDigitElements[index].style.transform = 'scale(1)';
+            }, 300);
+        }
+
+        // Verificar se o código está correto
+        this.checkPadlockCode(puzzle);
+    }
+
+    checkPadlockCode(puzzle) {
+        const enteredCode = this.padlockCurrentCode.join('');
+        const correctCode = puzzle.secretCode || '00000';
+
+        if (enteredCode === correctCode) {
+            // Código correto! Resolver o puzzle
+            uiManager.showNotification('✅ Código correto! Cadeado destrancado!');
+
+            // Remover caixinhas de dígitos
+            if (this.padlockDigitElements) {
+                this.padlockDigitElements.forEach(el => {
+                    el.style.transition = 'all 0.5s';
+                    el.style.opacity = '0';
+                    el.style.transform = 'scale(0)';
+                    setTimeout(() => el.remove(), 500);
+                });
+                this.padlockDigitElements = null;
+            }
+
+            // Resolver puzzle
+            setTimeout(() => {
+                gameStateManager.solvePuzzle(puzzle.id);
+                this.updatePuzzleVisual(true);
+            }, 600);
+        }
+    }
+
+    handlePadlockUnlockedAction(puzzle) {
+        const action = puzzle.onUnlockedAction;
+
+        if (action.type === 'changeBackground') {
+            // Trocar imagem de fundo
+            const newBackgroundImage = action.newBackground;
+
+            if (newBackgroundImage) {
+                // Fazer fade out
+                this.cameras.main.fadeOut(500, 0, 0, 0);
+
+                this.cameras.main.once('camerafadeoutcomplete', () => {
+                    // Atualizar dados da localização com novo background
+                    this.locationData.image = newBackgroundImage;
+
+                    // Destruir cadeado
+                    if (this.puzzleSprite) {
+                        this.puzzleSprite.destroy();
+                        this.puzzleSprite = null;
+                    }
+
+                    // Re-renderizar background
+                    if (this.background) {
+                        this.background.destroy();
+                    }
+                    this.renderBackground();
+
+                    // Fade in
+                    this.cameras.main.fadeIn(500, 0, 0, 0);
+
+                    uiManager.showNotification('O portão se abriu!');
+                });
+            }
+        } else if (action.type === 'navigate') {
+            // Navegar para outra localização
+            const targetLocation = action.targetLocation;
+            if (targetLocation) {
+                this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
+            }
+        }
+    }
+
     shutdown() {
         // Cleanup
         this.hotspots = [];
@@ -2337,6 +2508,12 @@ class LocationScene extends Phaser.Scene {
         this.currentPuzzleData = null;
         this.clearDroppedSprites();
         uiManager.setActiveScene(null);
+
+        // Limpar elementos de dígitos do cadeado
+        if (this.padlockDigitElements) {
+            this.padlockDigitElements.forEach(el => el.remove());
+            this.padlockDigitElements = null;
+        }
 
         // Remover listener de resize
         this.scale.off('resize', this.handleResize, this);
