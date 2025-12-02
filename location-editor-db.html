@@ -5043,7 +5043,9 @@ if (typeof module !== 'undefined' && module.exports) {
                         background_image: loc.background || loc.image,
                         hotspots: allHotspots,
                         puzzle: loc.puzzle,
-                        destructible_walls: loc.destructibleWalls || []
+                        destructible_walls: loc.destructibleWalls || [],
+                        is_final_scene: loc.isFinalScene || false,
+                        credits: loc.credits || null
                     });
                 }
 

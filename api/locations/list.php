@@ -59,6 +59,8 @@ try {
             name,
             description,
             background_image,
+            is_final_scene,
+            credits,
             created_at,
             updated_at
         FROM locations
@@ -67,6 +69,16 @@ try {
 
     $locations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     error_log("📋 LIST API - Encontradas " . count($locations) . " localizações no banco");
+
+    // Convert credits JSON string to array
+    foreach ($locations as &$location) {
+        if (!empty($location['credits'])) {
+            $location['credits'] = json_decode($location['credits'], true);
+        }
+        // Convert is_final_scene to boolean
+        $location['is_final_scene'] = (bool) $location['is_final_scene'];
+    }
+    unset($location); // Break reference
 
     // Prepare puzzle statement
     $puzzleStmt = $pdo->prepare("

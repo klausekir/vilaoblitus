@@ -33,6 +33,8 @@ try {
             name,
             description,
             background_image,
+            is_final_scene,
+            credits,
             created_at,
             updated_at
         FROM locations
@@ -44,6 +46,13 @@ try {
     if (!$location) {
         sendResponse(false, null, 'Location not found', 404);
     }
+
+    // Convert credits JSON string to array
+    if (!empty($location['credits'])) {
+        $location['credits'] = json_decode($location['credits'], true);
+    }
+    // Convert is_final_scene to boolean
+    $location['is_final_scene'] = (bool) $location['is_final_scene'];
 
     // Get hotspots
     $hotspotStmt = $pdo->prepare("

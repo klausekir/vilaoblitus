@@ -51,13 +51,15 @@ try {
 
     // Prepared statements (reutilizáveis)
     $locationStmt = $pdo->prepare("
-        INSERT INTO locations (id, name, description, background_image, display_order)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO locations (id, name, description, background_image, display_order, is_final_scene, credits)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             name = VALUES(name),
             description = VALUES(description),
             background_image = VALUES(background_image),
             display_order = VALUES(display_order),
+            is_final_scene = VALUES(is_final_scene),
+            credits = VALUES(credits),
             updated_at = CURRENT_TIMESTAMP
     ");
 
@@ -108,7 +110,9 @@ try {
         $name = $loc['name'] ?? '';
         $description = $loc['description'] ?? '';
         $backgroundImage = $loc['background_image'] ?? '';
-        
+        $isFinalScene = isset($loc['is_final_scene']) ? (int)$loc['is_final_scene'] : 0;
+        $credits = !empty($loc['credits']) ? json_encode($loc['credits'], JSON_UNESCAPED_UNICODE) : null;
+
         // Get display order from the order array
         $displayOrder = array_search($locationId, $order);
         if ($displayOrder === false) {
@@ -122,8 +126,8 @@ try {
         }
 
         // Insert/Update location
-        error_log("📍 Salvando location: ID=$locationId, Name=$name, Description=$description, BG=$backgroundImage, Order=$displayOrder");
-        $locationStmt->execute([$locationId, $name, $description, $backgroundImage, $displayOrder]);
+        error_log("📍 Salvando location: ID=$locationId, Name=$name, Description=$description, BG=$backgroundImage, Order=$displayOrder, FinalScene=$isFinalScene");
+        $locationStmt->execute([$locationId, $name, $description, $backgroundImage, $displayOrder, $isFinalScene, $credits]);
         error_log("✅ Location $locationId salvo com sucesso!");
         $successCount++;
 
