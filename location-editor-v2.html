@@ -853,6 +853,52 @@
             showMessage('Enigma removido. Clique em "Salvar Localização" para confirmar.', 'success');
         }
 
+        // Funções para gerenciar moldes do puzzle shape_match
+        function addMold() {
+            if (!currentLocation.puzzle) return;
+            if (!currentLocation.puzzle.molds) currentLocation.puzzle.molds = [];
+
+            const mold = {
+                shape: 'circle',
+                x: 400,
+                y: 300,
+                item: '',
+                label: ''
+            };
+
+            currentLocation.puzzle.molds.push(mold);
+            renderPuzzleTypeFields();
+        }
+
+        function editMold(index) {
+            if (!currentLocation.puzzle || !currentLocation.puzzle.molds) return;
+            const mold = currentLocation.puzzle.molds[index];
+
+            const shape = prompt('Forma (circle, square, triangle, rectangle, star):', mold.shape);
+            if (shape === null) return;
+
+            const x = parseFloat(prompt('Posição X (pixels):', mold.x));
+            const y = parseFloat(prompt('Posição Y (pixels):', mold.y));
+            const item = prompt('ID do Item do inventário que encaixa:', mold.item);
+            const label = prompt('Label (opcional):', mold.label || '');
+
+            mold.shape = shape || 'circle';
+            mold.x = isNaN(x) ? mold.x : x;
+            mold.y = isNaN(y) ? mold.y : y;
+            mold.item = item || '';
+            mold.label = label || '';
+
+            renderPuzzleTypeFields();
+        }
+
+        function deleteMold(index) {
+            if (!currentLocation.puzzle || !currentLocation.puzzle.molds) return;
+            if (!confirm('Deletar este molde?')) return;
+
+            currentLocation.puzzle.molds.splice(index, 1);
+            renderPuzzleTypeFields();
+        }
+
         async function savePuzzleToAPI() {
             if (!currentLocation || !currentLocation.id) {
                 console.warn('Nenhuma localização válida para salvar puzzle');
