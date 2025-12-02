@@ -70,17 +70,9 @@ class LocationScene extends Phaser.Scene {
         this.cameras.main.fadeIn(300, 0, 0, 0);
 
         // Verificar se é cena final e mostrar créditos DEPOIS de carregar tudo
-        console.log('🎬 Checking final scene:', {
-            isFinalScene: this.locationData.isFinalScene,
-            credits: this.locationData.credits,
-            locationId: this.locationData.id
-        });
-
         if (this.locationData.isFinalScene) {
-            console.log('🌟 Will show Star Wars credits in 5 seconds...');
             // Esperar 5 segundos após o fade-in para mostrar os créditos
             this.time.delayedCall(5000, () => {
-                console.log('✨ Starting credits now!');
                 this.showStarWarsCredits();
             });
         }
@@ -2613,7 +2605,6 @@ class LocationScene extends Phaser.Scene {
 
                 if (targetLocationData && targetLocationData.isFinalScene) {
                     // Tocar vídeo de transição antes de ir para cena final
-                    console.log('🎬 Tocando vídeo de transição para cena final...');
                     this.playTransitionVideo('images/Fuga_da_Vila_com_Salvação_Policial.mp4', () => {
                         // Após vídeo terminar, navegar para cena final
                         this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
@@ -2628,10 +2619,8 @@ class LocationScene extends Phaser.Scene {
 
     showStarWarsCredits() {
         const credits = this.locationData.credits || [];
-        console.log('✨ showStarWarsCredits called, credits:', credits);
 
         if (credits.length === 0) {
-            console.warn('⚠️ No credits to show! Array is empty.');
             return;
         }
 
@@ -2763,7 +2752,6 @@ class LocationScene extends Phaser.Scene {
 
             // CONGELAR TODOS OS CONTROLES DO JOGO
             this.gameFrozen = true;
-            console.log('🎬 THE END - Jogo congelado!');
 
             // Desabilitar input do Phaser
             this.input.enabled = false;
@@ -2777,8 +2765,6 @@ class LocationScene extends Phaser.Scene {
     }
 
     playTransitionVideo(videoPath, onComplete) {
-        console.log('🎥 Iniciando vídeo de transição:', videoPath);
-
         // Fade out da cena atual
         this.cameras.main.fadeOut(500, 0, 0, 0);
 
@@ -2814,37 +2800,18 @@ class LocationScene extends Phaser.Scene {
             videoContainer.appendChild(videoElement);
             document.body.appendChild(videoContainer);
 
-            console.log('▶️ Vídeo configurado, tentando tocar...');
-
             // Tentar dar play explicitamente
             const playPromise = videoElement.play();
 
             if (playPromise !== undefined) {
-                playPromise
-                    .then(() => {
-                        console.log('✅ Vídeo tocando com sucesso!');
-                    })
-                    .catch(error => {
-                        console.error('❌ Erro ao tocar vídeo:', error);
-                        console.log('ℹ️ Mostrando controles para permitir play manual...');
-                        videoElement.controls = true; // Mostrar controles se autoplay falhar
-                    });
+                playPromise.catch(() => {
+                    // Se autoplay falhar, mostrar controles
+                    videoElement.controls = true;
+                });
             }
-
-            // Log de eventos do vídeo para debug
-            videoElement.addEventListener('loadstart', () => console.log('📥 Vídeo começou a carregar...'));
-            videoElement.addEventListener('loadeddata', () => console.log('📦 Dados do vídeo carregados'));
-            videoElement.addEventListener('canplay', () => console.log('▶️ Vídeo pronto para tocar'));
-            videoElement.addEventListener('playing', () => console.log('🎬 Vídeo tocando agora!'));
-            videoElement.addEventListener('error', (e) => {
-                console.error('❌ Erro no vídeo:', e);
-                console.error('Detalhes:', videoElement.error);
-            });
 
             // Quando o vídeo terminar
             videoElement.addEventListener('ended', () => {
-                console.log('✅ Vídeo terminou, removendo...');
-
                 // Fade out do vídeo
                 videoContainer.style.transition = 'opacity 500ms';
                 videoContainer.style.opacity = '0';
@@ -2862,7 +2829,6 @@ class LocationScene extends Phaser.Scene {
 
             // Permitir pular o vídeo com clique
             videoContainer.addEventListener('click', () => {
-                console.log('⏭️ Vídeo pulado pelo usuário');
                 videoElement.pause();
                 videoElement.currentTime = videoElement.duration; // Pula para o final
             });
