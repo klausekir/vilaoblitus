@@ -2809,11 +2809,37 @@ class LocationScene extends Phaser.Scene {
             videoElement.src = videoPath;
             videoElement.autoplay = true;
             videoElement.controls = false;
+            videoElement.preload = 'auto';
 
             videoContainer.appendChild(videoElement);
             document.body.appendChild(videoContainer);
 
-            console.log('▶️ Vídeo começando a tocar...');
+            console.log('▶️ Vídeo configurado, tentando tocar...');
+
+            // Tentar dar play explicitamente
+            const playPromise = videoElement.play();
+
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log('✅ Vídeo tocando com sucesso!');
+                    })
+                    .catch(error => {
+                        console.error('❌ Erro ao tocar vídeo:', error);
+                        console.log('ℹ️ Mostrando controles para permitir play manual...');
+                        videoElement.controls = true; // Mostrar controles se autoplay falhar
+                    });
+            }
+
+            // Log de eventos do vídeo para debug
+            videoElement.addEventListener('loadstart', () => console.log('📥 Vídeo começou a carregar...'));
+            videoElement.addEventListener('loadeddata', () => console.log('📦 Dados do vídeo carregados'));
+            videoElement.addEventListener('canplay', () => console.log('▶️ Vídeo pronto para tocar'));
+            videoElement.addEventListener('playing', () => console.log('🎬 Vídeo tocando agora!'));
+            videoElement.addEventListener('error', (e) => {
+                console.error('❌ Erro no vídeo:', e);
+                console.error('Detalhes:', videoElement.error);
+            });
 
             // Quando o vídeo terminar
             videoElement.addEventListener('ended', () => {
