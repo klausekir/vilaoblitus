@@ -624,7 +624,7 @@
                     </div>
 
                     <div class="checkbox-group">
-                        <input type="checkbox" id="edit-final-scene" onchange="saveBasicInfo(); toggleCreditsSection()">
+                        <input type="checkbox" id="edit-final-scene" onchange="saveBasicInfo(); toggleCreditsSection(); syncToDatabase(true);">
                         <label for="edit-final-scene">🎬 Cena Final (Mostrar Créditos Estilo Star Wars)</label>
                     </div>
 
@@ -3727,6 +3727,7 @@
 
             container.appendChild(creditEl);
             saveBasicInfo();
+            syncToDatabase(true); // Auto-sync to MySQL
         }
 
         function removeCreditLine(index) {
@@ -3739,6 +3740,7 @@
                     el.dataset.index = i;
                 });
                 saveBasicInfo();
+                syncToDatabase(true); // Auto-sync to MySQL
             }
         }
 
@@ -4680,35 +4682,55 @@
         }
 
         // Delete location
-        function deleteLocation(locationId) {
+        async function deleteLocation(locationId) {
             if (!confirm(`Tem certeza que deseja remover o local "${gameLocations[locationId].name}"?`)) return;
 
-            // Remove connections in other locations
-            Object.values(gameLocations).forEach(loc => {
-                if (loc.connections) {
-                    loc.connections = loc.connections.filter(conn => conn !== locationId);
+            showToast('🗑️ Removendo localização...', 'info');
+
+            try {
+                // Delete from MySQL first
+                const response = await fetch(`api/locations/delete.php?id=${locationId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+
+                if (!result.success) {
+                    showToast('❌ Erro ao deletar do banco: ' + result.message, 'error');
+                    return;
                 }
-                if (loc.hotspots) {
-                    loc.hotspots = loc.hotspots.filter(hotspot => hotspot.target !== locationId);
+
+                // Remove connections in other locations
+                Object.values(gameLocations).forEach(loc => {
+                    if (loc.connections) {
+                        loc.connections = loc.connections.filter(conn => conn !== locationId);
+                    }
+                    if (loc.hotspots) {
+                        loc.hotspots = loc.hotspots.filter(hotspot => hotspot.target !== locationId);
+                    }
+                });
+
+                delete gameLocations[locationId];
+
+                // Remove from location order
+                const orderIndex = locationOrder.indexOf(locationId);
+                if (orderIndex > -1) {
+                    locationOrder.splice(orderIndex, 1);
                 }
-            });
 
-            delete gameLocations[locationId];
+                if (currentLocationId === locationId) {
+                    currentLocationId = null;
+                    document.getElementById('currentLocationName').textContent = 'Selecione um local';
+                    document.getElementById('currentLocationId').textContent = '';
+                }
 
-            // Remove from location order
-            const orderIndex = locationOrder.indexOf(locationId);
-            if (orderIndex > -1) {
-                locationOrder.splice(orderIndex, 1);
+                autoSave();
+                renderLocationsList();
+                showToast('✅ Localização removida com sucesso!', 'success');
+
+            } catch (error) {
+                console.error('Erro ao deletar:', error);
+                showToast('❌ Erro ao deletar localização', 'error');
             }
-
-            if (currentLocationId === locationId) {
-                currentLocationId = null;
-                document.getElementById('currentLocationName').textContent = 'Selecione um local';
-                document.getElementById('currentLocationId').textContent = '';
-            }
-
-            autoSave();
-            renderLocationsList();
         }
 
         // Export game data
@@ -4924,7 +4946,9 @@ if (typeof module !== 'undefined' && module.exports) {
                         hotspots: hotspots,
                         items: items,
                         imageDimensions: { width: 1024, height: 1024 },
-                        destructibleWalls: loc.destructible_walls || []  // ✅ Carregar paredes do banco
+                        destructibleWalls: loc.destructible_walls || [],  // ✅ Carregar paredes do banco
+                        isFinalScene: loc.is_final_scene || false,  // ✅ Carregar flag de cena final
+                        credits: loc.credits || null  // ✅ Carregar créditos
                     };
 
                     if (loc.puzzle) {
