@@ -626,6 +626,7 @@
                         <option value="direction" ${p.type === 'direction' ? 'selected' : ''}>Direção</option>
                         <option value="sequence_symbols" ${p.type === 'sequence_symbols' ? 'selected' : ''}>Sequência de Símbolos</option>
                         <option value="item_combination" ${p.type === 'item_combination' ? 'selected' : ''}>Combinação de Itens</option>
+                        <option value="shape_match" ${p.type === 'shape_match' ? 'selected' : ''}>Conecta Blocos</option>
                     </select>
                 </div>
 
@@ -762,6 +763,26 @@
                         <small style="color: #999;">O jogador precisa arrastar estes itens até o puzzle</small>
                     </div>
                 `;
+            } else if (type === 'shape_match') {
+                const molds = p.molds || [];
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Moldes (formas na cena)</label>
+                        <div id="moldsList" style="margin-top: 10px; max-height: 300px; overflow-y: auto;">
+                            ${molds.map((mold, i) => `
+                                <div style="background: rgba(0,0,0,0.3); padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+                                    <strong>Molde ${i + 1}</strong> -
+                                    Forma: ${mold.shape || 'circle'} |
+                                    Posição: (${mold.x}, ${mold.y}) |
+                                    Item: ${mold.item || 'nenhum'}
+                                    <button class="btn" onclick="editMold(${i})" style="padding: 4px 8px; margin-left: 10px;">✏️ Editar</button>
+                                    <button class="btn danger" onclick="deleteMold(${i})" style="padding: 4px 8px;">🗑️</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn primary" onclick="addMold()" style="margin-top: 10px;">➕ Adicionar Molde</button>
+                    </div>
+                `;
             }
         }
 
@@ -799,6 +820,9 @@
             } else if (type === 'item_combination') {
                 const itemsText = document.getElementById('puzzleRequiredItems').value;
                 p.requiredItems = itemsText.split(',').map(s => s.trim()).filter(Boolean);
+            } else if (type === 'shape_match') {
+                // Os moldes já estão salvos em p.molds através das funções addMold/editMold
+                // Não precisa fazer nada aqui
             }
 
             // Visual
