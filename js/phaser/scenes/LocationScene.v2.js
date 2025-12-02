@@ -2648,7 +2648,7 @@ class LocationScene extends Phaser.Scene {
             width: 80%;
             max-width: 800px;
             text-align: center;
-            animation: starWarsScroll 60s linear forwards;
+            animation: starWarsScroll 120s linear forwards;
         `;
 
         // Adicionar cada texto com sua fonte
@@ -2688,11 +2688,78 @@ class LocationScene extends Phaser.Scene {
 
         document.body.appendChild(creditsContainer);
 
-        // Remover após animação
+        // Após créditos terminarem, mostrar "THE END" e congelar jogo
         setTimeout(() => {
+            // Remover os créditos em rolagem
             if (creditsContainer.parentNode) {
                 creditsContainer.remove();
             }
+
+            // Criar "THE END" no centro da tela
+            const theEndContainer = document.createElement('div');
+            theEndContainer.id = 'the-end-screen';
+            theEndContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                pointer-events: none;
+            `;
+
+            const theEndText = document.createElement('div');
+            theEndText.textContent = 'THE END';
+            theEndText.style.cssText = `
+                font-family: 'Georgia', serif;
+                font-size: 120px;
+                font-weight: bold;
+                color: #feda4a;
+                text-shadow:
+                    0 0 20px rgba(254, 218, 74, 0.8),
+                    0 0 40px rgba(254, 218, 74, 0.5),
+                    4px 4px 10px rgba(0, 0, 0, 0.8);
+                animation: theEndFadeIn 2s ease-in forwards;
+                opacity: 0;
+            `;
+
+            theEndContainer.appendChild(theEndText);
+            document.body.appendChild(theEndContainer);
+
+            // Adicionar animação de fade-in para "THE END"
+            if (!document.getElementById('the-end-animation')) {
+                const style = document.createElement('style');
+                style.id = 'the-end-animation';
+                style.textContent = `
+                    @keyframes theEndFadeIn {
+                        0% {
+                            opacity: 0;
+                            transform: scale(0.5);
+                        }
+                        100% {
+                            opacity: 1;
+                            transform: scale(1);
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // CONGELAR TODOS OS CONTROLES DO JOGO
+            this.gameFrozen = true;
+            console.log('🎬 THE END - Jogo congelado!');
+
+            // Desabilitar input do Phaser
+            this.input.enabled = false;
+
+            // Remover interatividade de todos os hotspots e items
+            this.input.off('pointerdown');
+            this.input.off('pointermove');
+            this.input.off('pointerup');
+
         }, 60000);
     }
 
