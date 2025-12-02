@@ -1998,9 +1998,9 @@
                 const isSelected = selectedVisualType === 'mold' && selectedItemIndex === index;
 
                 // Converter posição de pixels absolutos para porcentagem
-                const container = document.getElementById('visual-canvas');
-                const containerWidth = container?.offsetWidth || 800;
-                const containerHeight = container?.offsetHeight || 600;
+                const visualCanvas = document.getElementById('visual-canvas');
+                const containerWidth = visualCanvas?.offsetWidth || 800;
+                const containerHeight = visualCanvas?.offsetHeight || 600;
 
                 let moldX = mold.x;
                 let moldY = mold.y;
@@ -2849,9 +2849,9 @@
                 }
             } else if (visualType === 'mold' && location.puzzle) {
                 const index = parseInt(draggedItem.dataset.moldIndex);
-                const container = document.getElementById('visual-canvas');
-                const containerWidth = container?.offsetWidth || 800;
-                const containerHeight = container?.offsetHeight || 600;
+                const visualCanvas = document.getElementById('visual-canvas');
+                const containerWidth = visualCanvas?.offsetWidth || 800;
+                const containerHeight = visualCanvas?.offsetHeight || 600;
 
                 // Converter % para pixels absolutos
                 const pixelX = (newX / 100) * containerWidth;
