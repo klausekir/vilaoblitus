@@ -2676,10 +2676,10 @@ class LocationScene extends Phaser.Scene {
             style.textContent = `
                 @keyframes starWarsScroll {
                     0% {
-                        transform: translateX(-50%) translateY(100%) rotateX(20deg);
+                        transform: translateX(-50%) translateY(100%) rotateX(20deg) scale(1);
                     }
                     100% {
-                        transform: translateX(-50%) translateY(-100%) rotateX(20deg);
+                        transform: translateX(-50%) translateY(-400%) rotateX(20deg) scale(0.1);
                     }
                 }
             `;
