@@ -122,7 +122,9 @@ class DatabaseLoader {
                 image: location.background_image,
                 hotspots: this.convertHotspots(hotspots),  // Só hotspots de navegação
                 items: items,  // Items separados
-                destructibleWalls: location.destructible_walls || [] // Paredes destrutíveis
+                destructibleWalls: location.destructible_walls || [], // Paredes destrutíveis
+                isFinalScene: location.is_final_scene || false,  // ✅ Cena final com créditos
+                credits: location.credits || null  // ✅ Array de créditos Star Wars
             };
 
             if (location.puzzle) {
