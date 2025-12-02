@@ -175,16 +175,28 @@ class LocationScene extends Phaser.Scene {
     }
 
     handleDoubleClick(pointer) {
+        console.log('🔍 Double click detected');
+
         // BLOQUEAR COMPLETAMENTE zoom se qualquer puzzle estiver ativo
         const puzzleOverlay = document.getElementById('puzzle-overlay');
+        console.log('Puzzle overlay:', puzzleOverlay);
+        console.log('Puzzle overlay display:', puzzleOverlay?.style.display);
+
         if (puzzleOverlay && puzzleOverlay.style.display === 'flex') {
+            console.log('❌ BLOCKED: HTML puzzle active');
             return; // BLOQUEAR zoom/unzoom quando puzzle HTML está aberto
         }
 
+        console.log('Puzzle manager exists?', !!this.puzzleManager);
+        console.log('isAnyPuzzleActive method exists?', !!this.puzzleManager?.isAnyPuzzleActive);
+        console.log('isAnyPuzzleActive()?', this.puzzleManager?.isAnyPuzzleActive?.());
+
         if (this.puzzleManager && this.puzzleManager.isAnyPuzzleActive && this.puzzleManager.isAnyPuzzleActive()) {
+            console.log('❌ BLOCKED: Phaser puzzle active');
             return; // BLOQUEAR zoom/unzoom quando puzzle Phaser está aberto
         }
 
+        console.log('✅ Proceeding with zoom, isZoomed:', this.isZoomed);
         const camera = this.cameras.main;
 
         if (!this.isZoomed) {

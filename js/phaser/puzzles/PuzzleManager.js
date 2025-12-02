@@ -564,6 +564,8 @@ class PuzzleManager {
      * Fechar puzzle
      */
     closePuzzle() {
+        console.log('🚪 closePuzzle called, activePuzzle before:', this.activePuzzle);
+
         if (this.hintTimer) {
             clearTimeout(this.hintTimer);
         }
@@ -576,10 +578,12 @@ class PuzzleManager {
             }
 
             this.activePuzzle = null;
+            console.log('🚪 activePuzzle set to null');
         }
 
         // Restaurar zoom da câmera se foi salvo
         if (this.savedCameraZoom && this.savedCameraZoom !== 1) {
+            console.log('🔍 Restoring camera zoom from', this.savedCameraZoom);
             const camera = this.scene.cameras.main;
             camera.setZoom(this.savedCameraZoom);
             if (this.savedCameraScroll) {
@@ -589,12 +593,17 @@ class PuzzleManager {
             this.savedCameraZoom = null;
             this.savedCameraScroll = null;
         }
+
+        console.log('🚪 closePuzzle done, activePuzzle after:', this.activePuzzle);
     }
 
     /**
      * Verificar se há algum puzzle ativo
      */
     isAnyPuzzleActive() {
-        return this.activePuzzle !== null;
+        console.log('🧩 isAnyPuzzleActive called, activePuzzle:', this.activePuzzle);
+        const isActive = this.activePuzzle !== null;
+        console.log('🧩 Returning:', isActive);
+        return isActive;
     }
 }
