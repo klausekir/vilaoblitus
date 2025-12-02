@@ -251,13 +251,23 @@ class EgyptianPuzzle {
     }
 
     close() {
-        if (this.container) {
-            this.container.destroy();
-            this.container = null;
+        // Chamar o closePuzzle do PuzzleManager para limpar tudo corretamente
+        if (this.scene && this.scene.puzzleManager) {
+            this.scene.puzzleManager.closePuzzle();
+        } else {
+            // Fallback: destruir o container diretamente
+            if (this.container) {
+                this.container.destroy();
+                this.container = null;
+            }
         }
     }
 
     destroy() {
-        this.close();
+        // Apenas destruir o container, sem chamar closePuzzle novamente
+        if (this.container) {
+            this.container.destroy();
+            this.container = null;
+        }
     }
 }
