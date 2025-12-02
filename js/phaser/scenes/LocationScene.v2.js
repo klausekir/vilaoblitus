@@ -2648,7 +2648,7 @@ class LocationScene extends Phaser.Scene {
             width: 80%;
             max-width: 800px;
             text-align: center;
-            animation: starWarsScroll 120s linear forwards;
+            animation: starWarsScroll 30s linear forwards;
         `;
 
         // Adicionar cada texto com sua fonte
@@ -2760,7 +2760,7 @@ class LocationScene extends Phaser.Scene {
             this.input.off('pointermove');
             this.input.off('pointerup');
 
-        }, 120000);
+        }, 30000);
     }
 
     shutdown() {
