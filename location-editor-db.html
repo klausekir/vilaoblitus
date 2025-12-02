@@ -4190,6 +4190,23 @@
                     }
 
                     togglePadlockActionFields();
+                } else if (puzzle.type === 'shape_match') {
+                    const titleEl = document.getElementById('puzzle-title');
+                    if (titleEl && puzzle.title) titleEl.value = puzzle.title;
+
+                    const descEl = document.getElementById('puzzle-description');
+                    if (descEl && puzzle.description) descEl.value = puzzle.description;
+
+                    const hintsEl = document.getElementById('puzzle-hints');
+                    if (hintsEl && puzzle.hints) {
+                        hintsEl.value = JSON.stringify(puzzle.hints, null, 2);
+                    }
+
+                    // Carregar moldes
+                    if (puzzle.molds && Array.isArray(puzzle.molds)) {
+                        currentMolds = puzzle.molds.map(m => ({ ...m }));
+                        renderShapeMatchMolds();
+                    }
                 }
 
                 if (puzzle.reward) {
@@ -4210,7 +4227,8 @@
                 code: 'Código',
                 item_combination: 'Combinar Itens',
                 padlock_5digit: 'Cadeado 5 Dígitos',
-                egyptian: 'Parede Egípcia'
+                egyptian: 'Parede Egípcia',
+                shape_match: 'Conecta Blocos'
             };
             return names[type] || type;
         }
