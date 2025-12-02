@@ -35,6 +35,8 @@ class EgyptianPuzzle {
     create(x, y) {
         this.container = this.scene.add.container(x, y);
         this.container.setDepth(1000);
+        // Ignorar zoom e movimento da câmera
+        this.container.setScrollFactor(0);
 
         // Fundo da parede
         const wallBg = this.scene.add.rectangle(0, 0, 500, 300, 0x3d2817);

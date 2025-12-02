@@ -567,4 +567,11 @@ class PuzzleManager {
             this.activePuzzle = null;
         }
     }
+
+    /**
+     * Verificar se há algum puzzle ativo
+     */
+    isAnyPuzzleActive() {
+        return this.activePuzzle !== null;
+    }
 }
