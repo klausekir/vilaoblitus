@@ -232,8 +232,12 @@ class LocationScene extends Phaser.Scene {
 
         // Listener para início do drag (pointerdown)
         this.input.on('pointerdown', (pointer) => {
-            // Só permite drag se estiver em zoom
-            if (this.isZoomed) {
+            // Só permite drag se estiver em zoom E não houver puzzle ativo
+            const puzzleOverlay = document.getElementById('puzzle-overlay');
+            const isPuzzleActive = (puzzleOverlay && puzzleOverlay.style.display === 'flex') ||
+                                  (this.puzzleManager && this.puzzleManager.isAnyPuzzleActive && this.puzzleManager.isAnyPuzzleActive());
+
+            if (this.isZoomed && !isPuzzleActive) {
                 this.isDragging = true;
                 this.dragStartX = pointer.x;
                 this.dragStartY = pointer.y;
@@ -244,7 +248,12 @@ class LocationScene extends Phaser.Scene {
 
         // Listener para movimento do drag (pointermove)
         this.input.on('pointermove', (pointer) => {
-            if (this.isDragging && this.isZoomed) {
+            // Verificar se puzzle está ativo antes de arrastar
+            const puzzleOverlay = document.getElementById('puzzle-overlay');
+            const isPuzzleActive = (puzzleOverlay && puzzleOverlay.style.display === 'flex') ||
+                                  (this.puzzleManager && this.puzzleManager.isAnyPuzzleActive && this.puzzleManager.isAnyPuzzleActive());
+
+            if (this.isDragging && this.isZoomed && !isPuzzleActive) {
                 // Calcular o delta do movimento
                 const deltaX = (pointer.x - this.dragStartX) / this.cameras.main.zoom;
                 const deltaY = (pointer.y - this.dragStartY) / this.cameras.main.zoom;

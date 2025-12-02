@@ -43,6 +43,17 @@ class PuzzleManager {
      */
     createEgyptianPuzzle(config) {
         const puzzle = new EgyptianPuzzle(this.scene, config);
+
+        // Salvar zoom atual e resetar para 1 durante o puzzle
+        const camera = this.scene.cameras.main;
+        this.savedCameraZoom = camera.zoom;
+        this.savedCameraScroll = { x: camera.scrollX, y: camera.scrollY };
+
+        if (camera.zoom !== 1) {
+            camera.setZoom(1);
+            camera.centerOn(camera.midPoint.x, camera.midPoint.y);
+        }
+
         const centerX = this.scene.scale.width / 2;
         const centerY = this.scene.scale.height / 2;
 
@@ -565,6 +576,18 @@ class PuzzleManager {
             }
 
             this.activePuzzle = null;
+        }
+
+        // Restaurar zoom da câmera se foi salvo
+        if (this.savedCameraZoom && this.savedCameraZoom !== 1) {
+            const camera = this.scene.cameras.main;
+            camera.setZoom(this.savedCameraZoom);
+            if (this.savedCameraScroll) {
+                camera.scrollX = this.savedCameraScroll.x;
+                camera.scrollY = this.savedCameraScroll.y;
+            }
+            this.savedCameraZoom = null;
+            this.savedCameraScroll = null;
         }
     }
 

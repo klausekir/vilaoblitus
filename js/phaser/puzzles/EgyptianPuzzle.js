@@ -35,12 +35,8 @@ class EgyptianPuzzle {
     create(x, y) {
         this.container = this.scene.add.container(x, y);
         this.container.setDepth(1000);
-        // Ignorar zoom e movimento da câmera
-        this.container.setScrollFactor(0);
-
-        // Compensar zoom da câmera para sempre aparecer em tamanho normal
-        const cameraZoom = this.scene.cameras.main.zoom;
-        this.container.setScale(1 / cameraZoom);
+        // NÃO usar scrollFactor(0) pois queremos que ele seja afetado pela câmera
+        // Mas posicionado no centro da view, então aparece sempre no centro da tela
 
         // Fundo da parede
         const wallBg = this.scene.add.rectangle(0, 0, 500, 300, 0x3d2817);
