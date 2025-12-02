@@ -2608,7 +2608,20 @@ class LocationScene extends Phaser.Scene {
             // Navegar para outra localização
             const targetLocation = action.targetLocation;
             if (targetLocation) {
-                this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
+                // Verificar se destino é cena final
+                const targetLocationData = databaseLoader.getLocation(targetLocation);
+
+                if (targetLocationData && targetLocationData.isFinalScene) {
+                    // Tocar vídeo de transição antes de ir para cena final
+                    console.log('🎬 Tocando vídeo de transição para cena final...');
+                    this.playTransitionVideo('images/Fuga_da_Vila_com_Salvação_Policial.mp4', () => {
+                        // Após vídeo terminar, navegar para cena final
+                        this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
+                    });
+                } else {
+                    // Navegação normal sem vídeo
+                    this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
+                }
             }
         }
     }
@@ -2761,6 +2774,73 @@ class LocationScene extends Phaser.Scene {
             this.input.off('pointerup');
 
         }, 30000);
+    }
+
+    playTransitionVideo(videoPath, onComplete) {
+        console.log('🎥 Iniciando vídeo de transição:', videoPath);
+
+        // Fade out da cena atual
+        this.cameras.main.fadeOut(500, 0, 0, 0);
+
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+            // Criar container de vídeo full-screen
+            const videoContainer = document.createElement('div');
+            videoContainer.id = 'transition-video-container';
+            videoContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+
+            // Criar elemento de vídeo
+            const videoElement = document.createElement('video');
+            videoElement.style.cssText = `
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            `;
+            videoElement.src = videoPath;
+            videoElement.autoplay = true;
+            videoElement.controls = false;
+
+            videoContainer.appendChild(videoElement);
+            document.body.appendChild(videoContainer);
+
+            console.log('▶️ Vídeo começando a tocar...');
+
+            // Quando o vídeo terminar
+            videoElement.addEventListener('ended', () => {
+                console.log('✅ Vídeo terminou, removendo...');
+
+                // Fade out do vídeo
+                videoContainer.style.transition = 'opacity 500ms';
+                videoContainer.style.opacity = '0';
+
+                setTimeout(() => {
+                    // Remover container de vídeo
+                    videoContainer.remove();
+
+                    // Chamar callback (navegar para cena final)
+                    if (onComplete) {
+                        onComplete();
+                    }
+                }, 500);
+            });
+
+            // Permitir pular o vídeo com clique
+            videoContainer.addEventListener('click', () => {
+                console.log('⏭️ Vídeo pulado pelo usuário');
+                videoElement.pause();
+                videoElement.currentTime = videoElement.duration; // Pula para o final
+            });
+        });
     }
 
     shutdown() {
