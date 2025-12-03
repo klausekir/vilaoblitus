@@ -376,6 +376,59 @@ class LocationScene extends Phaser.Scene {
         const puzzle = this.locationData.puzzle;
         console.log('Puzzle type:', puzzle?.type);
 
+        // Shape Match puzzle não precisa de visual sprite - processar antes da checagem de visual
+        if (puzzle && puzzle.type === 'shape_match') {
+            const isSolved = puzzle.id ? gameStateManager.isPuzzleSolved(puzzle.id) : false;
+
+            if (!isSolved) {
+                console.log('🔷 Renderizando Shape Match Puzzle...');
+
+                if (!this.puzzleManager) {
+                    this.puzzleManager = new PuzzleManager(this);
+                }
+
+                const puzzleConfig = {
+                    ...puzzle,
+                    onSolved: () => {
+                        gameStateManager.solvePuzzle(puzzle.id);
+                        uiManager.showNotification('✅ Enigma resolvido!');
+
+                        // Atualizar visual do puzzle (baú abre)
+                        setTimeout(() => {
+                            this.updatePuzzleVisual();
+                        }, 1000);
+
+                        // Dropar recompensa se existir
+                        if (puzzle.reward) {
+                            setTimeout(() => {
+                                const dropPosition = { x: 50, y: 50 };
+
+                                gameStateManager.normalizeInventory();
+                                gameStateManager.state.inventory[puzzle.reward.id] = {
+                                    ...puzzle.reward,
+                                    status: 'dropped',
+                                    dropLocation: this.currentLocation,
+                                    dropPosition: dropPosition
+                                };
+                                gameStateManager.saveProgress();
+
+                                uiManager.showNotification(`🎁 ${puzzle.reward.name} apareceu!`);
+                                this.renderDroppedItems();
+                            }, 1500);
+                        }
+                    }
+                };
+
+                this.puzzleManager.createPuzzle(puzzleConfig);
+            }
+
+            // Se tem visual configurado, continua para renderizar o sprite (baú)
+            // Se não tem, retorna aqui
+            if (!puzzle.visual) {
+                return;
+            }
+        }
+
         if (!puzzle || !puzzle.visual) {
             return;
         }
@@ -494,49 +547,6 @@ class LocationScene extends Phaser.Scene {
         // Renderizar caixinhas de números para cadeado de 5 dígitos
         if (puzzle.type === 'padlock_5digit' && !isSolved) {
             this.renderPadlockDigits(puzzle, visual, bgX, bgY, bgWidth, bgHeight);
-        }
-
-        // Renderizar moldes para Shape Match puzzle
-        if (puzzle.type === 'shape_match' && !isSolved) {
-            console.log('🔷 Renderizando Shape Match Puzzle...');
-
-            if (!this.puzzleManager) {
-                this.puzzleManager = new PuzzleManager(this);
-            }
-
-            const puzzleConfig = {
-                ...puzzle,
-                onSolved: () => {
-                    gameStateManager.solvePuzzle(puzzle.id);
-                    uiManager.showNotification('✅ Enigma resolvido!');
-
-                    // Dropar recompensa se existir
-                    if (puzzle.reward) {
-                        setTimeout(() => {
-                            const dropPosition = { x: 50, y: 50 };
-
-                            gameStateManager.normalizeInventory();
-                            gameStateManager.state.inventory[puzzle.reward.id] = {
-                                ...puzzle.reward,
-                                status: 'dropped',
-                                dropLocation: this.currentLocation,
-                                dropPosition: dropPosition
-                            };
-                            gameStateManager.saveProgress();
-
-                            uiManager.showNotification(`🎁 ${puzzle.reward.name} apareceu!`);
-                            this.renderDroppedItems();
-                        }, 500);
-                    }
-
-                    // Atualizar visual do puzzle (baú abre)
-                    setTimeout(() => {
-                        this.updatePuzzleVisual();
-                    }, 2000);
-                }
-            };
-
-            this.puzzleManager.createPuzzle(puzzleConfig);
         }
     }
 
