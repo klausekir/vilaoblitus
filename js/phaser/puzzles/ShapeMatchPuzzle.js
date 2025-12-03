@@ -112,18 +112,11 @@ class ShapeMatchPuzzle {
 
         this.molds.push(moldData);
 
-        // Se puzzle já está resolvido, mostrar um brilho sutil
+        // Se puzzle já está resolvido, não mostrar nada (invisível)
         if (alreadySolved) {
-            const filledGraphics = this.scene.add.graphics();
-            filledGraphics.lineStyle(0);
-            filledGraphics.fillStyle(0x00ff00, 0.2); // Brilho verde bem sutil
-
-            // Círculo de brilho
-            filledGraphics.fillCircle(0, 0, 55);
-
-            moldContainer.add(filledGraphics);
-            moldData.filledGraphics = filledGraphics;
-            console.log(`   ✅ Molde ${index + 1} criado já preenchido (puzzle resolvido)`);
+            // Molde marcado como preenchido, mas invisível
+            // O jogador vê o resultado na imagem de fundo
+            console.log(`   ✅ Molde ${index + 1} criado já preenchido (puzzle resolvido - invisível)`);
         }
 
         return moldData;
@@ -147,23 +140,22 @@ class ShapeMatchPuzzle {
 
         mold.filled = true;
 
-        // Criar brilho sutil (item encaixado com sucesso)
+        // Flash rápido de confirmação (depois desaparece)
         const filledGraphics = this.scene.add.graphics();
         filledGraphics.lineStyle(0);
-        filledGraphics.fillStyle(0x00ff00, 0.3); // Brilho verde sutil
+        filledGraphics.fillStyle(0xffffff, 0.5); // Flash branco
 
-        // Círculo de confirmação
+        // Círculo de feedback temporário
         filledGraphics.fillCircle(0, 0, 55);
 
         mold.container.add(filledGraphics);
         mold.filledGraphics = filledGraphics;
 
-        // Animação de encaixe (pulso)
-        filledGraphics.setAlpha(0);
+        // Animação: aparece e desaparece (feedback visual rápido)
         this.scene.tweens.add({
             targets: filledGraphics,
-            alpha: 0.3,
-            duration: 300,
+            alpha: 0,
+            duration: 400,
             ease: 'Cubic.easeOut'
         });
 
