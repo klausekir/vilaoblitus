@@ -190,18 +190,22 @@ class ShapeMatchPuzzle {
             yoyo: true
         });
 
-        // Remover item do inventário completamente
+        // Remover item do inventário e marcar como consumido
         if (draggedObject.itemData && typeof gameStateManager !== 'undefined') {
             const itemId = draggedObject.itemData.id;
-            console.log(`🗑️ Removendo item ${itemId} do jogo`);
+            console.log(`🗑️ Consumindo item ${itemId} no puzzle`);
 
             // Remover do inventário
             delete gameStateManager.state.inventory[itemId];
 
-            // Remover dos collectedItems também
-            const index = gameStateManager.state.collectedItems.indexOf(itemId);
-            if (index > -1) {
-                gameStateManager.state.collectedItems.splice(index, 1);
+            // NÃO remover de collectedItems - manter para o jogo saber que já foi coletado
+            // Mas adicionar à lista de itens consumidos
+            if (!gameStateManager.state.consumedItems) {
+                gameStateManager.state.consumedItems = [];
+            }
+            if (!gameStateManager.state.consumedItems.includes(itemId)) {
+                gameStateManager.state.consumedItems.push(itemId);
+                console.log(`   Item ${itemId} adicionado à lista de consumidos`);
             }
 
             // Remover sprite dropped da cena (se existir)
@@ -219,7 +223,7 @@ class ShapeMatchPuzzle {
 
             gameStateManager.saveProgress();
             gameStateManager.trigger('inventoryChanged');
-            console.log(`✅ Item ${itemId} removido completamente`);
+            console.log(`✅ Item ${itemId} consumido e não reaparecerá`);
         }
 
         // Som de encaixe (se disponível)

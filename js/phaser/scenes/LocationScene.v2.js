@@ -654,6 +654,13 @@ class LocationScene extends Phaser.Scene {
         const bounds = this.getBackgroundBounds();
         droppedItems.forEach(item => {
             if (!item.dropPosition) return;
+
+            // Não renderizar itens consumidos em puzzles
+            if (gameStateManager.state.consumedItems && gameStateManager.state.consumedItems.includes(item.id)) {
+                console.log(`Item dropped ${item.id} foi consumido, não renderizando`);
+                return;
+            }
+
             const world = this.percentToWorld(item.dropPosition, bounds);
             this.createDroppedItemSprite(item, world.x, world.y);
         });
@@ -1645,6 +1652,13 @@ class LocationScene extends Phaser.Scene {
 
         this.locationData.items.forEach(item => {
             if (gameStateManager.isItemCollected(item.id)) return;
+
+            // Não renderizar itens consumidos em puzzles
+            if (gameStateManager.state.consumedItems && gameStateManager.state.consumedItems.includes(item.id)) {
+                console.log(`Item ${item.id} foi consumido, não renderizando`);
+                return;
+            }
+
             if (!item.image || !item.position) {
                 console.warn('Item sem dados de imagem ou posição:', item);
                 return;
