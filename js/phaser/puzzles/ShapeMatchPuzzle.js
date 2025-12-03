@@ -89,29 +89,16 @@ class ShapeMatchPuzzle {
 
         console.log(`✅ Molde ${index + 1} criado na posição (${worldPos.x}, ${worldPos.y})`);
 
-        // Fundo do molde (buraco/vazio)
+        // Molde invisível (só área de drop)
+        // Sem visual - o fundo da cena já tem a imagem do molde
         const moldBg = this.scene.add.graphics();
-        moldBg.lineStyle(3, 0x888888, 1);
-        moldBg.fillStyle(0x222222, 0.3);
+        moldBg.lineStyle(0); // Sem borda
+        moldBg.fillStyle(0x00ff00, 0); // Invisível (alpha = 0)
 
-        // Desenhar a forma do molde
-        if (this.shapes[shape]) {
-            this.shapes[shape].draw(moldBg, 0, 0, true); // true = é molde (vazio)
-        }
+        // Desenhar hitbox invisível (círculo simples para detecção)
+        moldBg.fillCircle(0, 0, 50); // 50px de raio para área de drop
 
         moldContainer.add(moldBg);
-
-        // Adicionar label opcional
-        if (moldConfig.label) {
-            const label = this.scene.add.text(0, -60, moldConfig.label, {
-                fontSize: '16px',
-                color: '#ffffff',
-                backgroundColor: '#000000',
-                padding: { x: 8, y: 4 }
-            });
-            label.setOrigin(0.5);
-            moldContainer.add(label);
-        }
 
         // Dados do molde
         const moldData = {
@@ -125,15 +112,14 @@ class ShapeMatchPuzzle {
 
         this.molds.push(moldData);
 
-        // Se puzzle já está resolvido, mostrar item preenchido
+        // Se puzzle já está resolvido, mostrar um brilho sutil
         if (alreadySolved) {
             const filledGraphics = this.scene.add.graphics();
-            filledGraphics.lineStyle(2, 0xd4af37, 1);
-            filledGraphics.fillStyle(0x4a90e2, 1);
+            filledGraphics.lineStyle(0);
+            filledGraphics.fillStyle(0x00ff00, 0.2); // Brilho verde bem sutil
 
-            if (this.shapes[shape]) {
-                this.shapes[shape].draw(filledGraphics, 0, 0, false);
-            }
+            // Círculo de brilho
+            filledGraphics.fillCircle(0, 0, 55);
 
             moldContainer.add(filledGraphics);
             moldData.filledGraphics = filledGraphics;
@@ -161,33 +147,24 @@ class ShapeMatchPuzzle {
 
         mold.filled = true;
 
-        // Criar a forma preenchida no molde
+        // Criar brilho sutil (item encaixado com sucesso)
         const filledGraphics = this.scene.add.graphics();
-        filledGraphics.lineStyle(2, 0xd4af37, 1);
-        filledGraphics.fillStyle(0x4a90e2, 1);
+        filledGraphics.lineStyle(0);
+        filledGraphics.fillStyle(0x00ff00, 0.3); // Brilho verde sutil
 
-        if (this.shapes[mold.shape]) {
-            this.shapes[mold.shape].draw(filledGraphics, 0, 0, false); // false = forma preenchida
-        }
+        // Círculo de confirmação
+        filledGraphics.fillCircle(0, 0, 55);
 
         mold.container.add(filledGraphics);
         mold.filledGraphics = filledGraphics;
 
-        // Animação de encaixe
-        filledGraphics.setScale(0);
+        // Animação de encaixe (pulso)
+        filledGraphics.setAlpha(0);
         this.scene.tweens.add({
             targets: filledGraphics,
-            scale: 1,
+            alpha: 0.3,
             duration: 300,
-            ease: 'Back.easeOut'
-        });
-
-        // Efeito visual de sucesso
-        this.scene.tweens.add({
-            targets: mold.graphics,
-            alpha: { from: 1, to: 0.3 },
-            duration: 200,
-            yoyo: true
+            ease: 'Cubic.easeOut'
         });
 
         // Remover item do inventário e marcar como consumido
