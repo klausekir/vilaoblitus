@@ -62,10 +62,10 @@ class ShapeMatchPuzzle {
         }
     }
 
-    createMold(moldConfig, index) {
+    createMold(moldConfig, index, alreadySolved = false) {
         let { x, y, shape, item } = moldConfig;
 
-        console.log(`📍 Criando molde ${index + 1}:`, { x, y, shape, item });
+        console.log(`📍 Criando molde ${index + 1}:`, { x, y, shape, item, alreadySolved });
 
         // Se as coordenadas são em pixels (> 100), converter para porcentagem
         // (Compatibilidade com coordenadas antigas)
