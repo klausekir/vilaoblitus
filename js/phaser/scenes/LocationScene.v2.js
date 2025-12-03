@@ -382,47 +382,46 @@ class LocationScene extends Phaser.Scene {
             const isSolved = puzzle.id ? gameStateManager.isPuzzleSolved(puzzle.id) : false;
             console.log('🔍 Puzzle isSolved?', isSolved);
 
-            if (!isSolved) {
-                console.log('🔷 Renderizando Shape Match Puzzle...');
+            console.log('🔷 Renderizando Shape Match Puzzle...');
 
-                if (!this.puzzleManager) {
-                    this.puzzleManager = new PuzzleManager(this);
-                }
-
-                const puzzleConfig = {
-                    ...puzzle,
-                    onSolved: () => {
-                        gameStateManager.solvePuzzle(puzzle.id);
-                        uiManager.showNotification('✅ Enigma resolvido!');
-
-                        // Atualizar visual do puzzle (baú abre)
-                        setTimeout(() => {
-                            this.updatePuzzleVisual();
-                        }, 1000);
-
-                        // Dropar recompensa se existir
-                        if (puzzle.reward) {
-                            setTimeout(() => {
-                                const dropPosition = { x: 50, y: 50 };
-
-                                gameStateManager.normalizeInventory();
-                                gameStateManager.state.inventory[puzzle.reward.id] = {
-                                    ...puzzle.reward,
-                                    status: 'dropped',
-                                    dropLocation: this.currentLocation,
-                                    dropPosition: dropPosition
-                                };
-                                gameStateManager.saveProgress();
-
-                                uiManager.showNotification(`🎁 ${puzzle.reward.name} apareceu!`);
-                                this.renderDroppedItems();
-                            }, 1500);
-                        }
-                    }
-                };
-
-                this.puzzleManager.createPuzzle(puzzleConfig);
+            if (!this.puzzleManager) {
+                this.puzzleManager = new PuzzleManager(this);
             }
+
+            const puzzleConfig = {
+                ...puzzle,
+                solved: isSolved, // Passar estado de resolvido
+                onSolved: () => {
+                    gameStateManager.solvePuzzle(puzzle.id);
+                    uiManager.showNotification('✅ Enigma resolvido!');
+
+                    // Atualizar visual do puzzle (baú abre)
+                    setTimeout(() => {
+                        this.updatePuzzleVisual();
+                    }, 1000);
+
+                    // Dropar recompensa se existir
+                    if (puzzle.reward) {
+                        setTimeout(() => {
+                            const dropPosition = { x: 50, y: 50 };
+
+                            gameStateManager.normalizeInventory();
+                            gameStateManager.state.inventory[puzzle.reward.id] = {
+                                ...puzzle.reward,
+                                status: 'dropped',
+                                dropLocation: this.currentLocation,
+                                dropPosition: dropPosition
+                            };
+                            gameStateManager.saveProgress();
+
+                            uiManager.showNotification(`🎁 ${puzzle.reward.name} apareceu!`);
+                            this.renderDroppedItems();
+                        }, 1500);
+                    }
+                }
+            };
+
+            this.puzzleManager.createPuzzle(puzzleConfig);
 
             // Se tem visual configurado, continua para renderizar o sprite (baú)
             // Se não tem, retorna aqui

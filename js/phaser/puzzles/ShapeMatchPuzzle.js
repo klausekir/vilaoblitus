@@ -43,13 +43,20 @@ class ShapeMatchPuzzle {
         console.log('🔷 ShapeMatchPuzzle.create() chamado');
         console.log('Config:', this.config);
         console.log('Moldes:', this.config.molds);
+        console.log('Puzzle já resolvido?', this.config.solved);
 
         // Criar moldes na cena baseado na configuração
         if (this.config.molds && Array.isArray(this.config.molds)) {
             console.log(`Criando ${this.config.molds.length} moldes...`);
             this.config.molds.forEach((moldConfig, index) => {
-                this.createMold(moldConfig, index);
+                this.createMold(moldConfig, index, this.config.solved);
             });
+
+            // Se já resolvido, marcar como resolvido
+            if (this.config.solved) {
+                this.solved = true;
+                console.log('✅ Puzzle carregado no estado resolvido');
+            }
         } else {
             console.warn('⚠️ Nenhum molde definido no config!');
         }
