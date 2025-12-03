@@ -254,28 +254,34 @@ class ShapeMatchPuzzle {
     onSolved() {
         this.solved = true;
 
-        // Animação de sucesso em todos os moldes
-        this.molds.forEach(mold => {
+        // Animação de tremer em todos os moldes (sem explodir)
+        this.molds.forEach((mold, index) => {
+            // Tremer
+            this.scene.tweens.add({
+                targets: mold.container,
+                x: mold.container.x + 3,
+                duration: 50,
+                yoyo: true,
+                repeat: 5,
+                delay: index * 100 // Tremem em sequência
+            });
+
+            // Pulso de brilho
             this.scene.tweens.add({
                 targets: mold.filledGraphics,
-                scale: { from: 1, to: 1.2 },
-                alpha: { from: 1, to: 0.7 },
-                duration: 300,
+                alpha: { from: 1, to: 0.6 },
+                duration: 200,
                 yoyo: true,
-                repeat: 2
+                repeat: 2,
+                delay: index * 100
             });
         });
 
-        // Partículas de comemoração
-        setTimeout(() => {
-            this.createCelebrationParticles();
-        }, 500);
-
-        // Callback de sucesso
+        // Callback de sucesso (itens ficam nos moldes, não somem)
         if (this.config.onSolved) {
             setTimeout(() => {
                 this.config.onSolved();
-            }, 2000);
+            }, 1000);
         }
     }
 
