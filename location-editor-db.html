@@ -2849,22 +2849,16 @@
                 }
             } else if (visualType === 'mold' && location.puzzle) {
                 const index = parseInt(draggedItem.dataset.moldIndex);
-                const visualCanvas = document.getElementById('visual-canvas');
-                const containerWidth = visualCanvas?.offsetWidth || 800;
-                const containerHeight = visualCanvas?.offsetHeight || 600;
-
-                // Converter % para pixels absolutos
-                const pixelX = (newX / 100) * containerWidth;
-                const pixelY = (newY / 100) * containerHeight;
 
                 if (!Number.isNaN(index) && location.puzzle.molds && location.puzzle.molds[index]) {
-                    location.puzzle.molds[index].x = Math.round(pixelX);
-                    location.puzzle.molds[index].y = Math.round(pixelY);
+                    // Salvar como porcentagem (igual aos dígitos do cadeado)
+                    location.puzzle.molds[index].x = newX;
+                    location.puzzle.molds[index].y = newY;
 
                     // Atualizar também o currentMolds para o editor de moldes
                     if (currentMolds && currentMolds[index]) {
-                        currentMolds[index].x = Math.round(pixelX);
-                        currentMolds[index].y = Math.round(pixelY);
+                        currentMolds[index].x = newX;
+                        currentMolds[index].y = newY;
                     }
                 }
             }

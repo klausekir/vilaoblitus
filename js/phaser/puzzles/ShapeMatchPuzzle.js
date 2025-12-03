@@ -60,11 +60,15 @@ class ShapeMatchPuzzle {
 
         console.log(`📍 Criando molde ${index + 1}:`, { x, y, shape, item });
 
+        // Converter coordenadas de porcentagem para mundo
+        const worldPos = this.scene.percentToWorld({ x, y });
+        console.log(`   Convertido para world: (${worldPos.x}, ${worldPos.y})`);
+
         // Container para o molde
-        const moldContainer = this.scene.add.container(x, y);
+        const moldContainer = this.scene.add.container(worldPos.x, worldPos.y);
         moldContainer.setDepth(100);
 
-        console.log(`✅ Molde ${index + 1} criado na posição (${x}, ${y})`);
+        console.log(`✅ Molde ${index + 1} criado na posição (${worldPos.x}, ${worldPos.y})`);
 
         // Fundo do molde (buraco/vazio)
         const moldBg = this.scene.add.graphics();
@@ -228,7 +232,7 @@ class ShapeMatchPuzzle {
         if (!this.scene.textures.exists('particle_star')) {
             const particleGraphics = this.scene.add.graphics();
             particleGraphics.fillStyle(0xffff00, 1);
-            particleGraphics.fillStar(3, 3, 5, 3, 6, 0);
+            particleGraphics.fillCircle(3, 3, 3);
             particleGraphics.generateTexture('particle_star', 6, 6);
             particleGraphics.destroy();
         }
