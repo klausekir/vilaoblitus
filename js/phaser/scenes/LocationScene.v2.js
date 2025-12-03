@@ -367,6 +367,51 @@ class LocationScene extends Phaser.Scene {
         this.currentPuzzleData = this.locationData.puzzle || null;
 
         const puzzle = this.locationData.puzzle;
+
+        // Shape Match puzzle não precisa de visual sprite - os moldes aparecem direto na cena
+        if (puzzle && puzzle.type === 'shape_match') {
+            const isSolved = puzzle.id ? gameStateManager.isPuzzleSolved(puzzle.id) : false;
+
+            if (!isSolved) {
+                console.log('🔷 Renderizando Shape Match Puzzle...');
+
+                if (!this.puzzleManager) {
+                    this.puzzleManager = new PuzzleManager(this);
+                }
+
+                const puzzleConfig = {
+                    ...puzzle,
+                    onSolved: () => {
+                        gameStateManager.solvePuzzle(puzzle.id);
+                        uiManager.showNotification('✅ Enigma resolvido!');
+
+                        // Dropar recompensa se existir
+                        if (puzzle.reward) {
+                            setTimeout(() => {
+                                const dropPosition = { x: 50, y: 50 }; // Posição padrão
+
+                                gameStateManager.normalizeInventory();
+                                gameStateManager.state.inventory[puzzle.reward.id] = {
+                                    ...puzzle.reward,
+                                    status: 'dropped',
+                                    dropLocation: this.currentLocation,
+                                    dropPosition: dropPosition
+                                };
+                                gameStateManager.saveProgress();
+
+                                uiManager.showNotification(`🎁 ${puzzle.reward.name} apareceu!`);
+                                this.renderDroppedItems();
+                            }, 500);
+                        }
+                    }
+                };
+
+                this.puzzleManager.createPuzzle(puzzleConfig);
+            }
+
+            return; // Shape match não precisa de sprite visual
+        }
+
         if (!puzzle || !puzzle.visual) {
             return;
         }
@@ -1824,7 +1869,7 @@ class LocationScene extends Phaser.Scene {
         }
 
         // Puzzles do PuzzleManager (Phaser)
-        const phaserPuzzleTypes = ['egyptian', 'rotating_discs', 'pattern', 'sequence_buttons'];
+        const phaserPuzzleTypes = ['egyptian', 'rotating_discs', 'pattern', 'sequence_buttons', 'shape_match'];
         if (phaserPuzzleTypes.includes(puzzleType)) {
 
             if (!this.puzzleManager) {
