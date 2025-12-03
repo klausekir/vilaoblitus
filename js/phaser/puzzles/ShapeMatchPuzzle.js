@@ -119,11 +119,26 @@ class ShapeMatchPuzzle {
             config: moldConfig,
             shape: shape,
             item: item, // Item do inventário que encaixa aqui
-            filled: false,
+            filled: alreadySolved, // Se já resolvido, marcar como preenchido
             graphics: moldBg
         };
 
         this.molds.push(moldData);
+
+        // Se puzzle já está resolvido, mostrar item preenchido
+        if (alreadySolved) {
+            const filledGraphics = this.scene.add.graphics();
+            filledGraphics.lineStyle(2, 0xd4af37, 1);
+            filledGraphics.fillStyle(0x4a90e2, 1);
+
+            if (this.shapes[shape]) {
+                this.shapes[shape].draw(filledGraphics, 0, 0, false);
+            }
+
+            moldContainer.add(filledGraphics);
+            moldData.filledGraphics = filledGraphics;
+            console.log(`   ✅ Molde ${index + 1} criado já preenchido (puzzle resolvido)`);
+        }
 
         return moldData;
     }
