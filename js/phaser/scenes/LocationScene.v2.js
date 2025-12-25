@@ -1706,91 +1706,79 @@ class LocationScene extends Phaser.Scene {
             const transform = item.transform || {};
             let element;
 
-            // Se tem qualquer transformação, usar DOMElement para ter mais controle
+            // Se tem qualquer transformação, usar DOMElement com wrapper div
             if (item.transform) {
-                // Criar elemento HTML <img>
+                // Criar wrapper div (Phaser posiciona)
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.width = (item.size?.width || 80) + 'px';
+                wrapper.style.height = (item.size?.height || 80) + 'px';
+                wrapper.style.perspective = '1000px';
+                wrapper.style.transformStyle = 'preserve-3d';
+
+                // Criar img dentro do wrapper
                 const img = document.createElement('img');
                 img.src = item.image;
-                img.style.width = (item.size?.width || 80) + 'px';
-                img.style.height = (item.size?.height || 80) + 'px';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.display = 'block';
+                img.style.transformStyle = 'preserve-3d';
+                img.style.position = 'absolute';
+                img.style.left = '50%';
+                img.style.top = '50%';
                 img.style.pointerEvents = 'auto';
 
-                // Criar DOMElement
-                element = this.add.dom(x, y, img);
-                element.setOrigin(0.5);
-                element.setDepth(50); // Prioridade sobre hotspots (depth 10)
-
-                // Aplicar perspectiva via Phaser
-                element.setPerspective(800);
-
-                // Aplicar rotações 3D via Phaser API (no container)
-                const rotX = transform.rotateX || 0;
-                const rotY = transform.rotateY || 0;
-
-                if (rotX !== 0 && rotY !== 0) {
-                    element.rotate3d.set(1, 0, 0, rotX);
-                } else if (rotX !== 0) {
-                    element.rotate3d.set(1, 0, 0, rotX);
-                } else if (rotY !== 0) {
-                    element.rotate3d.set(0, 1, 0, rotY);
-                }
-
-                // Construir transformações 2D via CSS (na imagem, não no container!)
+                // Construir transforms CSS - MESMA ORDEM DO EDITOR
                 const transforms = [];
+                transforms.push('translate(-50%, -50%)'); // Centralizar
+                transforms.push(`rotateZ(${transform.rotation || 0}deg)`);
+                transforms.push(`rotateX(${transform.rotateX || 0}deg)`);
+                transforms.push(`rotateY(${transform.rotateY || 0}deg)`);
 
-                // Rotação 2D (Z axis)
-                const rotation = transform.rotation || 0;
-                if (rotation !== 0) transforms.push(`rotate(${rotation}deg)`);
+                const scaleX = (transform.scaleX || 1) * (transform.flipX ? -1 : 1);
+                const scaleY = (transform.scaleY || 1) * (transform.flipY ? -1 : 1);
+                transforms.push(`scaleX(${scaleX})`);
+                transforms.push(`scaleY(${scaleY})`);
 
-                // Escala (com flip integrado) - PRIORIDADE!
-                const baseScaleX = transform.scaleX || 1;
-                const baseScaleY = transform.scaleY || 1;
-                const flipX = transform.flipX ? -1 : 1;
-                const flipY = transform.flipY ? -1 : 1;
-                const finalScaleX = baseScaleX * flipX;
-                const finalScaleY = baseScaleY * flipY;
-                transforms.push(`scale(${finalScaleX}, ${finalScaleY})`);
+                transforms.push(`skewX(${transform.skewX || 0}deg)`);
+                transforms.push(`skewY(${transform.skewY || 0}deg)`);
 
-                // Skew (distorção) - pode ver depois
-                const skewX = transform.skewX || 0;
-                const skewY = transform.skewY || 0;
-                if (skewX !== 0) transforms.push(`skewX(${skewX}deg)`);
-                if (skewY !== 0) transforms.push(`skewY(${skewY}deg)`);
+                img.style.transform = transforms.join(' ');
+                img.style.transformOrigin = 'center center';
 
-                // Aplicar na IMAGEM (não no container com rotate3d)
-                const transformString = transforms.join(' ');
-                img.style.transform = transformString;
-
-                // Aplicar scale TAMBÉM via Phaser (além do CSS)
-
-                // Aplicar opacidade via Phaser setAlpha (ROLLBACK)
+                // Opacidade
                 if (transform.opacity !== undefined) {
-                    element.setAlpha(transform.opacity);
+                    img.style.opacity = transform.opacity;
                 }
 
-                // Aplicar sombra via CSS filter (drop-shadow)
+                // Sombra
                 const shadowBlur = transform.shadowBlur || 0;
-                const shadowX = transform.shadowOffsetX || 0;
-                const shadowY = transform.shadowOffsetY || 0;
                 if (shadowBlur > 0) {
-                    img.style.filter = `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.5))`;
-                } else {
-                    img.style.filter = 'none';
+                    const shadowX = transform.shadowOffsetX || 0;
+                    const shadowY = transform.shadowOffsetY || 0;
+                    const shadowFilter = `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.5))`;
+                    img.style.filter = shadowFilter;
                 }
 
-                // Salvar transform original para hover
-                const originalTransform = img.style.transform;
+                wrapper.appendChild(img);
 
-                // Eventos de hover/click via DOMElement
+                // Criar DOMElement
+                element = this.add.dom(x, y, wrapper);
+                element.setOrigin(0.5);
+                element.setDepth(50);
+
+                // Eventos
                 element.addListener('pointerover');
                 element.on('pointerover', () => {
-                    img.style.filter = 'brightness(1.2)';
-                    img.style.transition = 'filter 0.2s ease';
+                    const currentFilter = img.style.filter || '';
+                    const shadowFilter = shadowBlur > 0 ? `drop-shadow(${transform.shadowOffsetX || 0}px ${transform.shadowOffsetY || 0}px ${shadowBlur}px rgba(0,0,0,0.5))` : '';
+                    img.style.filter = shadowFilter ? `${shadowFilter} brightness(1.2)` : 'brightness(1.2)';
                 });
 
                 element.addListener('pointerout');
                 element.on('pointerout', () => {
-                    img.style.filter = '';
+                    const shadowFilter = shadowBlur > 0 ? `drop-shadow(${transform.shadowOffsetX || 0}px ${transform.shadowOffsetY || 0}px ${shadowBlur}px rgba(0,0,0,0.5))` : '';
+                    img.style.filter = shadowFilter;
                 });
 
                 element.addListener('pointerdown');
