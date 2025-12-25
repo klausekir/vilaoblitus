@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -266,11 +267,15 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Toolbar -->
         <div class="toolbar">
-            <a href="admin-panel.html" style="display: inline-block; padding: 8px 15px; background: rgba(240, 165, 0, 0.2); border: 2px solid #f0a500; color: #f0a500; text-decoration: none; border-radius: 6px; margin-bottom: 15px; font-size: 14px; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='rgba(240,165,0,0.4)'" onmouseout="this.style.background='rgba(240,165,0,0.2)'">← Painel Admin</a>
+            <a href="admin-panel.html"
+                style="display: inline-block; padding: 8px 15px; background: rgba(240, 165, 0, 0.2); border: 2px solid #f0a500; color: #f0a500; text-decoration: none; border-radius: 6px; margin-bottom: 15px; font-size: 14px; font-weight: 600; transition: all 0.3s;"
+                onmouseover="this.style.background='rgba(240,165,0,0.4)'"
+                onmouseout="this.style.background='rgba(240,165,0,0.2)'">← Painel Admin</a>
 
             <h1>🗺️ Editor de Mapa</h1>
             <p style="font-size: 0.85em; color: #999; margin-bottom: 20px;">
@@ -348,27 +353,17 @@
         </div>
     </div>
 
+    <!-- Dynamic Version -->
     <script>
-        // Dados dos locais
-        const locations = {
-            forest_entrance: { name: 'Entrada da Floresta', x: 200, y: 400, connections: [], color: '#2196F3', size: 35 },
-            village_gate: { name: 'Portão da Vila', x: 400, y: 400, connections: [], color: '#F44336', size: 35 },
-            main_square: { name: 'Praça Central', x: 800, y: 400, connections: [], color: '#4CAF50', size: 50 },
-            old_church: { name: 'Igreja Antiga', x: 600, y: 200, connections: [], color: '#9C27B0', size: 40 },
-            church_tower: { name: 'Torre do Sino', x: 500, y: 100, connections: [], color: '#9C27B0', size: 30 },
-            cemetery: { name: 'Cemitério', x: 700, y: 100, connections: [], color: '#9C27B0', size: 32 },
-            abandoned_house: { name: 'Casa - Térreo', x: 1000, y: 300, connections: [], color: '#FF9800', size: 35 },
-            house_second_floor: { name: 'Casa - 2º Andar', x: 1100, y: 200, connections: [], color: '#FF9800', size: 30 },
-            house_attic: { name: 'Casa - Sótão', x: 1200, y: 100, connections: [], color: '#FF9800', size: 30 },
-            town_hall: { name: 'Prefeitura', x: 900, y: 200, connections: [], color: '#03A9F4', size: 40 },
-            mayors_office: { name: 'Gabinete', x: 1000, y: 100, connections: [], color: '#03A9F4', size: 32 },
-            library: { name: 'Biblioteca', x: 1100, y: 50, connections: [], color: '#03A9F4', size: 32 },
-            old_well: { name: 'Poço', x: 800, y: 550, connections: [], color: '#795548', size: 32 },
-            abandoned_shop: { name: 'Loja', x: 950, y: 500, connections: [], color: '#FFC107', size: 35 },
-            blacksmith: { name: 'Ferreiro', x: 1100, y: 550, connections: [], color: '#FFC107', size: 35 }
-        };
+        const v = Date.now();
+        document.write('<script src="js/phaser/managers/DatabaseLoader.js?v=' + v + '"><\/script>');
+    </script>
 
-        // Estado do editor
+    <script>
+        // Start empty, will be populated from DB
+        let locations = {};
+
+        // Editor state
         let editorState = {
             mode: 'move', // 'move' or 'connect'
             selectedLocation: null,
@@ -382,14 +377,95 @@
         const canvas = document.getElementById('mapCanvas');
         const ctx = canvas.getContext('2d');
 
+        // Initialize
+        window.addEventListener('load', async () => {
+            await initEditor();
+        });
+
+        async function initEditor() {
+            // Setup resize listener
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // Load data
+            await loadFromDatabase();
+        }
+
+        async function loadFromDatabase() {
+            try {
+                document.getElementById('locationList').innerHTML = '<div style="padding:10px; color:#aaa">Carregando dados do banco...</div>';
+
+                // Load via DatabaseLoader
+                const gameMap = await databaseLoader.loadGameData();
+                const connections = databaseLoader.connections || [];
+
+                // Try to load saved layout (x, y positions) from localStorage
+                const savedLayoutJson = localStorage.getItem('vila_abandonada_map_layout');
+                const savedLayout = savedLayoutJson ? JSON.parse(savedLayoutJson) : {};
+
+                // Convert DB data to Editor format
+                locations = {};
+
+                const dbIds = Object.keys(gameMap);
+                const count = dbIds.length;
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = 300;
+
+                dbIds.forEach((id, index) => {
+                    const loc = gameMap[id];
+                    const saved = savedLayout[id];
+
+                    // Determine position: Saved > Calculated > Random
+                    let x, y;
+                    if (saved) {
+                        x = saved.x;
+                        y = saved.y;
+                    } else {
+                        // Place in circle if no saved pos
+                        const angle = (index / count) * Math.PI * 2;
+                        x = centerX + Math.cos(angle) * radius;
+                        y = centerY + Math.sin(angle) * radius;
+                    }
+
+                    // Determine connections (outgoing)
+                    // DatabaseLoader has a 'connections' array: {from_location, to_location}
+                    const locConnections = databaseLoader.getConnections(id);
+
+                    locations[id] = {
+                        name: loc.name,
+                        x: x,
+                        y: y,
+                        connections: locConnections,
+                        color: getLocationColor(id), // Helper for color
+                        size: 35 + (locConnections.length * 2) // Slightly larger if hub
+                    };
+                });
+
+                render();
+                updateLocationList();
+                updateStats();
+
+            } catch (e) {
+                console.error("Error loading data", e);
+                alert("Erro ao carregar dados do banco: " + e.message);
+            }
+        }
+
+        function getLocationColor(id) {
+            if (id.includes('forest')) return '#4CAF50';
+            if (id.includes('village')) return '#FF9800';
+            if (id.includes('church') || id.includes('cemetery')) return '#9C27B0';
+            if (id.includes('house')) return '#795548';
+            return '#2196F3'; // Default
+        }
+
         // Resize canvas
         function resizeCanvas() {
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             render();
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
         // Render
         function render() {
@@ -414,8 +490,11 @@
 
                         // Arrow
                         const angle = Math.atan2(to.y - from.y, to.x - from.x);
-                        const arrowX = (from.x + to.x) / 2;
-                        const arrowY = (from.y + to.y) / 2;
+                        // Place arrow 60% of the way using lerp
+                        const t = 0.6;
+                        const arrowX = from.x + (to.x - from.x) * t;
+                        const arrowY = from.y + (to.y - from.y) * t;
+
                         ctx.save();
                         ctx.translate(arrowX, arrowY);
                         ctx.rotate(angle);
@@ -437,7 +516,7 @@
                 const isSelected = editorState.selectedLocation === id;
 
                 // Circle
-                ctx.fillStyle = loc.color;
+                ctx.fillStyle = loc.color || '#888';
                 ctx.beginPath();
                 ctx.arc(loc.x, loc.y, loc.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -461,14 +540,16 @@
             if (editorState.mode === 'connect' && editorState.firstConnectionPoint) {
                 const from = locations[editorState.firstConnectionPoint];
                 const mousePos = getMousePos(event);
-                ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.moveTo(from.x, from.y);
-                ctx.lineTo(mousePos.x, mousePos.y);
-                ctx.stroke();
-                ctx.setLineDash([]);
+                if (from) { // Safety check
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(mousePos.x, mousePos.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
             }
 
             ctx.restore();
@@ -520,6 +601,7 @@
                     editorState.firstConnectionPoint = locId;
                     editorState.selectedLocation = locId;
                 } else if (editorState.firstConnectionPoint !== locId) {
+                    // Visual only connection toggle
                     toggleConnection(editorState.firstConnectionPoint, locId);
                     editorState.firstConnectionPoint = null;
                     editorState.selectedLocation = null;
@@ -583,22 +665,28 @@
             if (from.connections.includes(toId)) {
                 // Remove connection
                 from.connections = from.connections.filter(id => id !== toId);
-                to.connections = to.connections.filter(id => id !== fromId);
+                // Also remove reverse if exists? The DB usually has explicit one-way or two-way. 
+                // For editor simplicity we might just toggle this one.
+                // But wait, the standard map is often bidirectional.
+                alert("Nota: Esta mudança é apenas visual no editor. Use o 'Editor de Locais (DB)' para alterar conexões reais.");
             } else {
                 // Add connection
                 from.connections.push(toId);
-                to.connections.push(fromId);
+                // to.connections.push(fromId); // Don't force bidirectionality here
+                alert("Nota: Esta mudança é apenas visual no editor. Use o 'Editor de Locais (DB)' para alterar conexões reais.");
             }
         }
 
         // Update stats
         function updateStats() {
             let totalConnections = 0;
-            Object.values(locations).forEach(loc => {
-                totalConnections += loc.connections.length;
-            });
-            document.getElementById('statLocations').textContent = Object.keys(locations).length;
-            document.getElementById('statConnections').textContent = totalConnections / 2; // Divide by 2 because bidirectional
+            if (locations) {
+                Object.values(locations).forEach(loc => {
+                    totalConnections += (loc.connections ? loc.connections.length : 0);
+                });
+                document.getElementById('statLocations').textContent = Object.keys(locations).length;
+                document.getElementById('statConnections').textContent = totalConnections;
+            }
         }
 
         // Mode switching
@@ -617,7 +705,7 @@
             const list = document.getElementById('locationList');
             list.innerHTML = '';
 
-            Object.keys(locations).forEach(id => {
+            Object.keys(locations).sort().forEach(id => {
                 const loc = locations[id];
                 const div = document.createElement('div');
                 div.className = 'location-item';
@@ -626,10 +714,14 @@
                 }
                 div.innerHTML = `
                     <strong>${loc.name}</strong><br>
-                    <small style="color: #666;">Conexões: ${loc.connections.length}</small>
+                    <small style="color: #666;">ID: ${id}</small>
                 `;
                 div.addEventListener('click', () => {
                     editorState.selectedLocation = id;
+                    // Center camera on location
+                    editorState.camera.x = canvas.width / 2 - (loc.x * editorState.camera.zoom);
+                    editorState.camera.y = canvas.height / 2 - (loc.y * editorState.camera.zoom);
+
                     updateLocationList();
                     render();
                 });
@@ -639,14 +731,14 @@
 
         // Center view
         function centerView() {
-            editorState.camera = { x: canvas.width / 2 - 600, y: canvas.height / 2 - 300, zoom: 1 };
+            editorState.camera = { x: 0, y: 0, zoom: 1 };
             render();
         }
 
         // Auto arrange
         function autoArrange() {
-            const centerX = 600;
-            const centerY = 400;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
             const radius = 300;
             const keys = Object.keys(locations);
 
@@ -670,14 +762,6 @@
             });
 
             code += '};\n\n';
-            code += '// Conexões (Cole em js/map.js)\n\n';
-
-            Object.keys(locations).forEach(id => {
-                const loc = locations[id];
-                if (loc.connections.length > 0) {
-                    code += `${id}: ['${loc.connections.join("', '")}'],\n`;
-                }
-            });
 
             document.getElementById('exportedCode').value = code;
             document.getElementById('exportedCode').select();
@@ -685,34 +769,28 @@
 
         // Save layout
         function saveLayout() {
-            const data = JSON.stringify(locations, null, 2);
+            // We only save the x,y positions to localStorage, not the whole DB struct
+            const layoutData = {};
+            Object.keys(locations).forEach(id => {
+                layoutData[id] = {
+                    x: locations[id].x,
+                    y: locations[id].y
+                };
+            });
+            const data = JSON.stringify(layoutData, null, 2);
             localStorage.setItem('vila_abandonada_map_layout', data);
-            alert('Layout salvo com sucesso!');
+            alert('Layout visual salvo no navegador com sucesso!');
         }
 
-        // Load layout
+        // Load layout (Manual trigger, though auto-loaded on start)
         function loadLayout() {
-            const data = localStorage.getItem('vila_abandonada_map_layout');
-            if (data) {
-                const loaded = JSON.parse(data);
-                Object.keys(loaded).forEach(id => {
-                    if (locations[id]) {
-                        locations[id].x = loaded[id].x;
-                        locations[id].y = loaded[id].y;
-                        locations[id].connections = loaded[id].connections || [];
-                    }
-                });
-                render();
-                updateLocationList();
-                alert('Layout carregado com sucesso!');
-            } else {
-                alert('Nenhum layout salvo encontrado.');
-            }
+            loadFromDatabase();
+            // Re-calling loadFromDatabase includes loading layout
         }
 
-        // Clear connections
+        // Clear connections (Visual only)
         function clearConnections() {
-            if (confirm('Tem certeza que deseja remover TODAS as conexões?')) {
+            if (confirm('Isto apenas limpa a visualização. Para apagar conexões reais, use o Editor de DB.')) {
                 Object.values(locations).forEach(loc => {
                     loc.connections = [];
                 });
@@ -728,21 +806,11 @@
                 document.querySelector('.mode-btn[data-mode="connect"]').click();
             } else if (e.key === 'r' || e.key === 'R') {
                 centerView();
-            } else if (e.key === '+' || e.key === '=') {
-                editorState.camera.zoom = Math.min(3, editorState.camera.zoom + 0.1);
-                render();
-            } else if (e.key === '-' || e.key === '_') {
-                editorState.camera.zoom = Math.max(0.1, editorState.camera.zoom - 0.1);
-                render();
-            } else if (e.key === 'Delete' && editorState.selectedLocation) {
-                locations[editorState.selectedLocation].connections = [];
-                render();
             }
         });
 
-        // Initial render
-        updateLocationList();
-        centerView();
+        // Initial render logic is in initEditor()
     </script>
 </body>
+
 </html>
