@@ -284,11 +284,13 @@ class LocationScene extends Phaser.Scene {
 
     updateDOMElementsScale() {
         const zoom = this.cameras.main.zoom;
+        console.log('🔍 updateDOMElementsScale - zoom:', zoom, 'items:', this.items?.length);
 
         // Atualizar apenas items que são DOMElements com transforms
         if (this.items && Array.isArray(this.items)) {
             this.items.forEach(item => {
                 if (item.sprite && item.sprite.imgElement && item.sprite.transformData) {
+                    console.log('📏 Escalando item:', item.data?.id);
                     const img = item.sprite.imgElement;
                     const transform = item.sprite.transformData;
 
@@ -1745,6 +1747,8 @@ class LocationScene extends Phaser.Scene {
 
             const transform = item.transform || {};
             let element;
+
+            console.log('🎯 Renderizando item:', item.id, 'tem transform:', !!item.transform);
 
             // Se tem qualquer transformação, usar DOMElement com wrapper div
             if (item.transform) {
