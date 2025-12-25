@@ -735,19 +735,97 @@
             render();
         }
 
-        // Auto arrange
+        // Auto arrange (Hierarchical Left-to-Right)
         function autoArrange() {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = 300;
             const keys = Object.keys(locations);
+            if (keys.length === 0) return;
 
-            keys.forEach((id, i) => {
-                const angle = (i / keys.length) * Math.PI * 2;
-                locations[id].x = centerX + Math.cos(angle) * radius;
-                locations[id].y = centerY + Math.sin(angle) * radius;
+            // 1. Identify Root
+            // Priority: 'forest_entrance', 'floresta', or first key that has no incoming connections (optional logic), or just first key.
+            // For now, simple priority list.
+            let rootId = keys.find(k => k === 'forest_entrance' || k === 'floresta' || k === 'start');
+            if (!rootId) rootId = keys[0];
+
+            // 2. BFS for Layers
+            const levels = new Map(); // id -> level
+            const visited = new Set();
+            const queue = [{ id: rootId, level: 0 }];
+
+            // Track incoming connections count to find real roots of subgraphs if needed
+            // But simple BFS from main root works for connected components.
+
+            while (queue.length > 0) {
+                const { id, level } = queue.shift();
+
+                if (visited.has(id)) continue;
+                visited.add(id);
+                levels.set(id, level);
+
+                const loc = locations[id];
+                if (loc && loc.connections) {
+                    // Sorting connections to keep consistent order might be nice?
+                    loc.connections.forEach(targetId => {
+                        if (!visited.has(targetId)) {
+                            queue.push({ id: targetId, level: level + 1 });
+                        }
+                    });
+                }
+            }
+
+            // Handle disconnected nodes (islands)
+            // Assign them to level 0 or put them aside. 
+            // Better: Find unvisited and run bfs again with level 0 offset?
+            // Let's just put unvisited at level 0 for now to ensure they are visible.
+            keys.forEach(id => {
+                if (!visited.has(id)) {
+                    levels.set(id, 0);
+                    // Optionally we could restart BFS here to layout the island properly
+                    // But for simplicity let's dump them at x=0
+                }
             });
 
+            // 3. Group by Level
+            const levelGroups = [];
+            levels.forEach((level, id) => {
+                if (!levelGroups[level]) levelGroups[level] = [];
+                levelGroups[level].push(id);
+            });
+
+            // 4. Assign Coordinates
+            const xSpacing = 280;
+            const ySpacing = 150;
+            const startX = 150;
+            const canvasCenterY = canvas.height / 2;
+
+            levelGroups.forEach((group, levelIndex) => {
+                if (!group) return; // Empty level?
+
+                // Sort group nodes? Maybe by potential parent's Y?
+                // For now, alphabetical or ID based stability
+                group.sort();
+
+                const nodesInCol = group.length;
+                const columnHeight = nodesInCol * ySpacing;
+                const startY = canvasCenterY - (columnHeight / 2) + (ySpacing / 2);
+
+                group.forEach((id, nodeIndex) => {
+                    const loc = locations[id];
+
+                    // Animate to new position? Direct assignment for editor.
+                    loc.x = startX + (levelIndex * xSpacing);
+                    loc.y = startY + (nodeIndex * ySpacing);
+
+                    // Add slight random jitter to prevent perfect overlap if logic fails? No, grid is better.
+                });
+            });
+
+            render();
+            centerViewToStart(startX, canvasCenterY); // Optional: center on start
+        }
+
+        function centerViewToStart(x, y) {
+            editorState.camera.x = canvas.width / 2 - x;
+            editorState.camera.y = canvas.height / 2 - y;
             render();
         }
 
