@@ -2459,18 +2459,30 @@ class LocationScene extends Phaser.Scene {
             uiManager.showNotification(`✓ Você pegou: ${item.name}`);
             uiManager.renderInventory();
 
-            // Animação de coleta
+            // Remover do array items
+            const itemIndex = this.items.findIndex(i => i.data?.id === item.id);
+            if (itemIndex > -1) {
+                this.items.splice(itemIndex, 1);
+            }
+
+            // Destruir elemento
             if (element) {
-                this.tweens.add({
-                    targets: element,
-                    y: element.y - 100,
-                    alpha: 0,
-                    duration: 500,
-                    ease: 'Power2',
-                    onComplete: () => {
-                        element.destroy();
-                    }
-                });
+                // DOMElements precisam ser destruídos imediatamente (tweens não funcionam)
+                if (element.node) {
+                    element.destroy();
+                } else {
+                    // Sprites podem ter animação
+                    this.tweens.add({
+                        targets: element,
+                        y: element.y - 100,
+                        alpha: 0,
+                        duration: 500,
+                        ease: 'Power2',
+                        onComplete: () => {
+                            element.destroy();
+                        }
+                    });
+                }
             }
         } else {
             uiManager.showNotification('Você já pegou este item');
