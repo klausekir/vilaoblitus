@@ -580,26 +580,13 @@
                     ctx.lineWidth = 2;
                     ctx.stroke();
 
-                    // Nome do item (se só 1) ou quantidade
-                    ctx.fillStyle = '#000';
-                    ctx.font = 'bold 11px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    if (loc.items.length === 1) {
-                        // Mostrar nome do item
-                        const itemName = loc.items[0].name || loc.items[0].id || '?';
-                        ctx.fillText(itemName, itemX, itemY);
-                    } else {
-                        // Mostrar quantidade
-                        ctx.fillText(`${loc.items.length}x`, itemX, itemY);
-                    }
-
-                    // Lista de items abaixo
+                    // Lista de items abaixo (FORA do círculo apenas)
                     ctx.fillStyle = '#FFD700';
                     ctx.strokeStyle = '#000';
                     ctx.lineWidth = 2;
                     ctx.font = 'bold 9px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
                     const itemNames = loc.items.map(i => i.name || i.id).slice(0, 3).join(', ');
                     const displayText = loc.items.length > 3 ? itemNames + '...' : itemNames;
                     ctx.strokeText(displayText, itemX, itemY + indicatorRadius + 12);
@@ -645,22 +632,16 @@
                     ctx.lineWidth = 2;
                     ctx.stroke();
 
-                    // Texto: tipo de puzzle
-                    ctx.fillStyle = '#000';
-                    ctx.font = 'bold 10px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    const puzzleType = loc.puzzle.type || 'Puzzle';
-                    ctx.fillText(puzzleType, puzzleX, puzzleY);
-
-                    // Nome do puzzle abaixo
+                    // Tipo do puzzle abaixo (FORA do círculo apenas)
                     ctx.fillStyle = '#4CAF50';
                     ctx.strokeStyle = '#000';
                     ctx.lineWidth = 2;
                     ctx.font = 'bold 9px Arial';
-                    const puzzleName = loc.puzzle.name || loc.puzzle.id || 'Puzzle';
-                    ctx.strokeText(puzzleName, puzzleX, puzzleY + indicatorRadius + 12);
-                    ctx.fillText(puzzleName, puzzleX, puzzleY + indicatorRadius + 12);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const puzzleType = loc.puzzle.type || 'Puzzle';
+                    ctx.strokeText(puzzleType, puzzleX, puzzleY + indicatorRadius + 12);
+                    ctx.fillText(puzzleType, puzzleX, puzzleY + indicatorRadius + 12);
                 }
             });
 
