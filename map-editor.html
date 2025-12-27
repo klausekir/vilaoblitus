@@ -368,6 +368,7 @@
             mode: 'move', // 'move' or 'connect'
             selectedLocation: null,
             draggingLocation: null,
+            draggingIndicator: null, // {locId: "...", type: "item" or "puzzle"}
             firstConnectionPoint: null,
             camera: { x: 0, y: 0, zoom: 1 },
             isDraggingCamera: false,
@@ -442,6 +443,20 @@
                         items: loc.items || [], // Items da cena
                         puzzle: loc.puzzle // Puzzle da cena (se existir)
                     };
+
+                    // Restore indicator positions if saved
+                    if (saved && saved.itemIndicatorX !== undefined) {
+                        locations[id].itemIndicatorX = saved.itemIndicatorX;
+                    }
+                    if (saved && saved.itemIndicatorY !== undefined) {
+                        locations[id].itemIndicatorY = saved.itemIndicatorY;
+                    }
+                    if (saved && saved.puzzleIndicatorX !== undefined) {
+                        locations[id].puzzleIndicatorX = saved.puzzleIndicatorX;
+                    }
+                    if (saved && saved.puzzleIndicatorY !== undefined) {
+                        locations[id].puzzleIndicatorY = saved.puzzleIndicatorY;
+                    }
                 });
 
                 render();
@@ -688,10 +703,41 @@
             return null;
         }
 
+        // Find indicator (item or puzzle) at position
+        function findIndicatorAt(x, y) {
+            const defaultDistance = 80;
+
+            for (let id in locations) {
+                const loc = locations[id];
+                const indicatorRadius = loc.size * 0.8;
+
+                // Check item indicator (yellow, left side)
+                if (loc.items && loc.items.length > 0) {
+                    const itemX = loc.itemIndicatorX !== undefined ? loc.itemIndicatorX : (loc.x - defaultDistance);
+                    const itemY = loc.itemIndicatorY !== undefined ? loc.itemIndicatorY : loc.y;
+                    const dist = Math.sqrt((x - itemX) ** 2 + (y - itemY) ** 2);
+                    if (dist <= indicatorRadius) {
+                        return { locId: id, type: 'item' };
+                    }
+                }
+
+                // Check puzzle indicator (green, right side)
+                if (loc.puzzle) {
+                    const puzzleX = loc.puzzleIndicatorX !== undefined ? loc.puzzleIndicatorX : (loc.x + defaultDistance);
+                    const puzzleY = loc.puzzleIndicatorY !== undefined ? loc.puzzleIndicatorY : loc.y;
+                    const dist = Math.sqrt((x - puzzleX) ** 2 + (y - puzzleY) ** 2);
+                    if (dist <= indicatorRadius) {
+                        return { locId: id, type: 'puzzle' };
+                    }
+                }
+            }
+
+            return null;
+        }
+
         // Mouse events
         canvas.addEventListener('mousedown', (e) => {
             const pos = getMousePos(e);
-            const locId = findLocationAt(pos.x, pos.y);
 
             if (e.button === 1 || e.shiftKey || e.button === 2) { // Middle click or Shift+click or right click
                 editorState.isDraggingCamera = true;
@@ -700,6 +746,17 @@
                 e.preventDefault();
                 return;
             }
+
+            // Check for indicator first (takes priority over locations)
+            const indicator = findIndicatorAt(pos.x, pos.y);
+            if (indicator && editorState.mode === 'move') {
+                editorState.draggingIndicator = indicator;
+                render();
+                return;
+            }
+
+            // Then check for location
+            const locId = findLocationAt(pos.x, pos.y);
 
             if (editorState.mode === 'move' && locId) {
                 editorState.draggingLocation = locId;
@@ -735,6 +792,20 @@
                 return;
             }
 
+            // Handle indicator dragging
+            if (editorState.draggingIndicator) {
+                const loc = locations[editorState.draggingIndicator.locId];
+                if (editorState.draggingIndicator.type === 'item') {
+                    loc.itemIndicatorX = pos.x;
+                    loc.itemIndicatorY = pos.y;
+                } else if (editorState.draggingIndicator.type === 'puzzle') {
+                    loc.puzzleIndicatorX = pos.x;
+                    loc.puzzleIndicatorY = pos.y;
+                }
+                render();
+                return;
+            }
+
             if (editorState.draggingLocation) {
                 locations[editorState.draggingLocation].x = pos.x;
                 locations[editorState.draggingLocation].y = pos.y;
@@ -744,12 +815,14 @@
             }
 
             // Cursor
+            const indicator = findIndicatorAt(pos.x, pos.y);
             const locId = findLocationAt(pos.x, pos.y);
-            canvas.style.cursor = locId ? 'pointer' : 'grab';
+            canvas.style.cursor = (indicator || locId) ? 'pointer' : 'grab';
         });
 
         canvas.addEventListener('mouseup', () => {
             editorState.draggingLocation = null;
+            editorState.draggingIndicator = null;
             editorState.isDraggingCamera = false;
             canvas.style.cursor = 'grab';
         });
@@ -956,13 +1029,28 @@
 
         // Save layout
         function saveLayout() {
-            // We only save the x,y positions to localStorage, not the whole DB struct
+            // Save x,y positions AND indicator positions to localStorage
             const layoutData = {};
             Object.keys(locations).forEach(id => {
+                const loc = locations[id];
                 layoutData[id] = {
-                    x: locations[id].x,
-                    y: locations[id].y
+                    x: loc.x,
+                    y: loc.y
                 };
+
+                // Save indicator positions if they exist
+                if (loc.itemIndicatorX !== undefined) {
+                    layoutData[id].itemIndicatorX = loc.itemIndicatorX;
+                }
+                if (loc.itemIndicatorY !== undefined) {
+                    layoutData[id].itemIndicatorY = loc.itemIndicatorY;
+                }
+                if (loc.puzzleIndicatorX !== undefined) {
+                    layoutData[id].puzzleIndicatorX = loc.puzzleIndicatorX;
+                }
+                if (loc.puzzleIndicatorY !== undefined) {
+                    layoutData[id].puzzleIndicatorY = loc.puzzleIndicatorY;
+                }
             });
             const data = JSON.stringify(layoutData, null, 2);
             localStorage.setItem('vila_abandonada_map_layout', data);
