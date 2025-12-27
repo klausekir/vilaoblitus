@@ -2856,7 +2856,8 @@ class LocationScene extends Phaser.Scene {
             background: transparent;
             z-index: 10000;
             overflow: hidden;
-            perspective: 300px;
+            perspective: 400px;
+            perspective-origin: 50% 50%;
             pointer-events: none;
         `;
 
@@ -2864,12 +2865,11 @@ class LocationScene extends Phaser.Scene {
         const scrollContainer = document.createElement('div');
         scrollContainer.style.cssText = `
             position: absolute;
-            bottom: -20%;
+            top: 100%;
             left: 50%;
-            width: 100%;
-            max-width: 1200px;
+            width: 75%;
             text-align: center;
-            transform-origin: 50% 100%;
+            transform-origin: 50% 0%;
             transform-style: preserve-3d;
             animation: starWarsScroll 60s linear forwards;
         `;
@@ -2899,11 +2899,11 @@ class LocationScene extends Phaser.Scene {
             style.textContent = `
                 @keyframes starWarsScroll {
                     0% {
-                        transform: translateX(-50%) translateZ(0) rotateX(60deg);
+                        transform: translateX(-50%) translateY(0) translateZ(200px) rotateX(50deg);
                         opacity: 1;
                     }
                     100% {
-                        transform: translateX(-50%) translateZ(-3000px) rotateX(60deg);
+                        transform: translateX(-50%) translateY(-200%) translateZ(-2500px) rotateX(50deg);
                         opacity: 0;
                     }
                 }
