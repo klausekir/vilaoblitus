@@ -113,6 +113,7 @@ try {
         $backgroundImage = $loc['background_image'] ?? '';
         $isFinalScene = isset($loc['is_final_scene']) ? (int)$loc['is_final_scene'] : 0;
         $credits = !empty($loc['credits']) ? json_encode($loc['credits'], JSON_UNESCAPED_UNICODE) : null;
+        $transitionVideo = $loc['transition_video'] ?? null;
 
         // Get display order from the order array
         $displayOrder = array_search($locationId, $order);
@@ -127,8 +128,8 @@ try {
         }
 
         // Insert/Update location
-        error_log("📍 Salvando location: ID=$locationId, Name=$name, Description=$description, BG=$backgroundImage, Order=$displayOrder, FinalScene=$isFinalScene");
-        $locationStmt->execute([$locationId, $name, $description, $backgroundImage, $displayOrder, $isFinalScene, $credits]);
+        error_log("📍 Salvando location: ID=$locationId, Name=$name, Description=$description, BG=$backgroundImage, Order=$displayOrder, FinalScene=$isFinalScene, TransitionVideo=$transitionVideo");
+        $locationStmt->execute([$locationId, $name, $description, $backgroundImage, $displayOrder, $isFinalScene, $credits, $transitionVideo]);
         error_log("✅ Location $locationId salvo com sucesso!");
         $successCount++;
 
