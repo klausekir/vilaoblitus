@@ -2812,13 +2812,19 @@ class LocationScene extends Phaser.Scene {
         } else if (action.type === 'navigate') {
             // Navegar para outra localização
             const targetLocation = action.targetLocation;
+            console.log('🎯 Navegando para:', targetLocation);
+
             if (targetLocation) {
                 // Verificar se destino é cena final
                 const targetLocationData = databaseLoader.getLocation(targetLocation);
+                console.log('📍 Dados da location destino:', targetLocationData);
 
                 if (targetLocationData && targetLocationData.isFinalScene) {
+                    console.log('🎬 É cena final! Preparando vídeo de transição...');
+
                     // Tocar vídeo de transição antes de ir para cena final (se configurado)
                     const videoPath = targetLocationData.transitionVideo || 'images/Fuga_da_Vila_com_Salvação_Policial.mp4';
+                    console.log('🎥 Caminho do vídeo:', videoPath);
 
                     if (videoPath) {
                         this.playTransitionVideo(videoPath, () => {
@@ -2826,10 +2832,12 @@ class LocationScene extends Phaser.Scene {
                             this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
                         });
                     } else {
+                        console.log('⚠️ Sem vídeo configurado, navegando direto');
                         // Se não tiver vídeo configurado, navegar direto
                         this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
                     }
                 } else {
+                    console.log('📌 Navegação normal (não é cena final)');
                     // Navegação normal sem vídeo
                     this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
                 }
