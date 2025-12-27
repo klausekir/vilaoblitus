@@ -2477,6 +2477,13 @@ class LocationScene extends Phaser.Scene {
                     element.destroy();
                 } else {
                     console.log('🎬 Animando sprite:', item.id);
+
+                    // Remover todos os event listeners para não interferir com a animação
+                    element.removeAllListeners();
+
+                    // Cancelar tweens antigos (hover) antes de criar novo
+                    this.tweens.killTweensOf(element);
+
                     // Sprites podem ter animação
                     this.tweens.add({
                         targets: element,

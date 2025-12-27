@@ -438,7 +438,9 @@
                         y: y,
                         connections: locConnections,
                         color: getLocationColor(id), // Helper for color
-                        size: 35 + (locConnections.length * 2) // Slightly larger if hub
+                        size: 35 + (locConnections.length * 2), // Slightly larger if hub
+                        items: loc.items || [], // Items da cena
+                        puzzle: loc.puzzle // Puzzle da cena (se existir)
                     };
                 });
 
@@ -534,6 +536,49 @@
                 ctx.textAlign = 'center';
                 ctx.strokeText(loc.name, loc.x, loc.y + loc.size + 20);
                 ctx.fillText(loc.name, loc.x, loc.y + loc.size + 20);
+
+                // Indicadores de items (amarelo) e puzzles (verde)
+                const indicators = [];
+
+                // Adicionar indicador de puzzle (verde)
+                if (loc.puzzle) {
+                    indicators.push({ color: '#4CAF50', label: 'P' }); // Verde para puzzle
+                }
+
+                // Adicionar indicador de items (amarelo)
+                if (loc.items && loc.items.length > 0) {
+                    indicators.push({ color: '#FFD700', label: loc.items.length }); // Amarelo para items
+                }
+
+                // Desenhar indicadores como círculos pequenos abaixo da cena
+                if (indicators.length > 0) {
+                    const indicatorRadius = 8;
+                    const spacing = 20;
+                    const startX = loc.x - ((indicators.length - 1) * spacing) / 2;
+                    const startY = loc.y + loc.size + 40;
+
+                    indicators.forEach((indicator, i) => {
+                        const x = startX + (i * spacing);
+
+                        // Círculo colorido
+                        ctx.fillStyle = indicator.color;
+                        ctx.beginPath();
+                        ctx.arc(x, startY, indicatorRadius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Borda preta
+                        ctx.strokeStyle = '#000';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+
+                        // Label (P para puzzle, número para items)
+                        ctx.fillStyle = '#000';
+                        ctx.font = 'bold 10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(indicator.label, x, startY);
+                    });
+                }
             });
 
             // Connection preview
