@@ -897,8 +897,9 @@
 
             if (locId) {
                 // Abrir location-editor-db na localização específica e aba de posicionamento visual
+                // Usar nome fixo 'location-editor' para reutilizar a mesma janela
                 const url = `location-editor-db.html?location=${encodeURIComponent(locId)}&tab=visual`;
-                window.open(url, '_blank');
+                window.open(url, 'location-editor');
             }
         });
 
