@@ -463,6 +463,11 @@
                     if (saved && saved.puzzleIndicatorY !== undefined && locations[id].puzzle) {
                         locations[id].puzzleIndicatorY = saved.puzzleIndicatorY;
                     }
+
+                    // ✅ Restore manual connections from saved layout
+                    if (saved && saved.connections && Array.isArray(saved.connections)) {
+                        locations[id].connections = saved.connections;
+                    }
                 });
 
                 render();
