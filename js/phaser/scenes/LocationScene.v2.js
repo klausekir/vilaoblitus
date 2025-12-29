@@ -550,6 +550,19 @@ class LocationScene extends Phaser.Scene {
             this.puzzleSprite.setScale(1);
             this.puzzleSprite.displayWidth = this.puzzleSprite.width;
             this.puzzleSprite.displayHeight = this.puzzleSprite.height;
+
+            console.log('🎨 Puzzle sprite criado:', {
+                textureKey,
+                width: this.puzzleSprite.width,
+                height: this.puzzleSprite.height,
+                displayWidth: this.puzzleSprite.displayWidth,
+                displayHeight: this.puzzleSprite.displayHeight,
+                x: this.puzzleSprite.x,
+                y: this.puzzleSprite.y,
+                scaleX: this.puzzleSprite.scaleX,
+                scaleY: this.puzzleSprite.scaleY,
+                visible: this.puzzleSprite.visible
+            });
         } else {
             // Fallback for missing image
             this.puzzleSprite = this.add.container(x, y);
