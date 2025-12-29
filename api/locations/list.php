@@ -191,32 +191,6 @@ try {
     $connections = $connStmt->fetchAll(PDO::FETCH_ASSOC);
     error_log("🔗 LIST API - Encontradas " . count($connections) . " conexões de navegação");
 
-    // Buscar conexões de puzzles com campo "Localização de Destino"
-    $puzzleConnStmt = $pdo->query("SELECT location_id, puzzle_data FROM location_puzzles");
-    $puzzleRows = $puzzleConnStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($puzzleRows as $puzzleRow) {
-        $puzzleData = json_decode($puzzleRow['puzzle_data'], true);
-
-        // Verificar se existe onUnlockedAction.targetLocation
-        if (is_array($puzzleData) &&
-            isset($puzzleData['onUnlockedAction']) &&
-            is_array($puzzleData['onUnlockedAction']) &&
-            isset($puzzleData['onUnlockedAction']['targetLocation']) &&
-            !empty($puzzleData['onUnlockedAction']['targetLocation']) &&
-            trim($puzzleData['onUnlockedAction']['targetLocation']) !== '') {
-
-            $targetLocation = trim($puzzleData['onUnlockedAction']['targetLocation']);
-
-            $connections[] = [
-                'from_location' => $puzzleRow['location_id'],
-                'to_location' => $targetLocation
-            ];
-
-            error_log("🧩 LIST API - Conexão de puzzle: {$puzzleRow['location_id']} -> {$targetLocation}");
-        }
-    }
-
     // Success response
     error_log("✅ LIST API - Retornando " . count($locations) . " localizações com sucesso");
     sendResponse(true, [
