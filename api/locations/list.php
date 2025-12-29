@@ -181,12 +181,15 @@ try {
         }
     }
 
-    // Get all connections
+    // Get all connections from navigation hotspots (fonte real das conexões do jogo)
     $connStmt = $pdo->query("
-        SELECT from_location, to_location
-        FROM connections
+        SELECT DISTINCT location_id as from_location, target_location as to_location
+        FROM hotspots
+        WHERE type = 'navigation' AND target_location IS NOT NULL AND target_location != ''
+        ORDER BY location_id, target_location
     ");
     $connections = $connStmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("🔗 LIST API - Encontradas " . count($connections) . " conexões de navegação");
 
     // Success response
     error_log("✅ LIST API - Retornando " . count($locations) . " localizações com sucesso");
