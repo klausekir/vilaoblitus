@@ -1197,17 +1197,30 @@
                     const urlLocation = urlParams.get('location');
                     const urlTab = urlParams.get('tab');
 
-                    // Restaurar localização: URL > última editada (F4) > atual (F5)
-                    const currentLocation = localStorage.getItem('editor_current_location');
-                    const lastLocation = localStorage.getItem('editor_last_location');
-                    const locationToLoad = urlLocation || lastLocation || currentLocation;
+                    let locationToLoad = null;
+
+                    if (urlLocation) {
+                        // Se veio da URL (map-editor), usar sempre esse e limpar cache
+                        locationToLoad = urlLocation;
+                        // Limpar cache para evitar conflito
+                        localStorage.removeItem('editor_current_location');
+                        localStorage.removeItem('editor_last_location');
+                    } else {
+                        // Restaurar do cache apenas se NÃO veio da URL
+                        const currentLocation = localStorage.getItem('editor_current_location');
+                        const lastLocation = localStorage.getItem('editor_last_location');
+                        locationToLoad = lastLocation || currentLocation;
+                    }
 
                     if (locationToLoad && gameLocations[locationToLoad]) {
                         // Pequeno delay para garantir que a lista foi renderizada
                         setTimeout(() => {
                             selectLocation(locationToLoad);
-                            // Limpar apenas o editor_last_location (de F4)
-                            localStorage.removeItem('editor_last_location');
+
+                            // Apenas limpar editor_last_location se não veio da URL
+                            if (!urlLocation) {
+                                localStorage.removeItem('editor_last_location');
+                            }
 
                             // ✅ Se veio da URL com tab=visual, trocar para aba de posicionamento visual
                             if (urlTab === 'visual') {
