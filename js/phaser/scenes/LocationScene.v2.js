@@ -2400,8 +2400,6 @@ class LocationScene extends Phaser.Scene {
     }
 
     navigateToLocation(targetLocationId, hotspot) {
-        console.log('🎯 navigateToLocation chamado para:', targetLocationId);
-
         if (!targetLocationId) {
             console.error('❌ targetLocationId está vazio ou undefined!');
             return;
@@ -2415,23 +2413,35 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
-        console.log('📍 Dados da location:', targetLocationData);
-
         // VERIFICAR SE É CENA FINAL E TEM VÍDEO
         if (targetLocationData.isFinalScene) {
-            console.log('🎬 É cena final! Verificando vídeo...');
             const videoPath = targetLocationData.transitionVideo || 'images/Fuga_da_Vila_com_Salvação_Policial.mp4';
-            console.log('🎥 Vídeo configurado:', videoPath);
+            const dramaticMessages = targetLocationData.dramaticMessages;
+            const messageDuration = targetLocationData.dramaticMessageDuration || 5;
 
-            if (videoPath) {
-                // Reproduzir vídeo ANTES de navegar
-                this.playTransitionVideo(videoPath, () => {
-                    console.log('✅ Vídeo terminou, navegando para cena final...');
-                    // Atualizar estado
-                    gameStateManager.navigateToLocation(targetLocationId);
-                    // Reiniciar cena com nova location
-                    this.scene.restart({ locationId: targetLocationId });
-                });
+            const navigateToFinalScene = () => {
+                // Atualizar estado
+                gameStateManager.navigateToLocation(targetLocationId);
+                // Reiniciar cena com nova location
+                this.scene.restart({ locationId: targetLocationId });
+            };
+
+            if (videoPath || dramaticMessages) {
+                // Sequência: Mensagens Dramáticas → Vídeo → Cena Final
+                if (dramaticMessages) {
+                    // 1. Mostrar mensagens dramáticas primeiro
+                    this.showDramaticMessages(dramaticMessages, messageDuration, () => {
+                        // 2. Após mensagens, tocar vídeo (se houver)
+                        if (videoPath) {
+                            this.playTransitionVideo(videoPath, navigateToFinalScene);
+                        } else {
+                            navigateToFinalScene();
+                        }
+                    });
+                } else if (videoPath) {
+                    // Apenas vídeo, sem mensagens
+                    this.playTransitionVideo(videoPath, navigateToFinalScene);
+                }
                 return; // NÃO continuar com a navegação normal
             }
         }
@@ -2476,29 +2486,22 @@ class LocationScene extends Phaser.Scene {
     collectItem(item, element) {
         const collected = gameStateManager.collectItem(item);
 
-        console.log('🎁 collectItem:', item.id, 'collected:', collected, 'element:', element, 'isDOMElement:', !!element?.node);
-
         if (collected) {
             uiManager.showNotification(`✓ Você pegou: ${item.name}`);
             uiManager.renderInventory();
 
             // Remover do array items
             const itemIndex = this.items.findIndex(i => i.data?.id === item.id);
-            console.log('📦 Procurando item no array, index:', itemIndex, 'total items:', this.items.length);
             if (itemIndex > -1) {
                 this.items.splice(itemIndex, 1);
-                console.log('✂️ Item removido do array, total agora:', this.items.length);
             }
 
             // Destruir elemento
             if (element) {
                 // DOMElements precisam ser destruídos imediatamente (tweens não funcionam)
                 if (element.node) {
-                    console.log('💥 Destruindo DOMElement:', item.id);
                     element.destroy();
                 } else {
-                    console.log('🎬 Animando sprite:', item.id);
-
                     // Remover todos os event listeners para não interferir com a animação
                     element.removeAllListeners();
 
@@ -2513,7 +2516,6 @@ class LocationScene extends Phaser.Scene {
                         duration: 500,
                         ease: 'Power2',
                         onComplete: () => {
-                            console.log('💥 Destruindo sprite após animação:', item.id);
                             element.destroy();
                         }
                     });
@@ -2833,35 +2835,10 @@ class LocationScene extends Phaser.Scene {
         } else if (action.type === 'navigate') {
             // Navegar para outra localização
             const targetLocation = action.targetLocation;
-            console.log('🎯 Navegando para:', targetLocation);
 
             if (targetLocation) {
-                // Verificar se destino é cena final
-                const targetLocationData = databaseLoader.getLocation(targetLocation);
-                console.log('📍 Dados da location destino:', targetLocationData);
-
-                if (targetLocationData && targetLocationData.isFinalScene) {
-                    console.log('🎬 É cena final! Preparando vídeo de transição...');
-
-                    // Tocar vídeo de transição antes de ir para cena final (se configurado)
-                    const videoPath = targetLocationData.transitionVideo || 'images/Fuga_da_Vila_com_Salvação_Policial.mp4';
-                    console.log('🎥 Caminho do vídeo:', videoPath);
-
-                    if (videoPath) {
-                        this.playTransitionVideo(videoPath, () => {
-                            // Após vídeo terminar, navegar para cena final
-                            this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
-                        });
-                    } else {
-                        console.log('⚠️ Sem vídeo configurado, navegando direto');
-                        // Se não tiver vídeo configurado, navegar direto
-                        this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
-                    }
-                } else {
-                    console.log('📌 Navegação normal (não é cena final)');
-                    // Navegação normal sem vídeo
-                    this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
-                }
+                // navigateToLocation já trata vídeo de transição e cena final
+                this.navigateToLocation(targetLocation, { position: { x: 50, y: 50, width: 10, height: 10 } });
             }
         }
     }
@@ -3017,15 +2994,96 @@ class LocationScene extends Phaser.Scene {
         }, 30000);
     }
 
-    playTransitionVideo(videoPath, onComplete) {
-        console.log('🎬 Iniciando vídeo de transição:', videoPath);
+    showDramaticMessages(messagesText, duration, onComplete) {
+        // Dividir mensagens por linha
+        const messages = messagesText.split('\n').filter(msg => msg.trim());
+
+        if (messages.length === 0) {
+            if (onComplete) onComplete();
+            return;
+        }
 
         // Fade out da cena atual
         this.cameras.main.fadeOut(500, 0, 0, 0);
 
         this.cameras.main.once('camerafadeoutcomplete', () => {
-            console.log('📺 Fade out completo, criando player de vídeo...');
+            // Criar container de tela preta
+            const container = document.createElement('div');
+            container.id = 'dramatic-messages-container';
+            container.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            `;
 
+            // Elemento de texto
+            const textElement = document.createElement('div');
+            textElement.style.cssText = `
+                color: #fff;
+                font-family: 'Arial Black', Arial, sans-serif;
+                font-size: 72px;
+                font-weight: bold;
+                text-align: center;
+                text-transform: uppercase;
+                padding: 40px;
+                line-height: 1.3;
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+                opacity: 0;
+                transition: opacity 0.5s ease-in-out;
+                max-width: 90%;
+            `;
+
+            container.appendChild(textElement);
+            document.body.appendChild(container);
+
+            let currentIndex = 0;
+
+            const showNextMessage = () => {
+                if (currentIndex >= messages.length) {
+                    // Todas as mensagens exibidas
+                    textElement.style.opacity = '0';
+                    setTimeout(() => {
+                        container.remove();
+                        if (onComplete) onComplete();
+                    }, 500);
+                    return;
+                }
+
+                // Fade out da mensagem anterior
+                textElement.style.opacity = '0';
+
+                setTimeout(() => {
+                    // Atualizar texto
+                    textElement.textContent = messages[currentIndex];
+
+                    // Fade in
+                    textElement.style.opacity = '1';
+
+                    currentIndex++;
+
+                    // Esperar a duração configurada antes da próxima
+                    setTimeout(showNextMessage, duration * 1000);
+                }, 500); // Tempo do fade out
+            };
+
+            // Começar a exibir mensagens após um breve delay
+            setTimeout(showNextMessage, 500);
+        });
+    }
+
+    playTransitionVideo(videoPath, onComplete) {
+        // Fade out da cena atual
+        this.cameras.main.fadeOut(500, 0, 0, 0);
+
+        this.cameras.main.once('camerafadeoutcomplete', () => {
             // Criar container de vídeo full-screen
             const videoContainer = document.createElement('div');
             videoContainer.id = 'transition-video-container';
@@ -3051,13 +3109,8 @@ class LocationScene extends Phaser.Scene {
             `;
             videoElement.src = videoPath;
             videoElement.autoplay = true;
-            videoElement.controls = true; // Sempre mostrar controles
+            videoElement.controls = true;
             videoElement.preload = 'auto';
-
-            // Eventos de debug
-            videoElement.addEventListener('loadedmetadata', () => {
-                console.log('✅ Vídeo: metadata carregada, duração:', videoElement.duration);
-            });
 
             videoElement.addEventListener('error', (e) => {
                 console.error('❌ Erro no vídeo:', videoElement.error);
@@ -3077,27 +3130,22 @@ class LocationScene extends Phaser.Scene {
             videoContainer.appendChild(videoElement);
             document.body.appendChild(videoContainer);
 
-            console.log('▶️ Tentando reproduzir vídeo...');
-
             // Tentar dar play explicitamente
             const playPromise = videoElement.play();
 
             if (playPromise !== undefined) {
                 playPromise
-                    .then(() => console.log('✅ Play() bem-sucedido'))
                     .catch((error) => console.error('❌ Erro no play():', error));
             }
 
             // Quando o vídeo terminar
             videoElement.addEventListener('ended', () => {
-                console.log('🏁 Vídeo terminou');
                 videoContainer.style.transition = 'opacity 500ms';
                 videoContainer.style.opacity = '0';
 
                 setTimeout(() => {
                     videoContainer.remove();
                     if (onComplete) {
-                        console.log('➡️ Navegando para cena final...');
                         onComplete();
                     }
                 }, 500);
@@ -3105,7 +3153,6 @@ class LocationScene extends Phaser.Scene {
 
             // Permitir pular o vídeo com clique
             videoContainer.addEventListener('click', () => {
-                console.log('⏭️ Vídeo pulado pelo usuário');
                 videoElement.pause();
                 videoElement.currentTime = videoElement.duration;
             });

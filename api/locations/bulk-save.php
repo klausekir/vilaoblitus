@@ -51,8 +51,8 @@ try {
 
     // Prepared statements (reutilizáveis)
     $locationStmt = $pdo->prepare("
-        INSERT INTO locations (id, name, description, background_image, display_order, is_final_scene, credits, transition_video)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO locations (id, name, description, background_image, display_order, is_final_scene, credits, transition_video, dramatic_messages, dramatic_message_duration)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             name = VALUES(name),
             description = VALUES(description),
@@ -61,6 +61,8 @@ try {
             is_final_scene = VALUES(is_final_scene),
             credits = VALUES(credits),
             transition_video = VALUES(transition_video),
+            dramatic_messages = VALUES(dramatic_messages),
+            dramatic_message_duration = VALUES(dramatic_message_duration),
             updated_at = CURRENT_TIMESTAMP
     ");
 
@@ -114,6 +116,8 @@ try {
         $isFinalScene = isset($loc['is_final_scene']) ? (int)$loc['is_final_scene'] : 0;
         $credits = !empty($loc['credits']) ? json_encode($loc['credits'], JSON_UNESCAPED_UNICODE) : null;
         $transitionVideo = $loc['transition_video'] ?? null;
+        $dramaticMessages = $loc['dramatic_messages'] ?? null;
+        $dramaticMessageDuration = isset($loc['dramatic_message_duration']) ? (int)$loc['dramatic_message_duration'] : null;
 
         // Get display order from the order array
         $displayOrder = array_search($locationId, $order);
@@ -129,7 +133,7 @@ try {
 
         // Insert/Update location
         error_log("📍 Salvando location: ID=$locationId, Name=$name, Description=$description, BG=$backgroundImage, Order=$displayOrder, FinalScene=$isFinalScene, TransitionVideo=$transitionVideo");
-        $locationStmt->execute([$locationId, $name, $description, $backgroundImage, $displayOrder, $isFinalScene, $credits, $transitionVideo]);
+        $locationStmt->execute([$locationId, $name, $description, $backgroundImage, $displayOrder, $isFinalScene, $credits, $transitionVideo, $dramaticMessages, $dramaticMessageDuration]);
         error_log("✅ Location $locationId salvo com sucesso!");
         $successCount++;
 

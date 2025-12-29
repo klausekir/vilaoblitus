@@ -62,6 +62,8 @@ try {
             is_final_scene,
             credits,
             transition_video,
+            dramatic_messages,
+            dramatic_message_duration,
             created_at,
             updated_at
         FROM locations

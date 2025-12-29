@@ -637,6 +637,20 @@
                         </div>
                     </div>
 
+                    <div id="dramatic-messages-section" style="display: none; margin-top: 15px; padding: 15px; background: #ffe4e1; border-radius: 8px; border-left: 4px solid #dc3545;">
+                        <h4 style="margin-bottom: 10px; color: #721c24;">⚡ Mensagens Dramáticas</h4>
+                        <div class="form-group">
+                            <label for="edit-dramatic-messages" style="font-weight: normal; color: #721c24;">Mensagens (uma por linha)</label>
+                            <textarea id="edit-dramatic-messages" rows="5" placeholder="VOCÊ CONSEGUIU SAIR DA VILA&#10;MAS ESPERE A VILA NÃO ESTAVA ABANDONADA&#10;OLHE PARA TRÁS E VEJA" onchange="saveBasicInfo(); syncToDatabase(true);" style="width: 100%; padding: 8px; border: 1px solid #dc3545; border-radius: 4px; font-family: Arial, sans-serif;"></textarea>
+                            <small style="color: #721c24; display: block; margin-top: 5px;">Cada linha será exibida em sequência antes do vídeo</small>
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="edit-dramatic-duration" style="font-weight: normal; color: #721c24;">Duração por mensagem (segundos)</label>
+                            <input type="number" id="edit-dramatic-duration" placeholder="5" min="1" max="30" value="5" onchange="saveBasicInfo(); syncToDatabase(true);" style="width: 150px; padding: 8px; border: 1px solid #dc3545; border-radius: 4px;">
+                            <small style="color: #721c24; display: block; margin-top: 5px;">Tempo que cada mensagem ficará na tela (padrão: 5 segundos)</small>
+                        </div>
+                    </div>
+
                     <div id="credits-section" style="display: none; margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4a90e2;">
                         <h4 style="margin-bottom: 15px; color: #2a5885;">✨ Créditos Finais</h4>
                         <div style="margin-bottom: 10px;">
@@ -1323,6 +1337,8 @@
             document.getElementById('edit-unlocked').checked = location.unlocked || false;
             document.getElementById('edit-final-scene').checked = location.isFinalScene || false;
             document.getElementById('edit-transition-video').value = location.transitionVideo || '';
+            document.getElementById('edit-dramatic-messages').value = location.dramaticMessages || '';
+            document.getElementById('edit-dramatic-duration').value = location.dramaticMessageDuration || 5;
             toggleCreditsSection();
 
             // Carregar créditos se existirem
@@ -3799,8 +3815,10 @@
             const isChecked = document.getElementById('edit-final-scene').checked;
             const creditsSection = document.getElementById('credits-section');
             const videoSection = document.getElementById('transition-video-section');
+            const dramaticSection = document.getElementById('dramatic-messages-section');
             creditsSection.style.display = isChecked ? 'block' : 'none';
             videoSection.style.display = isChecked ? 'block' : 'none';
+            dramaticSection.style.display = isChecked ? 'block' : 'none';
         }
 
         function addCreditLine() {
@@ -3970,6 +3988,8 @@
             location.unlocked = document.getElementById('edit-unlocked').checked;
             location.isFinalScene = document.getElementById('edit-final-scene').checked;
             location.transitionVideo = document.getElementById('edit-transition-video').value.trim();
+            location.dramaticMessages = document.getElementById('edit-dramatic-messages').value.trim();
+            location.dramaticMessageDuration = parseInt(document.getElementById('edit-dramatic-duration').value) || 5;
 
             // Salvar créditos se for cena final
             if (location.isFinalScene) {
@@ -3977,9 +3997,15 @@
                 if (!location.transitionVideo) {
                     delete location.transitionVideo;
                 }
+                if (!location.dramaticMessages) {
+                    delete location.dramaticMessages;
+                    delete location.dramaticMessageDuration;
+                }
             } else {
                 delete location.credits;
                 delete location.transitionVideo;
+                delete location.dramaticMessages;
+                delete location.dramaticMessageDuration;
             }
 
             // If ID changed, update the object key and all connections
@@ -5348,7 +5374,9 @@ if (typeof module !== 'undefined' && module.exports) {
                         destructible_walls: loc.destructibleWalls || [],
                         is_final_scene: loc.isFinalScene || false,
                         credits: loc.credits || null,
-                        transition_video: loc.transitionVideo || null
+                        transition_video: loc.transitionVideo || null,
+                        dramatic_messages: loc.dramaticMessages || null,
+                        dramatic_message_duration: loc.dramaticMessageDuration || null
                     });
                 }
 

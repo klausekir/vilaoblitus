@@ -122,7 +122,9 @@ class DatabaseLoader {
                 destructibleWalls: location.destructible_walls || [], // Paredes destrutíveis
                 isFinalScene: location.is_final_scene || false,  // ✅ Cena final com créditos
                 credits: location.credits || null,  // ✅ Array de créditos Star Wars
-                transitionVideo: location.transition_video || null  // ✅ Vídeo de transição
+                transitionVideo: location.transition_video || null,  // ✅ Vídeo de transição
+                dramaticMessages: location.dramatic_messages || null,  // ✅ Mensagens dramáticas antes do vídeo
+                dramaticMessageDuration: location.dramatic_message_duration || 5  // ✅ Duração de cada mensagem (padrão 5s)
             };
 
             if (location.puzzle) {
