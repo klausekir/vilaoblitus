@@ -1579,7 +1579,7 @@
                                     onclick="document.getElementById('puzzle-image-before').click()">
                                 ${puzzleVisual.beforeImage ? '✓ Alterar PNG' : '📁 Upload PNG'}
                             </button>
-                            ${puzzleVisual.beforeImage ? `<img src="${puzzleVisual.beforeImage}" style="image-rendering: crisp-edges;">` : '<div style="font-size: 12px; color: #999;">Sem imagem</div>'}
+                            ${puzzleVisual.beforeImage ? `<img src="${puzzleVisual.beforeImage}" style="max-width: 100%; max-height: 90px; image-rendering: crisp-edges;">` : '<div style="font-size: 12px; color: #999;">Sem imagem</div>'}
                         </div>
 
                         <div style="background: white; border: 1px solid #f0a500; border-radius: 6px; padding: 8px; text-align: center;">
@@ -1589,7 +1589,7 @@
                                     onclick="document.getElementById('puzzle-image-after').click()">
                                 ${puzzleVisual.afterImage ? '✓ Alterar PNG' : '📁 Upload PNG'}
                             </button>
-                            ${puzzleVisual.afterImage ? `<img src="${puzzleVisual.afterImage}" style="image-rendering: crisp-edges;">` : '<div style="font-size: 12px; color: #999;">Sem imagem</div>'}
+                            ${puzzleVisual.afterImage ? `<img src="${puzzleVisual.afterImage}" style="max-width: 100%; max-height: 90px; image-rendering: crisp-edges;">` : '<div style="font-size: 12px; color: #999;">Sem imagem</div>'}
                         </div>
                     </div>
 
