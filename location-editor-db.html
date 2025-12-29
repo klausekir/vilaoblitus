@@ -1192,10 +1192,15 @@
                     }
                     renderLocationsList();
 
-                    // Restaurar localização atual (F5) ou última editada (F4)
+                    // ✅ Verificar parâmetros da URL primeiro (vindo do map-editor)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlLocation = urlParams.get('location');
+                    const urlTab = urlParams.get('tab');
+
+                    // Restaurar localização: URL > última editada (F4) > atual (F5)
                     const currentLocation = localStorage.getItem('editor_current_location');
                     const lastLocation = localStorage.getItem('editor_last_location');
-                    const locationToLoad = lastLocation || currentLocation;
+                    const locationToLoad = urlLocation || lastLocation || currentLocation;
 
                     if (locationToLoad && gameLocations[locationToLoad]) {
                         // Pequeno delay para garantir que a lista foi renderizada
@@ -1203,6 +1208,11 @@
                             selectLocation(locationToLoad);
                             // Limpar apenas o editor_last_location (de F4)
                             localStorage.removeItem('editor_last_location');
+
+                            // ✅ Se veio da URL com tab=visual, trocar para aba de posicionamento visual
+                            if (urlTab === 'visual') {
+                                switchTab('visual');
+                            }
                         }, 100);
                     }
                 } else {
