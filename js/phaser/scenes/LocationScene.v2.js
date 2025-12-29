@@ -534,14 +534,24 @@ class LocationScene extends Phaser.Scene {
 
         let textureKey = null;
 
+        console.log('🧩 Renderizando puzzle:', {
+            puzzleId: puzzle.id,
+            isSolved,
+            hasBeforeImage: !!visual.beforeImage,
+            hasAfterImage: !!visual.afterImage,
+            beforeImagePath: visual.beforeImage,
+            afterImagePath: visual.afterImage
+        });
 
         if (isSolved && visual.afterImage) {
             textureKey = `puzzle_${this.locationData.id}_after`;
         } else if (!isSolved && visual.beforeImage) {
             textureKey = `puzzle_${this.locationData.id}_before`;
         } else {
+            console.warn('⚠️ Nenhuma imagem configurada para o puzzle!');
         }
 
+        console.log('🔑 TextureKey:', textureKey, 'Exists:', textureKey ? this.textures.exists(textureKey) : false);
 
         if (textureKey && this.textures.exists(textureKey)) {
             this.puzzleSprite = this.add.image(x, y, textureKey);
