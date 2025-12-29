@@ -26,7 +26,8 @@
       "Bash(php api/migrations/add-transition-video.php:*)",
       "Bash(start run-migration.html)",
       "Bash(where:*)",
-      "Bash(php -r:*)"
+      "Bash(php -r:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File sobe-git.ps1)"
     ],
     "deny": [],
     "ask": []

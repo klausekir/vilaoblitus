@@ -557,10 +557,8 @@ class LocationScene extends Phaser.Scene {
             this.puzzleSprite = this.add.image(x, y, textureKey);
 
             // ✅ Usar tamanho original da imagem (sem redimensionar)
-            this.puzzleSprite.setScale(1);
             this.puzzleSprite.setOrigin(0, 0); // ✅ Top-left como no editor
-            this.puzzleSprite.displayWidth = this.puzzleSprite.width;
-            this.puzzleSprite.displayHeight = this.puzzleSprite.height;
+            this.puzzleSprite.setScale(1, 1); // ✅ Escala 1:1 sem distorção
 
             console.log('🎨 Puzzle sprite criado:', {
                 textureKey,
