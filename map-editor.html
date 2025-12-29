@@ -896,10 +896,20 @@
             const locId = findLocationAt(pos.x, pos.y);
 
             if (locId) {
+                console.log('🔵 Duplo clique na localização:', locId);
+
                 // Abrir location-editor-db na localização específica e aba de posicionamento visual
+                // Adicionar timestamp para forçar reload
+                const timestamp = Date.now();
+                const url = `location-editor-db.html?location=${encodeURIComponent(locId)}&tab=visual&t=${timestamp}`;
+
                 // Usar nome fixo 'location-editor' para reutilizar a mesma janela
-                const url = `location-editor-db.html?location=${encodeURIComponent(locId)}&tab=visual`;
-                window.open(url, 'location-editor');
+                const editorWindow = window.open(url, 'location-editor');
+
+                // Forçar foco na janela
+                if (editorWindow) {
+                    editorWindow.focus();
+                }
             }
         });
 
