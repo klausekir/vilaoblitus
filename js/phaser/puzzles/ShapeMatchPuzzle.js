@@ -87,12 +87,14 @@ class ShapeMatchPuzzle {
             ease: 'Cubic.easeOut'
         });
 
-        // Remover item e marcar como consumido
+        // ✅ NOVO: Manter item visível mas travado no lugar
         if (draggedObject.itemData && typeof gameStateManager !== 'undefined') {
             const itemId = draggedObject.itemData.id;
 
+            // Remover do inventário
             delete gameStateManager.state.inventory[itemId];
 
+            // Marcar como consumido
             if (!gameStateManager.state.consumedItems) {
                 gameStateManager.state.consumedItems = [];
             }
@@ -100,14 +102,58 @@ class ShapeMatchPuzzle {
                 gameStateManager.state.consumedItems.push(itemId);
             }
 
-            // Remover sprite dropped da cena
+            // ✅ MANTER sprite dropped na cena mas TRAVAR no lugar
             if (this.scene.droppedItemSprites) {
-                const droppedSprite = this.scene.droppedItemSprites.find(s => s.itemData?.id === itemId);
-                if (droppedSprite && droppedSprite.sprite) {
-                    droppedSprite.sprite.destroy();
-                    const spriteIndex = this.scene.droppedItemSprites.indexOf(droppedSprite);
-                    if (spriteIndex > -1) {
-                        this.scene.droppedItemSprites.splice(spriteIndex, 1);
+                const droppedEntry = this.scene.droppedItemSprites.find(s => s.data?.id === itemId);
+                if (droppedEntry && droppedEntry.sprite) {
+                    const moldWorldX = mold.container.x;
+                    const moldWorldY = mold.container.y;
+
+                    // Converter posição do molde para porcentagem
+                    const bounds = this.scene.getBackgroundBounds();
+                    const lockedPosition = this.scene.worldToPercent(moldWorldX, moldWorldY, bounds);
+
+                    // Salvar item como travado no estado do jogo
+                    if (!gameStateManager.state.placedPuzzleItems) {
+                        gameStateManager.state.placedPuzzleItems = {};
+                    }
+                    gameStateManager.state.placedPuzzleItems[itemId] = {
+                        id: itemId,
+                        locationId: this.scene.currentLocation,
+                        position: lockedPosition,
+                        name: droppedEntry.data?.name || itemId,
+                        image: droppedEntry.data?.image,
+                        size: droppedEntry.size,
+                        transform: droppedEntry.transform,
+                        renderMode: droppedEntry.renderMode
+                    };
+
+                    // Mover sprite para a posição exata do molde com animação suave
+                    this.scene.tweens.add({
+                        targets: droppedEntry.sprite,
+                        x: moldWorldX,
+                        y: moldWorldY,
+                        duration: 300,
+                        ease: 'Back.easeOut'
+                    });
+
+                    // Mover label junto
+                    if (droppedEntry.label) {
+                        this.scene.tweens.add({
+                            targets: droppedEntry.label,
+                            x: moldWorldX,
+                            y: moldWorldY + (droppedEntry.size?.height || 80) / 2 + 8,
+                            duration: 300,
+                            ease: 'Back.easeOut'
+                        });
+                    }
+
+                    // ✅ TRAVAR sprite (desabilitar drag)
+                    droppedEntry.locked = true;
+
+                    // Mudar cor da label para indicar que está travado
+                    if (droppedEntry.label) {
+                        droppedEntry.label.setColor('#00ff00'); // Verde = travado
                     }
                 }
             }

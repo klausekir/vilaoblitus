@@ -730,21 +730,33 @@ class LocationScene extends Phaser.Scene {
     renderDroppedItems() {
         this.clearDroppedSprites();
         const droppedItems = gameStateManager.getDroppedItems(this.currentLocation);
-        if (!droppedItems || droppedItems.length === 0) {
-            return;
-        }
         const bounds = this.getBackgroundBounds();
-        droppedItems.forEach(item => {
-            if (!item.dropPosition) return;
 
-            // Não renderizar itens consumidos em puzzles
-            if (gameStateManager.state.consumedItems && gameStateManager.state.consumedItems.includes(item.id)) {
-                return;
-            }
+        // Renderizar itens dropados normais (podem ser movidos)
+        if (droppedItems && droppedItems.length > 0) {
+            droppedItems.forEach(item => {
+                if (!item.dropPosition) return;
 
-            const world = this.percentToWorld(item.dropPosition, bounds);
-            this.createDroppedItemSprite(item, world.x, world.y);
-        });
+                // Não renderizar itens consumidos em puzzles (serão renderizados como placedPuzzleItems)
+                if (gameStateManager.state.consumedItems && gameStateManager.state.consumedItems.includes(item.id)) {
+                    return;
+                }
+
+                const world = this.percentToWorld(item.dropPosition, bounds);
+                this.createDroppedItemSprite(item, world.x, world.y);
+            });
+        }
+
+        // ✅ Renderizar itens travados de puzzles (não podem ser movidos)
+        if (gameStateManager.state.placedPuzzleItems) {
+            Object.values(gameStateManager.state.placedPuzzleItems).forEach(item => {
+                if (item.locationId !== this.currentLocation) return;
+                if (!item.position) return;
+
+                const world = this.percentToWorld(item.position, bounds);
+                this.createDroppedItemSprite(item, world.x, world.y, true); // true = locked
+            });
+        }
     }
 
     calculateRewardDropPlacement(puzzle, reward) {
@@ -804,7 +816,7 @@ class LocationScene extends Phaser.Scene {
         return percent;
     }
 
-    createDroppedItemSprite(item, worldX, worldY) {
+    createDroppedItemSprite(item, worldX, worldY, locked = false) {
         const size = item.dropSize || item.size || { width: 80, height: 80 };
         let transform = item.dropTransform || item.transform || null;
         let renderMode = item.renderMode || (transform ? 'dom' : 'sprite');
@@ -976,7 +988,7 @@ class LocationScene extends Phaser.Scene {
 
         const label = this.add.text(worldX, worldY + size.height / 2 + 8, item.name || item.id, {
             fontSize: '12px',
-            color: '#f0a500',
+            color: locked ? '#00ff00' : '#f0a500', // Verde se travado, amarelo se normal
             backgroundColor: 'rgba(0,0,0,0.7)',
             padding: { x: 6, y: 3 }
         });
@@ -995,7 +1007,8 @@ class LocationScene extends Phaser.Scene {
             size,
             transform,
             renderMode,
-            useDom: actualUseDom  // Usar o valor recalculado!
+            useDom: actualUseDom,  // Usar o valor recalculado!
+            locked: locked  // ✅ Marcar se item está travado
         };
 
         this.attachDroppedItemInteractions(entry);
@@ -1013,7 +1026,7 @@ class LocationScene extends Phaser.Scene {
         if (isDomElement && sprite.node) {
             // Para DOMElements, usar event listeners DOM nativos
             const domNode = sprite.node;
-            domNode.style.cursor = 'pointer';
+            domNode.style.cursor = entry.locked ? 'not-allowed' : 'pointer'; // ✅ Cursor diferente para travados
 
             domNode.addEventListener('pointerdown', (event) => {
                 event.stopPropagation();
@@ -1032,7 +1045,7 @@ class LocationScene extends Phaser.Scene {
         } else if (sprite.setInteractive) {
             // Para sprites Phaser normais
             sprite.setInteractive({
-                useHandCursor: true,
+                useHandCursor: !entry.locked, // ✅ Sem hand cursor se travado
                 pixelPerfect: false
             });
 
@@ -1132,6 +1145,12 @@ class LocationScene extends Phaser.Scene {
 
     startSceneItemDrag(entry, pointerInfo, source = 'sprite') {
         if (!entry || !pointerInfo) return;
+
+        // ✅ Não permitir arrastar itens travados (conectados em puzzles)
+        if (entry.locked) {
+            console.log(`[DRAG] Item ${entry.id} está travado e não pode ser arrastado`);
+            return;
+        }
 
         if (this.activeDroppedItemDrag) {
             this.cancelActiveDroppedItemDrag('replace');
