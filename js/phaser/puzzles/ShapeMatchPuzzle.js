@@ -102,60 +102,72 @@ class ShapeMatchPuzzle {
                 gameStateManager.state.consumedItems.push(itemId);
             }
 
-            // ✅ MANTER sprite dropped na cena mas TRAVAR no lugar
-            if (this.scene.droppedItemSprites) {
-                const droppedEntry = this.scene.droppedItemSprites.find(s => s.data?.id === itemId);
-                if (droppedEntry && droppedEntry.sprite) {
-                    const moldWorldX = mold.container.x;
-                    const moldWorldY = mold.container.y;
+            // ✅ CRIAR sprite travado na posição do molde
+            const moldWorldX = mold.container.x;
+            const moldWorldY = mold.container.y;
 
-                    // Converter posição do molde para porcentagem
-                    const bounds = this.scene.getBackgroundBounds();
-                    const lockedPosition = this.scene.worldToPercent(moldWorldX, moldWorldY, bounds);
+            // Converter posição do molde para porcentagem
+            const bounds = this.scene.getBackgroundBounds();
+            const lockedPosition = this.scene.worldToPercent(moldWorldX, moldWorldY, bounds);
 
-                    // Salvar item como travado no estado do jogo
-                    if (!gameStateManager.state.placedPuzzleItems) {
-                        gameStateManager.state.placedPuzzleItems = {};
-                    }
-                    gameStateManager.state.placedPuzzleItems[itemId] = {
-                        id: itemId,
-                        locationId: this.scene.currentLocation,
-                        position: lockedPosition,
-                        name: droppedEntry.data?.name || itemId,
-                        image: droppedEntry.data?.image,
-                        size: droppedEntry.size,
-                        transform: droppedEntry.transform,
-                        renderMode: droppedEntry.renderMode
-                    };
+            // Pegar dados completos do item do inventário ou database
+            let itemData = null;
+            if (gameStateManager.state.inventory && gameStateManager.state.inventory[itemId]) {
+                itemData = gameStateManager.state.inventory[itemId];
+            } else if (typeof databaseLoader !== 'undefined' && databaseLoader.getItemDefinition) {
+                itemData = databaseLoader.getItemDefinition(itemId);
+            }
 
-                    // Mover sprite para a posição exata do molde com animação suave
+            if (!itemData) {
+                itemData = { id: itemId, name: itemId };
+            }
+
+            // Salvar item como travado no estado do jogo
+            if (!gameStateManager.state.placedPuzzleItems) {
+                gameStateManager.state.placedPuzzleItems = {};
+            }
+            gameStateManager.state.placedPuzzleItems[itemId] = {
+                id: itemId,
+                locationId: this.scene.currentLocation,
+                position: lockedPosition,
+                name: itemData.name || itemId,
+                image: itemData.image,
+                size: itemData.size || { width: 80, height: 80 },
+                transform: itemData.transform,
+                renderMode: itemData.renderMode
+            };
+
+            // ✅ Verificar se já existe sprite na cena (arrastado da cena) ou criar novo (arrastado do inventário)
+            let droppedEntry = this.scene.droppedItemSprites?.find(s => s.data?.id === itemId);
+
+            if (droppedEntry && droppedEntry.sprite) {
+                // Item já estava na cena - mover para o molde
+                this.scene.tweens.add({
+                    targets: droppedEntry.sprite,
+                    x: moldWorldX,
+                    y: moldWorldY,
+                    duration: 300,
+                    ease: 'Back.easeOut'
+                });
+
+                if (droppedEntry.label) {
                     this.scene.tweens.add({
-                        targets: droppedEntry.sprite,
+                        targets: droppedEntry.label,
                         x: moldWorldX,
-                        y: moldWorldY,
+                        y: moldWorldY + (droppedEntry.size?.height || 80) / 2 + 8,
                         duration: 300,
                         ease: 'Back.easeOut'
                     });
-
-                    // Mover label junto
-                    if (droppedEntry.label) {
-                        this.scene.tweens.add({
-                            targets: droppedEntry.label,
-                            x: moldWorldX,
-                            y: moldWorldY + (droppedEntry.size?.height || 80) / 2 + 8,
-                            duration: 300,
-                            ease: 'Back.easeOut'
-                        });
-                    }
-
-                    // ✅ TRAVAR sprite (desabilitar drag)
-                    droppedEntry.locked = true;
-
-                    // Mudar cor da label para indicar que está travado
-                    if (droppedEntry.label) {
-                        droppedEntry.label.setColor('#00ff00'); // Verde = travado
-                    }
                 }
+
+                // Travar sprite
+                droppedEntry.locked = true;
+                if (droppedEntry.label) {
+                    droppedEntry.label.setColor('#00ff00');
+                }
+            } else {
+                // Item veio do inventário - criar sprite travado direto no molde
+                this.scene.createDroppedItemSprite(itemData, moldWorldX, moldWorldY, true);
             }
 
             gameStateManager.saveProgress();
