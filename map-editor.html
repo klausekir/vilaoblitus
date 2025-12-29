@@ -763,20 +763,20 @@
             // MODO TRANSFERIR: selecionar item/puzzle e depois cena destino
             if (editorState.mode === 'transfer') {
                 if (indicator) {
-                    // Primeiro clique: selecionar item/puzzle
+                    // Primeiro clique: selecionar item/puzzle específico
                     const loc = locations[indicator.locId];
-                    let itemIndex = -1;
+                    let itemIndex = indicator.itemIndex !== undefined ? indicator.itemIndex : -1;
+                    let itemId = null;
 
-                    if (indicator.type === 'item') {
-                        // Para items, precisamos saber qual item (se houver múltiplos)
-                        // Por simplicidade, vamos transferir TODOS os items da cena
-                        itemIndex = 0; // Pode expandir para selecionar item específico
+                    if (indicator.type === 'item' && itemIndex >= 0 && loc.items && loc.items[itemIndex]) {
+                        itemId = loc.items[itemIndex].id; // ✅ Pegar ID do item específico
                     }
 
                     editorState.transferSource = {
                         locId: indicator.locId,
                         type: indicator.type,
-                        itemIndex: itemIndex
+                        itemIndex: itemIndex,
+                        itemId: itemId // ✅ Salvar ID do item
                     };
                     editorState.selectedLocation = indicator.locId;
                     updateLocationList();
@@ -786,8 +786,13 @@
                     // Segundo clique: clicar em cena destino
                     const locId = findLocationAt(pos.x, pos.y);
                     if (locId && editorState.transferSource && editorState.transferSource.locId !== locId) {
-                        // Transferir!
-                        transferItemOrPuzzle(editorState.transferSource.locId, locId, editorState.transferSource.type);
+                        // Transferir item específico ou todos
+                        transferItemOrPuzzle(
+                            editorState.transferSource.locId,
+                            locId,
+                            editorState.transferSource.type,
+                            editorState.transferSource.itemId // ✅ Passar ID do item específico
+                        );
                         editorState.transferSource = null;
                         editorState.selectedLocation = null;
                         updateLocationList();
@@ -886,19 +891,26 @@
         });
 
         // Transfer item or puzzle between locations
-        async function transferItemOrPuzzle(fromLocId, toLocId, type) {
+        async function transferItemOrPuzzle(fromLocId, toLocId, type, itemId = null) {
             try {
-                console.log('🔄 Transferindo:', { fromLocId, toLocId, type });
+                console.log('🔄 Transferindo:', { fromLocId, toLocId, type, itemId });
 
                 if (type === 'item') {
+                    // Preparar payload - incluir item_id se for item específico
+                    const payload = {
+                        from_location: fromLocId,
+                        to_location: toLocId
+                    };
+
+                    if (itemId) {
+                        payload.item_id = itemId; // ✅ Transferir apenas este item
+                    }
+
                     // Usar API específica para transferir items
                     const response = await fetch('api/locations/transfer-items.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            from_location: fromLocId,
-                            to_location: toLocId
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     console.log('📤 Resposta transfer:', response.status);
