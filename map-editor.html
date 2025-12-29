@@ -967,8 +967,8 @@
                     div.classList.add('selected');
                 }
                 div.innerHTML = `
-                    <strong>${loc.name}</strong><br>
-                    <small style="color: #666;">ID: ${id}</small>
+                    <strong>${id}</strong><br>
+                    <small style="color: #666;">${loc.name}</small>
                 `;
                 div.addEventListener('click', () => {
                     editorState.selectedLocation = id;
