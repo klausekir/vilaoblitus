@@ -558,6 +558,7 @@ class LocationScene extends Phaser.Scene {
 
             // ✅ Usar tamanho original da imagem (sem redimensionar)
             this.puzzleSprite.setScale(1);
+            this.puzzleSprite.setOrigin(0, 0); // ✅ Top-left como no editor
             this.puzzleSprite.displayWidth = this.puzzleSprite.width;
             this.puzzleSprite.displayHeight = this.puzzleSprite.height;
 
@@ -571,6 +572,8 @@ class LocationScene extends Phaser.Scene {
                 y: this.puzzleSprite.y,
                 scaleX: this.puzzleSprite.scaleX,
                 scaleY: this.puzzleSprite.scaleY,
+                originX: this.puzzleSprite.originX,
+                originY: this.puzzleSprite.originY,
                 visible: this.puzzleSprite.visible
             });
         } else {
