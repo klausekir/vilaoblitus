@@ -5822,14 +5822,6 @@ if (typeof module !== 'undefined' && module.exports) {
                     });
                 }
 
-                // 🐛 Debug: Log puzzle data being sent
-                const locWithPuzzle = allLocations.find(l => l.puzzle);
-                if (locWithPuzzle) {
-                    console.log('📦 Enviando puzzle para', locWithPuzzle.id, ':', locWithPuzzle.puzzle);
-                } else {
-                    console.log('⚠️ Nenhum puzzle encontrado em allLocations');
-                }
-
                 const response = await fetch('api/locations/bulk-save.php', {
                     method: 'POST',
                     headers: {
