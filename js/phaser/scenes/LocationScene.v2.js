@@ -1802,12 +1802,13 @@ class LocationScene extends Phaser.Scene {
             const y = bgY + (item.position.y / 100) * bgHeight;
 
             // ✅ SEMPRE usar sprites Phaser para comportamento consistente durante zoom
-            // Ignorar transforms para todos os itens terem mesmo comportamento
+            // Aplicar transforms básicos (opacity, rotation, scale) sem usar DOM
             const size = item.size || { width: 80, height: 80 };
+            const transform = item.transform || {};
             const textureKey = `item_${item.id}`;
             let element;
 
-            // ✅ Criar sprite Phaser puro (sem transforms, sem DOM)
+            // ✅ Criar sprite Phaser puro (suporta transforms básicos nativamente)
             if (this.textures.exists(textureKey)) {
                 element = this.add.image(x, y, textureKey);
                 element.setDisplaySize(size.width, size.height);
@@ -1821,6 +1822,10 @@ class LocationScene extends Phaser.Scene {
                         newSprite.setDisplaySize(size.width, size.height);
                         newSprite.setOrigin(0.5);
                         newSprite.setDepth(50);
+
+                        // ✅ Aplicar transforms básicos ao sprite carregado
+                        this.applySpriteTransform(newSprite, transform);
+
                         newSprite.setInteractive({ useHandCursor: true });
                         newSprite.on('pointerdown', () => this.collectItem(item));
                         element.destroy();
@@ -1833,10 +1838,14 @@ class LocationScene extends Phaser.Scene {
                 this.load.start();
             }
 
-            // ✅ Configurar sprite com interatividade
+            // ✅ Configurar sprite com interatividade e transforms
             if (element) {
                 element.setOrigin(0.5);
                 element.setDepth(50);
+
+                // ✅ Aplicar transforms básicos (opacity, rotation, scale, flip)
+                this.applySpriteTransform(element, transform);
+
                 element.setInteractive({ useHandCursor: true });
 
                 // Salvar escala original para hover
