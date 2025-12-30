@@ -2065,21 +2065,10 @@
             puzzle.molds.forEach((mold, index) => {
                 const isSelected = selectedVisualType === 'mold' && selectedItemIndex === index;
 
-                // Converter posição de pixels absolutos para porcentagem
-                const visualCanvas = document.getElementById('visual-canvas');
-                const containerWidth = visualCanvas?.offsetWidth || 800;
-                const containerHeight = visualCanvas?.offsetHeight || 600;
-
-                let moldX = mold.x;
-                let moldY = mold.y;
-
-                // Se as coordenadas são em pixels (maiores que 100), converter para %
-                if (moldX > 100) {
-                    moldX = (mold.x / containerWidth) * 100;
-                }
-                if (moldY > 100) {
-                    moldY = (mold.y / containerHeight) * 100;
-                }
+                // ✅ Posições já são armazenadas em porcentagem (0-100+)
+                // Não converter mais, pois causa bug quando % > 100
+                const moldX = mold.x || 50;
+                const moldY = mold.y || 50;
 
                 const moldEl = document.createElement('div');
                 moldEl.dataset.visualType = 'mold';
@@ -4532,8 +4521,8 @@
         function addShapeMatchMold() {
             const mold = {
                 shape: 'circle',
-                x: 400,
-                y: 300,
+                x: 50,  // ✅ Porcentagem (centro horizontal)
+                y: 50,  // ✅ Porcentagem (centro vertical)
                 item: '',
                 label: ''
             };
@@ -4548,10 +4537,10 @@
             const shape = prompt('Forma (circle, square, triangle, rectangle, star):', mold.shape);
             if (shape === null) return;
 
-            const x = prompt('Posição X (pixels):', mold.x);
+            const x = prompt('Posição X (0-100 = porcentagem, >100 = pixels):', mold.x);
             if (x === null) return;
 
-            const y = prompt('Posição Y (pixels):', mold.y);
+            const y = prompt('Posição Y (0-100 = porcentagem, >100 = pixels):', mold.y);
             if (y === null) return;
 
             const item = prompt('ID do Item do inventário:', mold.item);
@@ -4561,8 +4550,25 @@
             if (label === null) return;
 
             mold.shape = shape;
-            mold.x = parseInt(x) || 400;
-            mold.y = parseInt(y) || 300;
+
+            // ✅ Converter pixels para porcentagem se necessário
+            let xVal = parseFloat(x) || 50;
+            let yVal = parseFloat(y) || 50;
+
+            // Se usuário digitou valor > 100, assumir que é pixel e converter para %
+            const visualCanvas = document.getElementById('visual-canvas');
+            const containerWidth = visualCanvas?.offsetWidth || 800;
+            const containerHeight = visualCanvas?.offsetHeight || 600;
+
+            if (xVal > 100) {
+                xVal = (xVal / containerWidth) * 100;
+            }
+            if (yVal > 100) {
+                yVal = (yVal / containerHeight) * 100;
+            }
+
+            mold.x = xVal;
+            mold.y = yVal;
             mold.item = item;
             mold.label = label;
 
