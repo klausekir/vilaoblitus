@@ -4848,14 +4848,17 @@
             if (!currentLocationId) {
                 return;
             }
-            if (!autoSaveEnabled) return; // ✅ Não salvar automaticamente
+            // ✅ REMOVIDO: não bloqueia mais o salvamento na memória
+            // A função sempre salva em gameLocations, mas só sincroniza com banco se autoSaveEnabled
 
             const hasPuzzle = document.getElementById('has-puzzle').checked;
             const location = gameLocations[currentLocationId];
 
             if (!hasPuzzle) {
                 delete location.puzzle;
-                autoSave();
+                if (autoSaveEnabled) {
+                    autoSave();
+                }
                 showToast('✓ Enigma removido!');
                 if (selectedVisualType === 'puzzle') {
                     selectedVisualType = null;
@@ -5014,8 +5017,11 @@
                 ensurePuzzleDefaults(location.puzzle);
             }
 
-            autoSave();
-            showToast('✓ Enigma salvo!');
+            // ✅ Só sincroniza com banco se auto-save habilitado (clicou em Salvar)
+            if (autoSaveEnabled) {
+                autoSave();
+            }
+            showToast('✓ Enigma salvo na memória!');
             renderVisualItemsList();
             renderPositionedItems();
         }
