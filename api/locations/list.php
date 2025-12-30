@@ -121,6 +121,8 @@ try {
                 h.shadow_blur,
                 h.shadow_offset_x,
                 h.shadow_offset_y,
+                h.arrow_direction,
+                h.zoom_direction,
                 i.image as item_image
             FROM hotspots h
             LEFT JOIN items i ON h.item_id = i.id AND h.type = 'item'
