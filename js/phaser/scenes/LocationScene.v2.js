@@ -44,7 +44,6 @@ class LocationScene extends Phaser.Scene {
         // Show a small loading indication (optional, Phaser handles the wait)
         // this.add.text(...) 
 
-        console.log(`[LocationScene] Lazy Loading assets for: ${this.currentLocation}`);
 
         // Logic similar to BootScene, but specific to this location
 
@@ -418,8 +417,6 @@ class LocationScene extends Phaser.Scene {
             // Se não é uma tecla de seta, ignora
             if (!direction) return;
 
-            console.log('[KEYBOARD] Seta pressionada:', event.key, '→ Direção:', direction);
-
             // Verificar se há puzzle ativo - não navega se tiver
             // ShapeMatchPuzzle NÃO bloqueia navegação (os moldes ficam na cena normal)
             const puzzleOverlay = document.getElementById('puzzle-overlay');
@@ -436,25 +433,12 @@ class LocationScene extends Phaser.Scene {
 
             const isPuzzleActive = overlayActive || managerActive;
 
-            console.log('[KEYBOARD] Verificação puzzle:', {
-                overlayExists: !!puzzleOverlay,
-                overlayDisplay: puzzleOverlay?.style.display,
-                overlayActive,
-                managerActive,
-                activePuzzleType: this.puzzleManager?.activePuzzle?.constructor?.name,
-                isPuzzleActive
-            });
-
             if (isPuzzleActive) {
-                console.log('[KEYBOARD] Puzzle ativo - navegação bloqueada');
                 return;
             }
 
             // Procurar hotspot com a direção correspondente
             const hotspot = this.locationData.hotspots?.find(h => h.arrowDirection === direction);
-
-            console.log('[KEYBOARD] Hotspots disponíveis:', this.locationData.hotspots?.map(h => ({ label: h.label, arrow: h.arrowDirection })));
-            console.log('[KEYBOARD] Hotspot encontrado para', direction, ':', hotspot ? hotspot.label : 'NENHUM');
 
             if (hotspot) {
                 // Navegar para o hotspot encontrado
