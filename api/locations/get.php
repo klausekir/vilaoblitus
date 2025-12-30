@@ -69,7 +69,9 @@ try {
             item_id,
             is_display_item,
             display_image,
-            interaction_data
+            interaction_data,
+            arrow_direction,
+            zoom_direction
         FROM hotspots
         WHERE location_id = ?
         ORDER BY type, id

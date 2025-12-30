@@ -33,7 +33,10 @@
       "Bash(node --version:*)",
       "Bash(node query-db.js:*)",
       "Bash(npm install:*)",
-      "Bash(node check-arrows.js:*)"
+      "Bash(node check-arrows.js:*)",
+      "Bash(php:*)",
+      "Bash(node add-arrow-column.js:*)",
+      "Bash(node set-arrows.js:*)"
     ],
     "deny": [],
     "ask": []

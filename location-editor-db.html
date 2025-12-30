@@ -3341,6 +3341,27 @@
                 delete hotspot.arrowDirection;
             }
 
+            // ✅ Campo para direção do zoom (sensação de movimento ao navegar)
+            const currentZoom = hotspot.zoomDirection || '';
+            const newZoom = prompt(
+                'Direção do zoom ao navegar (sensação de movimento):\n' +
+                '- in (entrar/aproximar)\n' +
+                '- out (sair/afastar)\n' +
+                '- deixe vazio para não usar zoom\n\n' +
+                'Digite a direção:',
+                currentZoom
+            );
+            if (newZoom === null) return;
+
+            // ✅ Salvar direção do zoom (só se for uma direção válida)
+            const validZooms = ['in', 'out'];
+            if (newZoom && validZooms.includes(newZoom.toLowerCase())) {
+                hotspot.zoomDirection = newZoom.toLowerCase();
+            } else {
+                // Remove o campo se vazio ou inválido
+                delete hotspot.zoomDirection;
+            }
+
             if (oldTarget !== newTarget) {
                 if (!location.connections) location.connections = [];
                 if (!location.connections.includes(newTarget)) {
