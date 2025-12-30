@@ -5579,6 +5579,24 @@ if (typeof module !== 'undefined' && module.exports) {
                     locationOrder.push(loc.id);
                 });
 
+                // ✅ Construir array de connections a partir dos hotspots de navegação
+                console.log('🔗 Construindo connections a partir dos hotspots...');
+                for (const locationId in gameLocations) {
+                    const location = gameLocations[locationId];
+                    location.connections = []; // Limpar primeiro
+
+                    // Para cada hotspot de navegação, adicionar à lista de connections
+                    (location.hotspots || []).forEach(h => {
+                        if (h.action === 'navigate' && h.target && h.target.trim() !== '') {
+                            // Adicionar conexão se ainda não existe
+                            if (!location.connections.includes(h.target)) {
+                                location.connections.push(h.target);
+                                console.log(`  ✅ ${locationId} → ${h.target}`);
+                            }
+                        }
+                    });
+                }
+
                 // Save to IndexedDB
                 await saveToIndexedDB('editorData', {
                     locations: gameLocations,
