@@ -181,6 +181,7 @@ class DatabaseLoader {
                     width: parseFloat(h.width),
                     height: parseFloat(h.height)
                 },
+                arrowDirection: h.arrow_direction,
                 zoomDirection: h.zoom_direction
             };
 
