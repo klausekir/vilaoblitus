@@ -135,6 +135,9 @@ class LocationScene extends Phaser.Scene {
 
         // Setup drag para mover a câmera quando em zoom
         this.setupDragPan();
+
+        // Setup navegação por teclado (setas)
+        this.setupKeyboardNavigation();
     }
 
     handleResize(gameSize) {
@@ -380,6 +383,39 @@ class LocationScene extends Phaser.Scene {
         // Listener para quando o pointer sai da tela
         this.input.on('pointerout', () => {
             this.isDragging = false;
+        });
+    }
+
+    setupKeyboardNavigation() {
+        // Mapear teclas de seta para direções de hotspot
+        const arrowKeyMap = {
+            'ArrowUp': 'up',
+            'ArrowDown': 'down',
+            'ArrowLeft': 'left',
+            'ArrowRight': 'right'
+        };
+
+        // Listener para teclas pressionadas
+        this.input.keyboard.on('keydown', (event) => {
+            const direction = arrowKeyMap[event.key];
+
+            // Se não é uma tecla de seta, ignora
+            if (!direction) return;
+
+            // Verificar se há puzzle ativo - não navega se tiver
+            const puzzleOverlay = document.getElementById('puzzle-overlay');
+            const isPuzzleActive = (puzzleOverlay && puzzleOverlay.style.display === 'flex') ||
+                (this.puzzleManager && this.puzzleManager.isAnyPuzzleActive && this.puzzleManager.isAnyPuzzleActive());
+
+            if (isPuzzleActive) return;
+
+            // Procurar hotspot com a direção correspondente
+            const hotspot = this.locationData.hotspots?.find(h => h.arrowDirection === direction);
+
+            if (hotspot) {
+                // Navegar para o hotspot encontrado
+                this.handleHotspotClick(hotspot);
+            }
         });
     }
 
@@ -1734,6 +1770,8 @@ class LocationScene extends Phaser.Scene {
             const label = this.add.text(labelCenterX, labelCenterY, hotspot.label, {
                 fontSize: '18px',
                 color: '#f0a500',
+                stroke: '#000000',
+                strokeThickness: 4,
                 padding: { x: 10, y: 6 },
                 fontStyle: 'bold'
             });
