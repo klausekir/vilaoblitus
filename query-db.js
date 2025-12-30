@@ -10,37 +10,28 @@ async function queryDatabase() {
     });
 
     try {
-        // Listar todas as tabelas
-        const [tables] = await connection.execute('SHOW TABLES');
-        console.log('=== TODAS AS TABELAS ===');
-        console.log(tables.map(t => Object.values(t)[0]).join(', '));
+        // Buscar todas as locations que contenham triangulo no campo puzzle
+        const [locs] = await connection.execute("SELECT id, name, puzzle FROM locations WHERE puzzle LIKE '%triangulo%'");
 
-        // Buscar circulo e triangulo
-        const [items] = await connection.execute("SELECT * FROM items WHERE id IN ('circulo', 'triangulo')");
-        console.log('\n=== CIRCULO E TRIANGULO ===');
-        console.table(items);
+        console.log(`=== LOCATIONS COM TRIÂNGULO (${locs.length} encontradas) ===\n`);
 
-        // Verificar estrutura da tabela locations
-        const [locDesc] = await connection.execute("DESCRIBE locations");
-        console.log('\n=== ESTRUTURA DA TABELA LOCATIONS ===');
-        console.table(locDesc);
-
-        // Buscar locations que contenham circulo ou triangulo no puzzle JSON
-        const [locs] = await connection.execute("SELECT id, name, puzzle FROM locations WHERE puzzle LIKE '%circulo%' OR puzzle LIKE '%triangulo%'");
-        console.log('\n=== LOCATIONS COM CIRCULO OU TRIANGULO ===');
         locs.forEach(loc => {
-            console.log(`\n--- ${loc.id} (${loc.name}) ---`);
+            console.log(`📍 ${loc.id} (${loc.name})`);
+
             if (loc.puzzle) {
                 try {
                     const puzzleData = JSON.parse(loc.puzzle);
+
                     if (puzzleData.items) {
-                        const filtered = puzzleData.items.filter(i => i.id === 'circulo' || i.id === 'triangulo');
-                        if (filtered.length > 0) {
-                            console.log(JSON.stringify(filtered, null, 2));
+                        const triangulo = puzzleData.items.find(i => i.id === 'triangulo');
+                        if (triangulo) {
+                            console.log('🔺 TRIÂNGULO:');
+                            console.log(JSON.stringify(triangulo, null, 2));
+                            console.log('');
                         }
                     }
                 } catch (e) {
-                    console.log('Erro ao parsear puzzle:', e.message);
+                    console.log('❌ Erro ao parsear puzzle:', e.message);
                 }
             }
         });

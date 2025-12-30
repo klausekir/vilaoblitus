@@ -1817,6 +1817,7 @@ class LocationScene extends Phaser.Scene {
 
             if (needsDOM) {
                 // ✅ Usar DOM element para transforms 3D/skew
+                console.log(`[RENDER] Item ${item.id} usa DOM (tem transforms 3D/skew)`, transform);
                 const wrapper = document.createElement('div');
                 wrapper.style.position = 'relative';
                 wrapper.style.width = `${size.width}px`;
