@@ -1734,7 +1734,6 @@ class LocationScene extends Phaser.Scene {
             const label = this.add.text(labelCenterX, labelCenterY, hotspot.label, {
                 fontSize: '18px',
                 color: '#f0a500',
-                backgroundColor: '#000000',
                 padding: { x: 10, y: 6 },
                 fontStyle: 'bold'
             });
