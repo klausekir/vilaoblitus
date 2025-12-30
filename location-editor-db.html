@@ -2999,8 +2999,15 @@
                 };
                 const arrowDisplay = hotspot.arrowDirection ? arrowEmoji[hotspot.arrowDirection] || '' : '';
 
+                // ✅ Emoji de zoom baseado em zoomDirection
+                const zoomEmoji = {
+                    'in': '🔍+',
+                    'out': '🔍-'
+                };
+                const zoomDisplay = hotspot.zoomDirection ? zoomEmoji[hotspot.zoomDirection] || '' : '';
+
                 hotspotEl.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 4px;">📍 ${hotspot.name || 'Hotspot ' + (index + 1)} ${arrowDisplay}</div>
+                <div style="font-weight: bold; margin-bottom: 4px;">📍 ${hotspot.name || 'Hotspot ' + (index + 1)} ${arrowDisplay} ${zoomDisplay}</div>
                         <div style="color: #666; font-size: 10px;">→ ${hotspot.target || 'destino'}</div>
                         <div style="margin-top: 6px; display: flex; gap: 4px;">
                             <button onclick="editVisualHotspot(${index})" style="flex: 1; padding: 4px; font-size: 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">✏️ Editar</button>
