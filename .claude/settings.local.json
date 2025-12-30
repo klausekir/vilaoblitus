@@ -27,7 +27,8 @@
       "Bash(start run-migration.html)",
       "Bash(where:*)",
       "Bash(php -r:*)",
-      "Bash(powershell -ExecutionPolicy Bypass -File sobe-git.ps1)"
+      "Bash(powershell -ExecutionPolicy Bypass -File sobe-git.ps1)",
+      "Bash(mysql:*)"
     ],
     "deny": [],
     "ask": []

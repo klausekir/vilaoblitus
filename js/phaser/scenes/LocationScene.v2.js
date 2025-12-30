@@ -1946,8 +1946,9 @@ class LocationScene extends Phaser.Scene {
                     this.collectItem(item, element);
                 });
 
-            } else {
-                // Sem rotação 3D - usar Phaser Image normal
+            } else { // ✅ CÓDIGO ANTIGO - TB DESABILITADO
+                // Este bloco else está desabilitado - código acima já criou sprite
+                if (false) {
                 const textureKey = 'item_' + item.id;
                 const hasTexture = this.textures.exists(textureKey);
 
@@ -1963,7 +1964,7 @@ class LocationScene extends Phaser.Scene {
 
                     element.setOrigin(0.5);
                     element.setDepth(50); // Prioridade sobre hotspots (depth 10)
-                    this.applySpriteTransform(element, transform);
+                    // this.applySpriteTransform removido
 
                     // Make it interactive
                     element.setInteractive({ useHandCursor: true });
@@ -2001,6 +2002,7 @@ class LocationScene extends Phaser.Scene {
                     element.setOrigin(0.5);
                     element.setDepth(50); // Prioridade sobre hotspots (depth 10)
                 }
+                } // Fecha if (false) da linha 1951
             }
 
             this.items.push({ sprite: element, data: item });
