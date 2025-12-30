@@ -142,13 +142,17 @@ class ShapeMatchPuzzle {
             let droppedEntry = this.scene.droppedItemSprites?.find(s => s.data?.id === itemId);
 
             if (droppedEntry && droppedEntry.sprite) {
-                // Item já estava na cena - mover para o molde
+                // Item já estava na cena - mover para o molde e adicionar como filho do container
                 this.scene.tweens.add({
                     targets: droppedEntry.sprite,
-                    x: moldWorldX,
-                    y: moldWorldY,
+                    x: 0, // Posição relativa ao container (centro)
+                    y: 0,
                     duration: 300,
-                    ease: 'Back.easeOut'
+                    ease: 'Back.easeOut',
+                    onComplete: () => {
+                        // Adicionar sprite como filho do container do molde
+                        mold.container.add(droppedEntry.sprite);
+                    }
                 });
 
                 // ✅ Remover label quando item for travado no molde
@@ -157,17 +161,26 @@ class ShapeMatchPuzzle {
                     droppedEntry.label = null;
                 }
 
-                // Travar sprite
+                // Travar sprite e salvar referência do molde
                 droppedEntry.locked = true;
+                droppedEntry.moldContainer = mold.container;
             } else {
                 // Item veio do inventário - criar sprite travado direto no molde
                 this.scene.createDroppedItemSprite(itemData, moldWorldX, moldWorldY, true);
 
-                // ✅ Remover label do item recém-criado
+                // ✅ Remover label e adicionar ao container do molde
                 const newEntry = this.scene.droppedItemSprites?.find(s => s.data?.id === itemId);
-                if (newEntry && newEntry.label) {
-                    newEntry.label.destroy();
-                    newEntry.label = null;
+                if (newEntry) {
+                    if (newEntry.label) {
+                        newEntry.label.destroy();
+                        newEntry.label = null;
+                    }
+                    // Adicionar sprite como filho do container (coordenadas relativas)
+                    newEntry.sprite.x = 0;
+                    newEntry.sprite.y = 0;
+                    mold.container.add(newEntry.sprite);
+                    newEntry.locked = true;
+                    newEntry.moldContainer = mold.container;
                 }
             }
 
