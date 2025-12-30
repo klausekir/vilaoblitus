@@ -285,12 +285,12 @@ class LocationScene extends Phaser.Scene {
     updateDOMElementsScale() {
         const zoom = this.cameras.main.zoom;
 
-        // Escalar wrapper via Phaser (mantém transforms da img)
+        // ✅ Itens normais da cena: manter escala fixa (não crescer com zoom)
         if (this.items && Array.isArray(this.items)) {
             this.items.forEach(item => {
                 if (item.sprite && item.sprite.node && item.sprite.baseTransformString) {
-                    // Escalar o wrapper via Phaser
-                    item.sprite.setScale(zoom);
+                    // ✅ Manter escala 1 para comportamento consistente (não crescer com zoom)
+                    item.sprite.setScale(1);
                 }
             });
         }
