@@ -874,7 +874,7 @@
 
     <!-- Save Button -->
     <div class="export-section">
-        <button class="export-btn" onclick="syncToDatabase()" style="background: #28a745;">💾 Salvar</button>
+        <button class="export-btn" onclick="autoSaveEnabled = true; syncToDatabase().then(() => autoSaveEnabled = false);" style="background: #28a745;">💾 Salvar</button>
     </div>
 
     <!-- Save Indicator -->
@@ -901,6 +901,7 @@
         let currentLocationId = null;
         let currentTab = 'basic';
         let currentPuzzleType = null;
+        let autoSaveEnabled = false; // ✅ Desabilitar salvamento automático
         let locationOrder = []; // Track order of locations for drag-and-drop
         let draggedElement = null;
 
@@ -4049,6 +4050,7 @@
 
         function saveBasicInfo(triggerAutoSave = true) {
             if (!currentLocationId) return;
+            if (!autoSaveEnabled) return; // ✅ Não salvar automaticamente
 
             const oldId = currentLocationId;
             const newId = document.getElementById('edit-id').value.trim();
@@ -4615,6 +4617,7 @@
             if (!currentLocationId) {
                 return;
             }
+            if (!autoSaveEnabled) return; // ✅ Não salvar automaticamente
 
             const hasPuzzle = document.getElementById('has-puzzle').checked;
             const location = gameLocations[currentLocationId];
@@ -5428,6 +5431,7 @@ if (typeof module !== 'undefined' && module.exports) {
         }
 
         async function syncToDatabase(silent = false) {
+            if (!autoSaveEnabled) return; // ✅ Não salvar automaticamente
 
             // IMPORTANTE: Salvar informações básicas da localização atual ANTES de sincronizar
             if (currentLocationId) {
