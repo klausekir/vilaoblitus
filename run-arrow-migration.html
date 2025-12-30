@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Executar Migration - Arrow Direction</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+        #result {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #f0a500;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Migration: Adicionar Arrow Direction</h1>
+    <p>Esta migration adiciona a coluna <code>arrow_direction</code> na tabela <code>hotspots</code>.</p>
+
+    <button onclick="runMigration()">▶️ Executar Migration</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function runMigration() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ Executando migration...';
+
+            try {
+                const response = await fetch('api/migrations/add-arrow-direction.php');
+                const text = await response.text();
+
+                if (text.includes('✅')) {
+                    resultDiv.className = 'success';
+                } else if (text.includes('❌')) {
+                    resultDiv.className = 'error';
+                }
+
+                resultDiv.textContent = text;
+
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = '❌ Erro ao executar migration:\n' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

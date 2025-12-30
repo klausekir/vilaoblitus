@@ -32,7 +32,8 @@
       "Bash(cmd /c dir \"C:\\\\tools\\\\mysql\\\\current\\\\lib\\\\plugin\\\\*.dll\")",
       "Bash(node --version:*)",
       "Bash(node query-db.js:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(node check-arrows.js:*)"
     ],
     "deny": [],
     "ask": []
