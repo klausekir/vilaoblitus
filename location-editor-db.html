@@ -4152,6 +4152,35 @@
             renderPuzzleOptions(type);
         }
 
+        // Helper: HTML comum para ação ao resolver puzzle
+        function getUnlockActionHTML() {
+            return `
+                <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <label style="font-size: 14px; font-weight: bold; color: #333;">🎯 Ação ao Resolver Enigma</label>
+                    <select id="puzzle-unlock-action-type" onchange="savePuzzle(); toggleUnlockActionFields()">
+                        <option value="">Nenhuma ação (só mostrar mensagem)</option>
+                        <option value="changeBackground">Trocar Imagem de Fundo</option>
+                        <option value="navigate">Navegar para Outra Localização</option>
+                    </select>
+                </div>
+                <div class="form-group" id="unlock-new-background-group" style="display: none;">
+                    <label>Nova Imagem de Fundo</label>
+                    <input type="text" id="puzzle-new-background" placeholder="images/scenes/porta_aberta.jpg" onchange="savePuzzle()">
+                    <div class="form-hint">Imagem mostrada após resolver o enigma</div>
+                </div>
+                <div class="form-group" id="unlock-target-location-group" style="display: none;">
+                    <label>Localização de Destino</label>
+                    <input type="text" id="puzzle-target-location" placeholder="sala_secreta" onchange="savePuzzle()">
+                    <div class="form-hint">ID da localização para navegar após resolver</div>
+                </div>
+                <div class="form-group" id="unlock-message-group" style="display: none;">
+                    <label>Mensagem Customizada (opcional)</label>
+                    <input type="text" id="puzzle-unlock-message" placeholder="O caminho se abriu!" onchange="savePuzzle()">
+                    <div class="form-hint">Mensagem mostrada ao executar a ação</div>
+                </div>
+            `;
+        }
+
         // Render puzzle options based on type
         function renderPuzzleOptions(type) {
             const container = document.getElementById('puzzle-options-container');
@@ -4233,6 +4262,8 @@
                         <label>Itens Necessários (IDs separados por vírgula)</label>
                         <input type="text" id="puzzle-required-items" placeholder="item1, item2" onchange="savePuzzle()">
                     </div>
+
+                    ${getUnlockActionHTML()}
                 `,
                 padlock_5digit: `
                     <div class="form-group">
@@ -4240,23 +4271,8 @@
                         <input type="text" id="puzzle-secret-code" maxlength="5" pattern="[0-9]{5}" placeholder="12345" onchange="savePuzzle()">
                         <div class="form-hint">Digite exatamente 5 números (0-9)</div>
                     </div>
-                    <div class="form-group">
-                        <label>Ação ao Destravar</label>
-                        <select id="puzzle-unlock-action-type" onchange="savePuzzle(); togglePadlockActionFields()">
-                            <option value="changeBackground">Trocar Imagem de Fundo</option>
-                            <option value="navigate">Navegar para Outra Localização</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="padlock-new-background-group">
-                        <label>Nova Imagem de Fundo (portão aberto)</label>
-                        <input type="text" id="puzzle-new-background" placeholder="images/scenes/portao_aberto.jpg" onchange="savePuzzle()">
-                        <div class="form-hint">Caminho da imagem que será mostrada após destravar o cadeado</div>
-                    </div>
-                    <div class="form-group" id="padlock-target-location-group" style="display: none;">
-                        <label>Localização de Destino</label>
-                        <input type="text" id="puzzle-target-location" placeholder="area_exterior" onchange="savePuzzle()">
-                        <div class="form-hint">ID da localização para navegar após destravar</div>
-                    </div>
+
+                    ${getUnlockActionHTML()}
                 `,
                 egyptian: `
                     <div class="form-group">
@@ -4310,6 +4326,8 @@
                         <textarea id="puzzle-hints" placeholder='[{"text": "Procure os papiros..."}]' onchange="savePuzzle()"></textarea>
                         <div class="form-hint">Formato: Array de objetos com propriedade "text"</div>
                     </div>
+
+                    ${getUnlockActionHTML()}
                 `,
                 shape_match: `
                     <div class="form-group">
@@ -4336,6 +4354,8 @@
                         <textarea id="puzzle-hints" placeholder='[{"text": "Observe as formas dos moldes..."}]' onchange="savePuzzle()"></textarea>
                         <div class="form-hint">Formato: Array de objetos com propriedade "text"</div>
                     </div>
+
+                    ${getUnlockActionHTML()}
                 `
             };
 
@@ -4417,23 +4437,6 @@
                 } else if (puzzle.type === 'padlock_5digit') {
                     const secretCodeEl = document.getElementById('puzzle-secret-code');
                     if (secretCodeEl && puzzle.secretCode) secretCodeEl.value = puzzle.secretCode;
-
-                    const actionTypeEl = document.getElementById('puzzle-unlock-action-type');
-                    if (actionTypeEl && puzzle.onUnlockedAction) {
-                        actionTypeEl.value = puzzle.onUnlockedAction.type || 'changeBackground';
-                    }
-
-                    const newBackgroundEl = document.getElementById('puzzle-new-background');
-                    if (newBackgroundEl && puzzle.onUnlockedAction?.newBackground) {
-                        newBackgroundEl.value = puzzle.onUnlockedAction.newBackground;
-                    }
-
-                    const targetLocationEl = document.getElementById('puzzle-target-location');
-                    if (targetLocationEl && puzzle.onUnlockedAction?.targetLocation) {
-                        targetLocationEl.value = puzzle.onUnlockedAction.targetLocation;
-                    }
-
-                    togglePadlockActionFields();
                 } else if (puzzle.type === 'shape_match') {
                     const titleEl = document.getElementById('puzzle-title');
                     if (titleEl && puzzle.title) titleEl.value = puzzle.title;
@@ -4452,6 +4455,29 @@
                         renderShapeMatchMolds();
                     }
                 }
+
+                // ✅ Carregar unlock action para TODOS os tipos de puzzle
+                const actionTypeEl = document.getElementById('puzzle-unlock-action-type');
+                if (actionTypeEl && puzzle.onUnlockedAction) {
+                    actionTypeEl.value = puzzle.onUnlockedAction.type || '';
+                }
+
+                const newBackgroundEl = document.getElementById('puzzle-new-background');
+                if (newBackgroundEl && puzzle.onUnlockedAction?.newBackground) {
+                    newBackgroundEl.value = puzzle.onUnlockedAction.newBackground;
+                }
+
+                const targetLocationEl = document.getElementById('puzzle-target-location');
+                if (targetLocationEl && puzzle.onUnlockedAction?.targetLocation) {
+                    targetLocationEl.value = puzzle.onUnlockedAction.targetLocation;
+                }
+
+                const unlockMessageEl = document.getElementById('puzzle-unlock-message');
+                if (unlockMessageEl && puzzle.onUnlockedAction?.message) {
+                    unlockMessageEl.value = puzzle.onUnlockedAction.message;
+                }
+
+                toggleUnlockActionFields();
 
                 if (puzzle.reward) {
                     document.getElementById('puzzle-reward-id').value = puzzle.reward.id || '';
@@ -4477,18 +4503,26 @@
             return names[type] || type;
         }
 
-        // Toggle padlock action fields
-        function togglePadlockActionFields() {
+        // Toggle unlock action fields (para todos os tipos de puzzle)
+        function toggleUnlockActionFields() {
             const actionType = document.getElementById('puzzle-unlock-action-type')?.value;
-            const backgroundGroup = document.getElementById('padlock-new-background-group');
-            const locationGroup = document.getElementById('padlock-target-location-group');
+            const backgroundGroup = document.getElementById('unlock-new-background-group');
+            const locationGroup = document.getElementById('unlock-target-location-group');
+            const messageGroup = document.getElementById('unlock-message-group');
 
-            if (actionType === 'changeBackground') {
+            if (!actionType || actionType === '') {
+                // Nenhuma ação
+                if (backgroundGroup) backgroundGroup.style.display = 'none';
+                if (locationGroup) locationGroup.style.display = 'none';
+                if (messageGroup) messageGroup.style.display = 'none';
+            } else if (actionType === 'changeBackground') {
                 if (backgroundGroup) backgroundGroup.style.display = 'block';
                 if (locationGroup) locationGroup.style.display = 'none';
+                if (messageGroup) messageGroup.style.display = 'block';
             } else if (actionType === 'navigate') {
                 if (backgroundGroup) backgroundGroup.style.display = 'none';
                 if (locationGroup) locationGroup.style.display = 'block';
+                if (messageGroup) messageGroup.style.display = 'none';
             }
         }
 
@@ -4675,20 +4709,6 @@
             } else if (currentPuzzleType === 'padlock_5digit') {
                 const secretCodeEl = document.getElementById('puzzle-secret-code');
                 if (secretCodeEl) puzzle.secretCode = secretCodeEl.value;
-
-                const actionTypeEl = document.getElementById('puzzle-unlock-action-type');
-                const newBackgroundEl = document.getElementById('puzzle-new-background');
-                const targetLocationEl = document.getElementById('puzzle-target-location');
-
-                puzzle.onUnlockedAction = {
-                    type: actionTypeEl ? actionTypeEl.value : 'changeBackground'
-                };
-
-                if (puzzle.onUnlockedAction.type === 'changeBackground' && newBackgroundEl) {
-                    puzzle.onUnlockedAction.newBackground = newBackgroundEl.value;
-                } else if (puzzle.onUnlockedAction.type === 'navigate' && targetLocationEl) {
-                    puzzle.onUnlockedAction.targetLocation = targetLocationEl.value;
-                }
             } else if (currentPuzzleType === 'shape_match') {
                 const titleEl = document.getElementById('puzzle-title');
                 if (titleEl && titleEl.value) puzzle.title = titleEl.value;
@@ -4708,6 +4728,32 @@
 
                 // Salvar moldes
                 puzzle.molds = currentMolds.map(m => ({ ...m }));
+            }
+
+            // ✅ Salvar unlock action para TODOS os tipos de puzzle
+            const actionTypeEl = document.getElementById('puzzle-unlock-action-type');
+            const newBackgroundEl = document.getElementById('puzzle-new-background');
+            const targetLocationEl = document.getElementById('puzzle-target-location');
+            const unlockMessageEl = document.getElementById('puzzle-unlock-message');
+
+            if (actionTypeEl && actionTypeEl.value) {
+                puzzle.onUnlockedAction = {
+                    type: actionTypeEl.value
+                };
+
+                if (puzzle.onUnlockedAction.type === 'changeBackground' && newBackgroundEl && newBackgroundEl.value) {
+                    puzzle.onUnlockedAction.newBackground = newBackgroundEl.value;
+                } else if (puzzle.onUnlockedAction.type === 'navigate' && targetLocationEl && targetLocationEl.value) {
+                    puzzle.onUnlockedAction.targetLocation = targetLocationEl.value;
+                }
+
+                // Mensagem customizada (opcional)
+                if (unlockMessageEl && unlockMessageEl.value) {
+                    puzzle.onUnlockedAction.message = unlockMessageEl.value;
+                }
+            } else {
+                // Se não tem ação selecionada, remover onUnlockedAction
+                delete puzzle.onUnlockedAction;
             }
 
             const rewardId = document.getElementById('puzzle-reward-id').value;
