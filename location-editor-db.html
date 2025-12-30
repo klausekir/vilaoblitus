@@ -5038,20 +5038,21 @@
                 if (hotspot.action === 'navigate') {
                     arrowDirectionDropdown = `
                         <div class="form-group" style="margin-top: 10px;">
-                            <label style="font-size: 12px;">Direção da Seta</label>
+                            <label style="font-size: 12px;">⌨️ Direção da Seta (Teclado)</label>
                             <select onchange="updateHotspotArrowDirection(${index}, this.value)" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="right" ${hotspot.arrowDirection === 'right' ? 'selected' : ''}>Direita</option>
-                                <option value="left" ${hotspot.arrowDirection === 'left' ? 'selected' : ''}>Esquerda</option>
-                                <option value="up" ${hotspot.arrowDirection === 'up' ? 'selected' : ''}>Cima</option>
-                                <option value="down" ${hotspot.arrowDirection === 'down' ? 'selected' : ''}>Baixo</option>
+                                <option value="" ${!hotspot.arrowDirection ? 'selected' : ''}>— Nenhuma —</option>
+                                <option value="up" ${hotspot.arrowDirection === 'up' ? 'selected' : ''}>⬆️ Cima</option>
+                                <option value="down" ${hotspot.arrowDirection === 'down' ? 'selected' : ''}>⬇️ Baixo</option>
+                                <option value="left" ${hotspot.arrowDirection === 'left' ? 'selected' : ''}>⬅️ Esquerda</option>
+                                <option value="right" ${hotspot.arrowDirection === 'right' ? 'selected' : ''}>➡️ Direita</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-top: 10px;">
                             <label style="font-size: 12px;">🔍 Tipo de Zoom</label>
                             <select onchange="updateHotspotZoomDirection(${index}, this.value)" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="in" ${!hotspot.zoomDirection || hotspot.zoomDirection === 'in' ? 'selected' : ''}>🔎 Zoom In (aproximar)</option>
-                                <option value="out" ${hotspot.zoomDirection === 'out' ? 'selected' : ''}>🔍 Zoom Out (afastar)</option>
-                                <option value="none" ${hotspot.zoomDirection === 'none' ? 'selected' : ''}>➡️ Sem Zoom</option>
+                                <option value="" ${!hotspot.zoomDirection ? 'selected' : ''}>— Nenhum —</option>
+                                <option value="in" ${hotspot.zoomDirection === 'in' ? 'selected' : ''}>🔍+ In (aproximar)</option>
+                                <option value="out" ${hotspot.zoomDirection === 'out' ? 'selected' : ''}>🔍- Out (afastar)</option>
                             </select>
                         </div>
                     `;
