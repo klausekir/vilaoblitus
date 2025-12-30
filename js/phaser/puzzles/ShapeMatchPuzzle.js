@@ -133,8 +133,9 @@ class ShapeMatchPuzzle {
                 name: itemData.name || itemId,
                 image: itemData.image,
                 size: itemData.size || { width: 80, height: 80 },
-                transform: itemData.transform,
-                renderMode: itemData.renderMode
+                // ✅ NÃO copiar transforms - itens travados devem ter tamanho natural
+                transform: null,
+                renderMode: 'sprite' // ✅ Forçar sprite normal (não DOM) para seguir zoom da câmera
             };
 
             // ✅ Verificar se já existe sprite na cena (arrastado da cena) ou criar novo (arrastado do inventário)

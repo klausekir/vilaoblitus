@@ -299,16 +299,18 @@ class LocationScene extends Phaser.Scene {
         if (this.droppedItemSprites && Array.isArray(this.droppedItemSprites)) {
             this.droppedItemSprites.forEach(entry => {
                 if (entry.sprite && entry.sprite.node) {
-                    // DOM element - precisa escalar manualmente
-                    // Salvar escala base na primeira vez
-                    if (!entry.sprite.__baseZoomScale) {
-                        entry.sprite.__baseZoomScale = entry.sprite.scaleX || 1;
+                    if (entry.locked) {
+                        // ✅ Itens travados: manter escala fixa = 1 (tamanho natural da cena)
+                        entry.sprite.setScale(1);
+                    } else {
+                        // Itens não travados: escalar com zoom
+                        if (!entry.sprite.__baseZoomScale) {
+                            entry.sprite.__baseZoomScale = 1;
+                        }
+                        entry.sprite.setScale(entry.sprite.__baseZoomScale * zoom);
                     }
-                    // Aplicar zoom sobre a escala base
-                    const finalScale = entry.sprite.__baseZoomScale * zoom;
-                    entry.sprite.setScale(finalScale);
                 }
-                // Sprites Phaser normais já seguem o zoom da câmera automaticamente
+                // Sprites Phaser normais seguem o zoom da câmera automaticamente
             });
         }
     }
