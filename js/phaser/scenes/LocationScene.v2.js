@@ -1801,23 +1801,72 @@ class LocationScene extends Phaser.Scene {
             const x = bgX + (item.position.x / 100) * bgWidth;
             const y = bgY + (item.position.y / 100) * bgHeight;
 
-            const transform = item.transform || {};
+            // ✅ SEMPRE usar sprites Phaser para comportamento consistente durante zoom
+            // Ignorar transforms para todos os itens terem mesmo comportamento
+            const size = item.size || { width: 80, height: 80 };
+            const textureKey = `item_${item.id}`;
             let element;
 
-            // Só usar DOMElement para transforms que sprites NÃO suportam (3D/skew)
-            const needsDOM = transform && (
-                (transform.rotateX && transform.rotateX !== 0) ||
-                (transform.rotateY && transform.rotateY !== 0) ||
-                (transform.skewX && transform.skewX !== 0) ||
-                (transform.skewY && transform.skewY !== 0)
-            );
+            // ✅ Criar sprite Phaser puro (sem transforms, sem DOM)
+            if (this.textures.exists(textureKey)) {
+                element = this.add.image(x, y, textureKey);
+                element.setDisplaySize(size.width, size.height);
+            } else if (item.image) {
+                // Criar temporário e carregar textura
+                element = this.add.rectangle(x, y, size.width, size.height, 0x666666, 0.3);
+                this.load.image(textureKey, item.image);
+                this.load.once('complete', () => {
+                    if (this.textures.exists(textureKey) && element && element.scene) {
+                        const newSprite = this.add.image(x, y, textureKey);
+                        newSprite.setDisplaySize(size.width, size.height);
+                        newSprite.setOrigin(0.5);
+                        newSprite.setDepth(50);
+                        newSprite.setInteractive({ useHandCursor: true });
+                        newSprite.on('pointerdown', () => this.collectItem(item));
+                        element.destroy();
+                        const itemIndex = this.items.findIndex(i => i.data?.id === item.id);
+                        if (itemIndex >= 0) {
+                            this.items[itemIndex].sprite = newSprite;
+                        }
+                    }
+                });
+                this.load.start();
+            }
 
-            // Usar DOMElement APENAS para 3D/skew, sprites para o resto
-            if (needsDOM) {
-                // Criar wrapper div (Phaser posiciona)
-                const wrapper = document.createElement('div');
-                wrapper.style.position = 'relative';
-                wrapper.style.width = (item.size?.width || 80) + 'px';
+            // ✅ Configurar sprite com interatividade
+            if (element) {
+                element.setOrigin(0.5);
+                element.setDepth(50);
+                element.setInteractive({ useHandCursor: true });
+
+                // Salvar escala original para hover
+                const originalScaleX = element.scaleX;
+                const originalScaleY = element.scaleY;
+
+                // Hover effect
+                element.on('pointerover', () => {
+                    this.tweens.add({
+                        targets: element,
+                        scaleX: originalScaleX * 1.15,
+                        scaleY: originalScaleY * 1.15,
+                        duration: 200,
+                        ease: 'Power2'
+                    });
+                });
+
+                element.on('pointerout', () => {
+                    this.tweens.killTweensOf(element);
+                    element.setScale(originalScaleX, originalScaleY);
+                });
+
+                // Click handler
+                element.on('pointerdown', () => {
+                    this.collectItem(item, element);
+                });
+            }
+
+            if (false) { // ✅ CÓDIGO ANTIGO DOM/SPRITE - DESABILITADO
+                const wrapper = 'antigo';
                 wrapper.style.height = (item.size?.height || 80) + 'px';
                 wrapper.style.perspective = '1000px';
                 wrapper.style.transformStyle = 'preserve-3d';
