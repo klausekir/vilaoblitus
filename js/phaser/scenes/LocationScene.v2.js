@@ -299,8 +299,14 @@ class LocationScene extends Phaser.Scene {
         if (this.droppedItemSprites && Array.isArray(this.droppedItemSprites)) {
             this.droppedItemSprites.forEach(entry => {
                 if (entry.sprite && entry.sprite.node) {
-                    // DOM element - escalar via Phaser
-                    entry.sprite.setScale(zoom);
+                    // DOM element - precisa escalar manualmente
+                    // Salvar escala base na primeira vez
+                    if (!entry.sprite.__baseZoomScale) {
+                        entry.sprite.__baseZoomScale = entry.sprite.scaleX || 1;
+                    }
+                    // Aplicar zoom sobre a escala base
+                    const finalScale = entry.sprite.__baseZoomScale * zoom;
+                    entry.sprite.setScale(finalScale);
                 }
                 // Sprites Phaser normais já seguem o zoom da câmera automaticamente
             });
