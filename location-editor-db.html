@@ -2181,14 +2181,18 @@
                     ${isPuzzleSelected ? 'box-shadow: 0 0 0 3px #f0a500;' : ''}
                 `;
 
-                // ✅ Usar <img> em tamanho original em vez de background
+                // ✅ Usar <img> com tamanho configurável
                 if (puzzleVisual.beforeImage) {
                     const img = document.createElement('img');
                     img.src = puzzleVisual.beforeImage;
+
+                    // Se puzzle tem size definido, usar; senão, usar tamanho original (auto)
+                    const hasCustomSize = puzzleVisual.size && (puzzleVisual.size.width || puzzleVisual.size.height);
+
                     img.style.cssText = `
                         display: block;
-                        width: auto;
-                        height: auto;
+                        width: ${hasCustomSize ? puzzleVisual.size.width + 'px' : 'auto'};
+                        height: ${hasCustomSize ? puzzleVisual.size.height + 'px' : 'auto'};
                         max-width: none;
                         pointer-events: none;
                         image-rendering: crisp-edges;
@@ -2224,6 +2228,34 @@
                 puzzleEl.appendChild(label);
 
                 puzzleEl.addEventListener('mousedown', startDragItem);
+
+                // ✅ Adicionar resize handles (vértices) quando puzzle está selecionado
+                if (isPuzzleSelected) {
+                    const handles = ['nw', 'ne', 'sw', 'se'];
+                    handles.forEach(handle => {
+                        const handleEl = document.createElement('div');
+                        handleEl.className = 'resize-handle';
+                        handleEl.dataset.direction = handle;
+                        handleEl.style.cssText = `
+                            position: absolute;
+                            width: 12px;
+                            height: 12px;
+                            background: #f0a500;
+                            border: 2px solid white;
+                            border-radius: 50%;
+                            cursor: ${handle}-resize;
+                            z-index: 1000;
+                            pointer-events: auto;
+                        `;
+                        if (handle.includes('n')) handleEl.style.top = '-6px';
+                        if (handle.includes('s')) handleEl.style.bottom = '-6px';
+                        if (handle.includes('w')) handleEl.style.left = '-6px';
+                        if (handle.includes('e')) handleEl.style.right = '-6px';
+
+                        handleEl.addEventListener('mousedown', startResizeItem);
+                        puzzleEl.appendChild(handleEl);
+                    });
+                }
 
                 container.appendChild(puzzleEl);
 
@@ -2304,6 +2336,35 @@
 
                 itemEl.appendChild(label);
                 itemEl.addEventListener('mousedown', startDragItem);
+
+                // ✅ Adicionar resize handles (vértices) quando item está selecionado
+                if (isSelected) {
+                    const handles = ['nw', 'ne', 'sw', 'se'];
+                    handles.forEach(handle => {
+                        const handleEl = document.createElement('div');
+                        handleEl.className = 'resize-handle';
+                        handleEl.dataset.direction = handle;
+                        handleEl.style.cssText = `
+                            position: absolute;
+                            width: 12px;
+                            height: 12px;
+                            background: #667eea;
+                            border: 2px solid white;
+                            border-radius: 50%;
+                            cursor: ${handle}-resize;
+                            z-index: 1000;
+                            pointer-events: auto;
+                        `;
+                        if (handle.includes('n')) handleEl.style.top = '-6px';
+                        if (handle.includes('s')) handleEl.style.bottom = '-6px';
+                        if (handle.includes('w')) handleEl.style.left = '-6px';
+                        if (handle.includes('e')) handleEl.style.right = '-6px';
+
+                        handleEl.addEventListener('mousedown', startResizeItem);
+                        itemEl.appendChild(handleEl);
+                    });
+                }
+
                 container.appendChild(itemEl);
             });
 
@@ -2797,8 +2858,20 @@
             visual.data.size.width = Math.max(20, Math.round(newWidth));
             visual.data.size.height = Math.max(20, Math.round(newHeight));
 
-            resizingItem.style.width = visual.data.size.width + 'px';
-            resizingItem.style.height = visual.data.size.height + 'px';
+            // Atualizar DOM
+            const visualType = resizingItem.dataset.visualType;
+            if (visualType === 'puzzle') {
+                // Para puzzle, atualizar a <img> dentro do elemento
+                const img = resizingItem.querySelector('img');
+                if (img) {
+                    img.style.width = visual.data.size.width + 'px';
+                    img.style.height = visual.data.size.height + 'px';
+                }
+            } else {
+                // Para items, atualizar o próprio elemento
+                resizingItem.style.width = visual.data.size.width + 'px';
+                resizingItem.style.height = visual.data.size.height + 'px';
+            }
         }
 
         function stopResizeItem() {
