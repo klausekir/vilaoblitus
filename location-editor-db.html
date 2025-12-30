@@ -3348,7 +3348,13 @@
                 }
             }
 
-            autoSave();
+            // ✅ Salvar localmente (IndexedDB) - para sincronizar com banco, clique em "💾 Salvar"
+            const saveData = {
+                locations: gameLocations,
+                order: locationOrder
+            };
+            saveToIndexedDB('editorData', saveData);
+
             renderVisualHotspotsList();
             renderPositionedHotspots();
         }
