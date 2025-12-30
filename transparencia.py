@@ -60,12 +60,14 @@ def remover_fundo_solido(input_path, output_path, threshold=10, remover_borda_br
 
     # ✅ REMOVER BORDAS BRANCAS (múltiplas passadas para ser mais agressivo)
     if remover_borda_branca:
-        print("Removendo bordas brancas (passada 1/3)...")
+        print("Removendo bordas brancas (passada 1/4)...")
         img = remover_bordas_brancas(img, threshold_branco=200, raio=2)
-        print("Removendo bordas brancas (passada 2/3)...")
+        print("Removendo bordas brancas (passada 2/4)...")
         img = remover_bordas_brancas(img, threshold_branco=180, raio=1)
-        print("Removendo bordas brancas (passada 3/3)...")
+        print("Removendo bordas brancas (passada 3/4)...")
         img = remover_bordas_brancas(img, threshold_branco=160, raio=1)
+        print("Removendo bordas brancas (passada 4/4 - EXTRA AGRESSIVA)...")
+        img = remover_bordas_brancas(img, threshold_branco=140, raio=2)
 
     # Salvar a nova imagem como PNG (que suporta transparência)
     try:
