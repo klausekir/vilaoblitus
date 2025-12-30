@@ -285,12 +285,25 @@ class LocationScene extends Phaser.Scene {
     updateDOMElementsScale() {
         const zoom = this.cameras.main.zoom;
 
-        // ✅ Itens normais da cena: manter escala fixa (não crescer com zoom)
+        // ✅ Itens normais da cena: manter escala fixa E recalcular posição
         if (this.items && Array.isArray(this.items)) {
+            const bounds = this.getBackgroundBounds();
+
             this.items.forEach(item => {
-                if (item.sprite && item.sprite.node && item.sprite.baseTransformString) {
-                    // ✅ Manter escala 1 para comportamento consistente (não crescer com zoom)
-                    item.sprite.setScale(1);
+                if (item.sprite) {
+                    // ✅ Recalcular posição baseada em porcentagem para evitar drift
+                    if (item.sprite.__itemPercentPosition) {
+                        const percentPos = item.sprite.__itemPercentPosition;
+                        const newX = bounds.bgX + (percentPos.x / 100) * bounds.bgWidth;
+                        const newY = bounds.bgY + (percentPos.y / 100) * bounds.bgHeight;
+                        item.sprite.x = newX;
+                        item.sprite.y = newY;
+                    }
+
+                    // ✅ Manter escala 1 para DOM elements
+                    if (item.sprite.node && item.sprite.baseTransformString) {
+                        item.sprite.setScale(1);
+                    }
                 }
             });
         }
@@ -2103,6 +2116,11 @@ class LocationScene extends Phaser.Scene {
                     element.setDepth(50); // Prioridade sobre hotspots (depth 10)
                 }
                 } // Fecha if (false) da linha 1951
+            }
+
+            // ✅ Salvar posição percentual para recalcular durante zoom
+            if (element) {
+                element.__itemPercentPosition = { x: item.position.x, y: item.position.y };
             }
 
             this.items.push({ sprite: element, data: item });
