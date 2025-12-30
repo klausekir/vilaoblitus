@@ -150,24 +150,24 @@ class ShapeMatchPuzzle {
                     ease: 'Back.easeOut'
                 });
 
+                // ✅ Remover label quando item for travado no molde
                 if (droppedEntry.label) {
-                    this.scene.tweens.add({
-                        targets: droppedEntry.label,
-                        x: moldWorldX,
-                        y: moldWorldY + (droppedEntry.size?.height || 80) / 2 + 8,
-                        duration: 300,
-                        ease: 'Back.easeOut'
-                    });
+                    droppedEntry.label.destroy();
+                    droppedEntry.label = null;
                 }
 
                 // Travar sprite
                 droppedEntry.locked = true;
-                if (droppedEntry.label) {
-                    droppedEntry.label.setColor('#00ff00');
-                }
             } else {
                 // Item veio do inventário - criar sprite travado direto no molde
                 this.scene.createDroppedItemSprite(itemData, moldWorldX, moldWorldY, true);
+
+                // ✅ Remover label do item recém-criado
+                const newEntry = this.scene.droppedItemSprites?.find(s => s.data?.id === itemId);
+                if (newEntry && newEntry.label) {
+                    newEntry.label.destroy();
+                    newEntry.label = null;
+                }
             }
 
             gameStateManager.saveProgress();

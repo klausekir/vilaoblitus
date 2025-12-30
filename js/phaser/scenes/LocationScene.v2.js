@@ -996,17 +996,21 @@ class LocationScene extends Phaser.Scene {
         // precisamos usar DOM listeners
         const actualUseDom = !!(sprite.node);
 
-        const label = this.add.text(worldX, worldY + size.height / 2 + 8, item.name || item.id, {
-            fontSize: '12px',
-            color: locked ? '#00ff00' : '#f0a500', // Verde se travado, amarelo se normal
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            padding: { x: 6, y: 3 }
-        });
-        label.setOrigin(0.5, 0);
-        label.setDepth(101); // Label acima do sprite
+        // ✅ Só criar label se item NÃO estiver travado
+        let label = null;
+        if (!locked) {
+            label = this.add.text(worldX, worldY + size.height / 2 + 8, item.name || item.id, {
+                fontSize: '12px',
+                color: '#f0a500',
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                padding: { x: 6, y: 3 }
+            });
+            label.setOrigin(0.5, 0);
+            label.setDepth(101); // Label acima do sprite
+        }
 
         const spriteAlpha = typeof sprite.alpha === 'number' ? sprite.alpha : 1;
-        const labelAlpha = typeof label.alpha === 'number' ? label.alpha : 1;
+        const labelAlpha = label ? (typeof label.alpha === 'number' ? label.alpha : 1) : 1;
         const entry = {
             id: item.id,
             sprite,
