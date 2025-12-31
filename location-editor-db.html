@@ -6261,6 +6261,7 @@ if (typeof module !== 'undefined' && module.exports) {
         }
 
         async function syncToDatabase(silent = false) {
+            console.log('🔧 syncToDatabase v2.0 - FIX: display_image para decorativos');
             if (!autoSaveEnabled) return; // ✅ Não salvar automaticamente
 
             // IMPORTANTE: Salvar informações básicas da localização atual ANTES de sincronizar
