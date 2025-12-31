@@ -2394,8 +2394,63 @@
                     ${isSelected ? 'box-shadow: 0 0 0 3px #667eea;' : ''}
                 `;
 
-                // ✅ Usar <img> tag para suportar GIFs animados
-                if (item.image) {
+                // ✅ Detectar se é spritesheet e animar
+                if (item.image && item.image.includes('_spritesheet.png')) {
+                    // SPRITESHEET: Criar canvas animado
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        pointer-events: none;
+                        display: block;
+                        z-index: 1;
+                    `;
+                    itemEl.appendChild(canvas);
+
+                    // Carregar spritesheet e animar
+                    const spriteImg = new Image();
+                    spriteImg.onload = () => {
+                        // Assumir frame padrão: 249x341 (arvore01)
+                        const frameWidth = item.spritesheetFrameWidth || 249;
+                        const frameHeight = item.spritesheetFrameHeight || 341;
+                        const frameCount = Math.floor(spriteImg.width / frameWidth);
+                        const frameRate = item.spritesheetFrameRate || 10;
+
+                        canvas.width = frameWidth;
+                        canvas.height = frameHeight;
+
+                        let currentFrame = 0;
+                        let lastFrameTime = 0;
+                        const frameDuration = 1000 / frameRate;
+
+                        function animate(timestamp) {
+                            if (!lastFrameTime) lastFrameTime = timestamp;
+                            const elapsed = timestamp - lastFrameTime;
+
+                            if (elapsed >= frameDuration) {
+                                ctx.clearRect(0, 0, frameWidth, frameHeight);
+                                ctx.drawImage(
+                                    spriteImg,
+                                    currentFrame * frameWidth, 0, frameWidth, frameHeight,
+                                    0, 0, frameWidth, frameHeight
+                                );
+
+                                currentFrame = (currentFrame + 1) % frameCount;
+                                lastFrameTime = timestamp;
+                            }
+
+                            requestAnimationFrame(animate);
+                        }
+
+                        requestAnimationFrame(animate);
+                    };
+                    spriteImg.src = item.image;
+                } else if (item.image) {
+                    // GIF ou imagem estática: usar <img> tag
                     const img = document.createElement('img');
                     img.src = item.image;
                     img.style.cssText = `
