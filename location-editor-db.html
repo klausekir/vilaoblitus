@@ -5687,7 +5687,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 for (const loc of sortedLocations) {
                     const option = document.createElement('option');
                     option.value = loc.id;
-                    option.textContent = `${loc.id} - ${loc.name}`;
+                    option.textContent = loc.id;
                     select.appendChild(option);
                 }
 
