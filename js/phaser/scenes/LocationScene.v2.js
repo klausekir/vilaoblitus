@@ -62,8 +62,14 @@ class LocationScene extends Phaser.Scene {
 
             // ✅ Detectar se é spritesheet (termina com _spritesheet.png)
             if (item.image.includes('_spritesheet.png')) {
-                const frameWidth = item.spritesheetFrameWidth || 249;
-                const frameHeight = item.spritesheetFrameHeight || 341;
+                let frameWidth = item.spritesheetFrameWidth || 249;
+                let frameHeight = item.spritesheetFrameHeight || 341;
+
+                // ✅ Configuração específica para árvore (12 frames horizontais, 249x341 cada)
+                if (item.id === 'arvore' || item.id === 'arvore2') {
+                    frameWidth = 249;
+                    frameHeight = 341;
+                }
 
                 this.load.spritesheet(textureKey, item.image, {
                     frameWidth: frameWidth,
@@ -1902,17 +1908,14 @@ class LocationScene extends Phaser.Scene {
             const hasShadow = transform && transform.shadowBlur && transform.shadowBlur > 0;
 
             // Verificar se precisa de DOM
-            // ✅ DECORATIVOS SEMPRE usam DOM (spritesheets animam no DOM automaticamente)
-            // ✅ Outros usam DOM para: transforms 3D/skew OU sombra (mas não spritesheets normais)
-            const needsDOM = item.isDecorative || (!isSpritesheet && (
-                (hasShadow) ||
+            const needsDOM = !isSpritesheet && (
                 (transform && (
                     (transform.rotateX && transform.rotateX !== 0) ||
                     (transform.rotateY && transform.rotateY !== 0) ||
                     (transform.skewX && transform.skewX !== 0) ||
                     (transform.skewY && transform.skewY !== 0)
                 ))
-            ));
+            );
 
             if (needsDOM) {
                 // ✅ Usar DOM element para transforms 3D/skew (e itens decorativos para GIF)
