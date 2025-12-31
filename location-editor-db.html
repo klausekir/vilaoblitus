@@ -1442,15 +1442,7 @@
         function loadLocationData() {
             if (!currentLocationId) return;
 
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('📂 LOAD LOCATION DATA');
-            console.log('   Location ID:', currentLocationId);
-
             const location = gameLocations[currentLocationId];
-            console.log('   Tem puzzle?', !!location.puzzle);
-            if (location.puzzle) {
-                console.log('   Puzzle ID:', location.puzzle.id);
-            }
             document.getElementById('currentLocationName').textContent = location.name;
             document.getElementById('currentLocationId').textContent = location.id;
 
@@ -1464,15 +1456,6 @@
             document.getElementById('edit-transition-video').value = location.transitionVideo || '';
             document.getElementById('edit-dramatic-messages').value = location.dramaticMessages || '';
             document.getElementById('edit-dramatic-duration').value = location.dramaticMessageDuration || 5;
-
-            console.log('📂 CARREGANDO LOCATION DATA:', {
-                locationId: location.id,
-                isFinalScene: location.isFinalScene,
-                dramaticMessages: location.dramaticMessages,
-                dramaticMessageDuration: location.dramaticMessageDuration,
-                transitionVideo: location.transitionVideo
-            });
-
             toggleCreditsSection();
 
             // Carregar créditos se existirem
@@ -3110,17 +3093,6 @@
             const container = document.getElementById('visual-items-container');
             const rect = container.getBoundingClientRect();
 
-            // 🔍 DEBUG: Log das dimensões do container (só primeira vez)
-            if (!window.__editorDimensionsLogged) {
-                console.log('📐 DIMENSÕES DO CONTAINER DO EDITOR:', {
-                    width: rect.width,
-                    height: rect.height,
-                    aspectRatio: (rect.width / rect.height).toFixed(2),
-                    nota: 'Jogo usa 911x911 (ratio 1.00)'
-                });
-                window.__editorDimensionsLogged = true;
-            }
-
             let x = ((e.clientX - rect.left - dragOffsetX) / rect.width) * 100;
             let y = ((e.clientY - rect.top - dragOffsetY) / rect.height) * 100;
 
@@ -4537,14 +4509,6 @@
             location.dramaticMessages = document.getElementById('edit-dramatic-messages').value.trim();
             location.dramaticMessageDuration = parseInt(document.getElementById('edit-dramatic-duration').value) || 5;
 
-            console.log('💾 SALVANDO BASIC INFO:', {
-                locationId: location.id,
-                isFinalScene: location.isFinalScene,
-                dramaticMessages: location.dramaticMessages,
-                dramaticMessageDuration: location.dramaticMessageDuration,
-                transitionVideo: location.transitionVideo
-            });
-
             // Salvar créditos se for cena final
             if (location.isFinalScene) {
                 location.credits = collectCreditsData();
@@ -4552,12 +4516,10 @@
                     delete location.transitionVideo;
                 }
                 if (!location.dramaticMessages) {
-                    console.log('⚠️ Deletando dramaticMessages (estava vazio)');
                     delete location.dramaticMessages;
                     delete location.dramaticMessageDuration;
                 }
             } else {
-                console.log('⚠️ NÃO é cena final - deletando credits/dramatic/video');
                 delete location.credits;
                 delete location.transitionVideo;
                 delete location.dramaticMessages;
@@ -4867,7 +4829,6 @@
         // Load puzzle data
         // Limpar todos os campos do formulário de puzzle
         function clearPuzzleFormFields() {
-            console.log('🧹 Limpando campos do formulário de puzzle');
             document.getElementById('puzzle-id').value = '';
             currentPuzzleType = null;
 
@@ -5180,30 +5141,11 @@
         function savePuzzle() {
 
             if (!currentLocationId) {
-                console.log('⚠️ savePuzzle() chamado sem currentLocationId!');
                 return;
             }
-            // ✅ REMOVIDO: não bloqueia mais o salvamento na memória
-            // A função sempre salva em gameLocations, mas só sincroniza com banco se autoSaveEnabled
 
             const hasPuzzle = document.getElementById('has-puzzle').checked;
             const location = gameLocations[currentLocationId];
-
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('🔍 SAVE PUZZLE chamado');
-            console.log('   Location atual:', currentLocationId);
-            console.log('   Has puzzle checkbox:', hasPuzzle);
-            console.log('   Puzzle ID no campo:', document.getElementById('puzzle-id').value);
-            console.log('   Puzzle atual da location:', location.puzzle?.id || 'nenhum');
-            for (const locId in gameLocations) {
-                const loc = gameLocations[locId];
-                if (loc.puzzle && locId !== currentLocationId) {
-                    console.log(`⚠️ Location "${locId}" também tem puzzle:`, loc.puzzle.id);
-                    if (loc.puzzle === location.puzzle) {
-                        console.error('❌ COMPARTILHAMENTO DETECTADO! Puzzles são o MESMO objeto!');
-                    }
-                }
-            }
 
             if (!hasPuzzle) {
                 delete location.puzzle;
@@ -5423,10 +5365,11 @@
             location.items.forEach((item, index) => {
                 const itemEl = document.createElement('div');
                 itemEl.className = 'list-item';
+                const decorativeBadge = item.isDecorative ? '<span style="background: #ff9800; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">🎨 Decorativo</span>' : '';
                 const displayBadge = item.isDisplayItem ? '<span style="background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 8px;">📄 Exibição</span>' : '';
                 itemEl.innerHTML = `
                     <div class="list-item-content">
-                        <div class="list-item-title">${item.name} ${displayBadge}</div>
+                        <div class="list-item-title">${item.name} ${decorativeBadge}${displayBadge}</div>
                         <div class="list-item-details">ID: ${item.id}${item.displayImage ? ` • Imagem: ${item.displayImage}` : ''}</div>
                     </div>
                     <div class="list-item-actions">
@@ -5467,23 +5410,42 @@
             const newName = prompt('Nome do item:', item.name);
             if (newName === null) return;
 
-            const newImage = prompt('Imagem do item (PNG do ícone no inventário):', item.image || '');
+            const newImage = prompt('Imagem do item (pode ser PNG ou GIF):', item.image || '');
 
-            const isDisplayItem = confirm('Este item é um ITEM DE EXIBIÇÃO (mapa, papel, foto)?\n\nQuando clicado no inventário, abrirá uma imagem em tela cheia para visualização.\n\nClique OK para SIM, Cancelar para NÃO.');
+            // Perguntar se é item decorativo
+            const isDecorative = confirm('Este item é DECORATIVO (sem interação)?\n\nItens decorativos:\n• NÃO podem ser coletados\n• NÃO aparecem no inventário\n• Servem apenas para animação/decoração visual\n• Suportam GIFs animados que ficam em loop\n\nClique OK para SIM, Cancelar para NÃO.');
 
-            let displayImage = item.displayImage || '';
-            if (isDisplayItem) {
-                displayImage = prompt('Imagem de EXIBIÇÃO (imagem grande que aparece ao clicar no inventário):', displayImage);
+            let isDisplayItem = false;
+            let displayImage = '';
+
+            // Se NÃO é decorativo, perguntar se é item de exibição
+            if (!isDecorative) {
+                isDisplayItem = confirm('Este item é um ITEM DE EXIBIÇÃO (mapa, papel, foto)?\n\nQuando clicado no inventário, abrirá uma imagem em tela cheia para visualização.\n\nClique OK para SIM, Cancelar para NÃO.');
+
+                if (isDisplayItem) {
+                    displayImage = prompt('Imagem de EXIBIÇÃO (imagem grande que aparece ao clicar no inventário):', item.displayImage || '');
+                }
             }
 
+            // Atualizar item
             item.id = newId;
             item.name = newName;
             if (newImage) item.image = newImage;
-            item.isDisplayItem = isDisplayItem;
-            if (isDisplayItem && displayImage) {
-                item.displayImage = displayImage;
-            } else {
+
+            // Definir flags
+            item.isDecorative = isDecorative;
+
+            if (isDecorative) {
+                // Itens decorativos não têm display item
+                delete item.isDisplayItem;
                 delete item.displayImage;
+            } else {
+                item.isDisplayItem = isDisplayItem;
+                if (isDisplayItem && displayImage) {
+                    item.displayImage = displayImage;
+                } else {
+                    delete item.displayImage;
+                }
             }
 
             autoSave();
@@ -6253,6 +6215,7 @@ if (typeof module !== 'undefined' && module.exports) {
                             description: item.description,
                             item_image: item.image,
                             is_display_item: item.isDisplayItem ? 1 : 0,
+                            is_decorative: item.isDecorative ? 1 : 0,
                             display_image: item.displayImage || null,
                         x: item.position.x,
                         y: item.position.y,
@@ -6326,7 +6289,6 @@ if (typeof module !== 'undefined' && module.exports) {
                             locations: gameLocations,
                             order: locationOrder
                         });
-                        console.log('💾 Salvo no IndexedDB após sync com MySQL');
 
                         if (!silent) {
                             showToast(`✅ ${result.data.locations} localizações e ${result.data.hotspots} hotspots salvos em ${elapsed}s!`, 'success');

@@ -1843,11 +1843,14 @@ class LocationScene extends Phaser.Scene {
         const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
 
         this.locationData.items.forEach(item => {
-            if (gameStateManager.isItemCollected(item.id)) return;
+            // ✅ Itens decorativos SEMPRE renderizam (não são coletáveis)
+            if (!item.isDecorative) {
+                if (gameStateManager.isItemCollected(item.id)) return;
 
-            // Não renderizar itens consumidos em puzzles
-            if (gameStateManager.state.consumedItems && gameStateManager.state.consumedItems.includes(item.id)) {
-                return;
+                // Não renderizar itens consumidos em puzzles
+                if (gameStateManager.state.consumedItems && gameStateManager.state.consumedItems.includes(item.id)) {
+                    return;
+                }
             }
 
             if (!item.image || !item.position) {
@@ -1864,16 +1867,16 @@ class LocationScene extends Phaser.Scene {
             const textureKey = `item_${item.id}`;
             let element;
 
-            // Verificar se precisa de DOM (transforms 3D/skew)
-            const needsDOM = transform && (
+            // Verificar se precisa de DOM (transforms 3D/skew OU decorativo para suportar GIF)
+            const needsDOM = item.isDecorative || (transform && (
                 (transform.rotateX && transform.rotateX !== 0) ||
                 (transform.rotateY && transform.rotateY !== 0) ||
                 (transform.skewX && transform.skewX !== 0) ||
                 (transform.skewY && transform.skewY !== 0)
-            );
+            ));
 
             if (needsDOM) {
-                // ✅ Usar DOM element para transforms 3D/skew
+                // ✅ Usar DOM element para transforms 3D/skew (e itens decorativos para GIF)
                 const wrapper = document.createElement('div');
                 wrapper.style.position = 'relative';
                 wrapper.style.width = `${size.width}px`;
@@ -1890,7 +1893,8 @@ class LocationScene extends Phaser.Scene {
                 img.style.position = 'absolute';
                 img.style.left = '50%';
                 img.style.top = '50%';
-                img.style.pointerEvents = 'auto';
+                // ✅ Desabilitar pointer events para itens decorativos (não coletáveis)
+                img.style.pointerEvents = item.isDecorative ? 'none' : 'auto';
 
                 // Construir transforms CSS
                 const transforms = [];
@@ -1945,8 +1949,11 @@ class LocationScene extends Phaser.Scene {
                         // ✅ Aplicar transforms básicos ao sprite carregado
                         this.applySpriteTransform(newSprite, transform);
 
-                        newSprite.setInteractive({ useHandCursor: true });
-                        newSprite.on('pointerdown', () => this.collectItem(item));
+                        // ✅ Adicionar interatividade SOMENTE se NÃO for decorativo
+                        if (!item.isDecorative) {
+                            newSprite.setInteractive({ useHandCursor: true });
+                            newSprite.on('pointerdown', () => this.collectItem(item));
+                        }
                         element.destroy();
                         const itemIndex = this.items.findIndex(i => i.data?.id === item.id);
                         if (itemIndex >= 0) {
@@ -1960,32 +1967,34 @@ class LocationScene extends Phaser.Scene {
             // ✅ Configurar interatividade (diferente para DOM vs Sprite)
             if (element) {
                 if (needsDOM) {
-                    // DOM elements: usar event listeners CSS
-                    element.addListener('pointerover');
-                    element.on('pointerover', () => {
-                        const img = element.node.querySelector('img');
-                        if (img) img.style.filter = (img.style.filter || '') + ' brightness(1.2)';
-                    });
+                    // ✅ DOM elements: adicionar interatividade SOMENTE se NÃO for decorativo
+                    if (!item.isDecorative) {
+                        element.addListener('pointerover');
+                        element.on('pointerover', () => {
+                            const img = element.node.querySelector('img');
+                            if (img) img.style.filter = (img.style.filter || '') + ' brightness(1.2)';
+                        });
 
-                    element.addListener('pointerout');
-                    element.on('pointerout', () => {
-                        const img = element.node.querySelector('img');
-                        if (img) {
-                            const shadowBlur = transform.shadowBlur || 0;
-                            if (shadowBlur > 0) {
-                                const shadowX = transform.shadowOffsetX || 0;
-                                const shadowY = transform.shadowOffsetY || 0;
-                                img.style.filter = `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.5))`;
-                            } else {
-                                img.style.filter = '';
+                        element.addListener('pointerout');
+                        element.on('pointerout', () => {
+                            const img = element.node.querySelector('img');
+                            if (img) {
+                                const shadowBlur = transform.shadowBlur || 0;
+                                if (shadowBlur > 0) {
+                                    const shadowX = transform.shadowOffsetX || 0;
+                                    const shadowY = transform.shadowOffsetY || 0;
+                                    img.style.filter = `drop-shadow(${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.5))`;
+                                } else {
+                                    img.style.filter = '';
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    element.addListener('pointerdown');
-                    element.on('pointerdown', () => {
-                        this.collectItem(item, element);
-                    });
+                        element.addListener('pointerdown');
+                        element.on('pointerdown', () => {
+                            this.collectItem(item, element);
+                        });
+                    }
 
                 } else {
                     // Sprites Phaser: comportamento normal
@@ -1995,29 +2004,32 @@ class LocationScene extends Phaser.Scene {
                     // Aplicar transforms básicos
                     this.applySpriteTransform(element, transform);
 
-                    element.setInteractive({ useHandCursor: true });
+                    // ✅ Adicionar interatividade SOMENTE se NÃO for decorativo
+                    if (!item.isDecorative) {
+                        element.setInteractive({ useHandCursor: true });
 
-                    const originalScaleX = element.scaleX;
-                    const originalScaleY = element.scaleY;
+                        const originalScaleX = element.scaleX;
+                        const originalScaleY = element.scaleY;
 
-                    element.on('pointerover', () => {
-                        this.tweens.add({
-                            targets: element,
-                            scaleX: originalScaleX * 1.15,
-                            scaleY: originalScaleY * 1.15,
-                            duration: 200,
-                            ease: 'Power2'
+                        element.on('pointerover', () => {
+                            this.tweens.add({
+                                targets: element,
+                                scaleX: originalScaleX * 1.15,
+                                scaleY: originalScaleY * 1.15,
+                                duration: 200,
+                                ease: 'Power2'
+                            });
                         });
-                    });
 
-                    element.on('pointerout', () => {
-                        this.tweens.killTweensOf(element);
-                        element.setScale(originalScaleX, originalScaleY);
-                    });
+                        element.on('pointerout', () => {
+                            this.tweens.killTweensOf(element);
+                            element.setScale(originalScaleX, originalScaleY);
+                        });
 
-                    element.on('pointerdown', () => {
-                        this.collectItem(item, element);
-                    });
+                        element.on('pointerdown', () => {
+                            this.collectItem(item, element);
+                        });
+                    }
                 }
             }
 
@@ -2771,6 +2783,12 @@ class LocationScene extends Phaser.Scene {
     }
 
     collectItem(item, element) {
+        // ✅ SAFETY: Nunca coletar itens decorativos
+        if (item.isDecorative) {
+            console.warn('Tentativa de coletar item decorativo bloqueada:', item.id);
+            return;
+        }
+
         const collected = gameStateManager.collectItem(item);
 
         if (collected) {
