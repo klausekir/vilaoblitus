@@ -1992,6 +1992,11 @@ class LocationScene extends Phaser.Scene {
                     const texture = this.textures.get(textureKey);
                     const frameCount = texture.frameTotal;
 
+                    // 🔍 DEBUG
+                    if (item.id.includes('arvore')) {
+                        console.log(`🔍 [SPRITE DEBUG] ${item.id}: frameCount=${frameCount}, frames: 0-${frameCount-1}`);
+                    }
+
                     this.anims.create({
                         key: animKey,
                         frames: this.anims.generateFrameNumbers(textureKey, {
