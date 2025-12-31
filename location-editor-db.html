@@ -1464,6 +1464,15 @@
             document.getElementById('edit-transition-video').value = location.transitionVideo || '';
             document.getElementById('edit-dramatic-messages').value = location.dramaticMessages || '';
             document.getElementById('edit-dramatic-duration').value = location.dramaticMessageDuration || 5;
+
+            console.log('📂 CARREGANDO LOCATION DATA:', {
+                locationId: location.id,
+                isFinalScene: location.isFinalScene,
+                dramaticMessages: location.dramaticMessages,
+                dramaticMessageDuration: location.dramaticMessageDuration,
+                transitionVideo: location.transitionVideo
+            });
+
             toggleCreditsSection();
 
             // Carregar créditos se existirem
@@ -4526,6 +4535,14 @@
             location.dramaticMessages = document.getElementById('edit-dramatic-messages').value.trim();
             location.dramaticMessageDuration = parseInt(document.getElementById('edit-dramatic-duration').value) || 5;
 
+            console.log('💾 SALVANDO BASIC INFO:', {
+                locationId: location.id,
+                isFinalScene: location.isFinalScene,
+                dramaticMessages: location.dramaticMessages,
+                dramaticMessageDuration: location.dramaticMessageDuration,
+                transitionVideo: location.transitionVideo
+            });
+
             // Salvar créditos se for cena final
             if (location.isFinalScene) {
                 location.credits = collectCreditsData();
@@ -4533,10 +4550,12 @@
                     delete location.transitionVideo;
                 }
                 if (!location.dramaticMessages) {
+                    console.log('⚠️ Deletando dramaticMessages (estava vazio)');
                     delete location.dramaticMessages;
                     delete location.dramaticMessageDuration;
                 }
             } else {
+                console.log('⚠️ NÃO é cena final - deletando credits/dramatic/video');
                 delete location.credits;
                 delete location.transitionVideo;
                 delete location.dramaticMessages;
