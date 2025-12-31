@@ -3568,28 +3568,22 @@
             if (isResizingHotspot) {
                 isResizingHotspot = false;
                 draggedCornerIndex = -1;
-                const hotspot = gameLocations[currentLocationId].hotspots[selectedHotspotIndex];
-                console.log('🔧 Corner mouseup - hotspot:', hotspot.name, 'corners:', JSON.stringify(hotspot.corners));
 
                 // Salvar no IndexedDB sem debounce
                 const saveData = {
                     locations: gameLocations,
                     order: locationOrder
                 };
-                console.log('💾 Salvando no IndexedDB - hotspot tem corners:', hotspot.corners);
                 await saveToIndexedDB('editorData', saveData);
-                console.log('✅ Salvo no IndexedDB com sucesso');
 
                 // Cancelar qualquer timer pendente (evitar sync duplicado)
                 if (autoSaveTimer) {
                     clearTimeout(autoSaveTimer);
                     autoSaveTimer = null;
-                    console.log('⏱️ Timer cancelado');
                 }
 
                 // Sync imediato ao MySQL
                 await syncToDatabase(true);
-                console.log('✅ Sync ao MySQL completado!');
             }
             document.removeEventListener('mousemove', handleCornerMouseMove);
             document.removeEventListener('mouseup', handleCornerMouseUp);
@@ -5819,27 +5813,10 @@ if (typeof module !== 'undefined' && module.exports) {
         async function loadFromDatabase(auto = false) {
             // ⚠️ IMPORTANTE: Sync mudanças não sincronizadas antes de carregar!
             const hasUnsyncedChanges = localStorage.getItem('unsyncedChanges') === 'true';
-            console.log('🔍 loadFromDatabase - unsyncedChanges flag:', hasUnsyncedChanges);
 
             if (hasUnsyncedChanges) {
-                console.log('⏰ Detectadas mudanças não sincronizadas. Carregando do IndexedDB e sincronizando...');
                 await loadFromLocalStorage();
-                console.log('📦 IndexedDB carregado');
-
-                // Debug: verificar corners no gameLocations
-                for (const locId in gameLocations) {
-                    const loc = gameLocations[locId];
-                    if (loc.hotspots) {
-                        loc.hotspots.forEach(h => {
-                            if (h.corners) {
-                                console.log(`🔍 Hotspot "${h.name}" em ${locId} tem corners:`, h.corners);
-                            }
-                        });
-                    }
-                }
-
                 await syncToDatabase(true);
-                console.log('✅ Mudanças sincronizadas. Agora carregando do banco...');
             }
 
             if (!auto) {
@@ -5999,11 +5976,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
                 // ⚠️ NÃO salvar no IndexedDB aqui! Isso sobrescreve mudanças feitas durante o load.
                 // O IndexedDB é atualizado apenas por handleCornerMouseUp e autoSave.
-                // await saveToIndexedDB('editorData', {
-                //     locations: gameLocations,
-                //     order: locationOrder
-                // });
-                console.log('📋 Dados carregados do MySQL (IndexedDB não foi sobrescrito)');
 
                 renderLocationsList();
 
@@ -6055,26 +6027,20 @@ if (typeof module !== 'undefined' && module.exports) {
                     const loc = gameLocations[locationId];
 
                     // Convert editor format to API format
-                    const navigationHotspots = (loc.hotspots || []).map(h => {
-                        const hotspotData = {
-                            type: h.action === 'navigate' ? 'navigation' : h.action === 'item' ? 'item' : 'interaction',
-                            x: h.position?.x || 0,
-                            y: h.position?.y || 0,
-                            width: h.position?.width || 10,
-                            height: h.position?.height || 10,
-                            corners: h.corners ? JSON.stringify(h.corners) : null,
-                            label: h.name || '',
-                            description: h.description || '',
-                            target_location: h.target || null,
-                            item_id: h.item || null,
-                            arrow_direction: h.arrowDirection || null,
-                            zoom_direction: h.zoomDirection || null
-                        };
-                        if (h.corners) {
-                            console.log(`📤 Enviando hotspot "${h.name}" com corners:`, h.corners);
-                        }
-                        return hotspotData;
-                    });
+                    const navigationHotspots = (loc.hotspots || []).map(h => ({
+                        type: h.action === 'navigate' ? 'navigation' : h.action === 'item' ? 'item' : 'interaction',
+                        x: h.position?.x || 0,
+                        y: h.position?.y || 0,
+                        width: h.position?.width || 10,
+                        height: h.position?.height || 10,
+                        corners: h.corners ? JSON.stringify(h.corners) : null,
+                        label: h.name || '',
+                        description: h.description || '',
+                        target_location: h.target || null,
+                        item_id: h.item || null,
+                        arrow_direction: h.arrowDirection || null,
+                        zoom_direction: h.zoomDirection || null
+                    }));
 
                     // IMPORTANTE: Converter items para hotspots do tipo 'item'
                     const itemHotspots = (loc.items || []).map(item => {
