@@ -6315,7 +6315,8 @@ if (typeof module !== 'undefined' && module.exports) {
                             item_image: item.image,
                             is_display_item: item.isDisplayItem ? 1 : 0,
                             is_decorative: item.isDecorative ? 1 : 0,
-                            display_image: item.displayImage || null,
+                            // ✅ Para decorativos, usar item.image como display_image (spritesheets/GIFs)
+                            display_image: item.isDecorative ? item.image : (item.displayImage || null),
                         x: item.position.x,
                         y: item.position.y,
                         width: item.size.width,
