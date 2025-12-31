@@ -3262,6 +3262,21 @@
             renderTransformControls();
         }
 
+        // Garante que hotspot tenha corners (converte de position se necessário)
+        function ensureHotspotCorners(hotspot) {
+            if (!hotspot.corners && hotspot.position) {
+                // Converter de retângulo para 4 cantos
+                const p = hotspot.position;
+                hotspot.corners = [
+                    { x: p.x, y: p.y },                           // top-left (nw - index 0)
+                    { x: p.x + p.width, y: p.y },                 // top-right (ne - index 1)
+                    { x: p.x + p.width, y: p.y + p.height },      // bottom-right (se - index 2)
+                    { x: p.x, y: p.y + p.height }                 // bottom-left (sw - index 3)
+                ];
+            }
+            return hotspot.corners;
+        }
+
         function renderPositionedHotspots() {
             if (!currentLocationId) return;
 
@@ -3302,23 +3317,45 @@
                     return;
                 }
 
-
+                // Garantir que tenha corners
+                const corners = ensureHotspotCorners(hotspot);
                 const isSelected = index === selectedHotspotIndex;
+
+                // Calcular bounding box dos corners
+                const xs = corners.map(c => c.x);
+                const ys = corners.map(c => c.y);
+                const minX = Math.min(...xs);
+                const minY = Math.min(...ys);
+                const maxX = Math.max(...xs);
+                const maxY = Math.max(...ys);
 
                 const hotspotEl = document.createElement('div');
                 hotspotEl.dataset.hotspotIndex = index;
                 hotspotEl.style.cssText = `
             position: absolute;
-            left: ${hotspot.position.x}%;
-            top: ${hotspot.position.y}%;
-            width: ${hotspot.position.width}%;
-            height: ${hotspot.position.height}%;
-            border: 3px ${isSelected ? 'solid #ff4444' : 'dashed #28a745'};
-            background: ${isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(40, 167, 69, 0.2)'};
+            left: ${minX}%;
+            top: ${minY}%;
+            width: ${maxX - minX}%;
+            height: ${maxY - minY}%;
             cursor: move;
             pointer-events: auto;
             z-index: 50;
             `;
+
+                // Criar SVG para desenhar o polígono
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;';
+                svg.setAttribute('viewBox', `0 0 ${maxX - minX} ${maxY - minY}`);
+
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                const points = corners.map(c => `${c.x - minX},${c.y - minY}`).join(' ');
+                polygon.setAttribute('points', points);
+                polygon.setAttribute('fill', isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(40, 167, 69, 0.2)');
+                polygon.setAttribute('stroke', isSelected ? '#ff4444' : '#28a745');
+                polygon.setAttribute('stroke-width', '0.3');
+                polygon.setAttribute('stroke-dasharray', isSelected ? '' : '1,0.5');
+                svg.appendChild(polygon);
+                hotspotEl.appendChild(svg);
 
                 const label = document.createElement('div');
                 label.style.cssText = `
@@ -3342,10 +3379,16 @@
                 // Clique no label navega para destino
                 label.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     if (hotspot.target) {
                         loadLocation(hotspot.target);
                         showToast(`📍 Navegando para ${hotspot.target}`, 'info');
                     }
+                });
+
+                // Prevenir drag quando clicar no label
+                label.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
                 });
 
                 hotspotEl.appendChild(label);
@@ -3357,11 +3400,16 @@
                 });
 
                 if (isSelected) {
-                    const handles = ['nw', 'ne', 'sw', 'se'];
-                    handles.forEach(handle => {
+                    // Criar handle para cada canto do quadrilátero
+                    corners.forEach((corner, cornerIndex) => {
                         const handleEl = document.createElement('div');
-                        handleEl.className = 'resize-handle';
-                        handleEl.dataset.direction = handle;
+                        handleEl.className = 'corner-handle';
+                        handleEl.dataset.cornerIndex = cornerIndex;
+
+                        // Posição do handle relativa ao bounding box
+                        const handleX = ((corner.x - minX) / (maxX - minX)) * 100;
+                        const handleY = ((corner.y - minY) / (maxY - minY)) * 100;
+
                         handleEl.style.cssText = `
             position: absolute;
             width: 16px;
@@ -3370,15 +3418,14 @@
             border: 2px solid white;
             border-radius: 50%;
             z-index: 100;
-            cursor: ${handle}-resize;
+            cursor: move;
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            left: ${handleX}%;
+            top: ${handleY}%;
+            transform: translate(-50%, -50%);
             `;
-                        if (handle.includes('n')) handleEl.style.top = '-8px';
-                        if (handle.includes('s')) handleEl.style.bottom = '-8px';
-                        if (handle.includes('w')) handleEl.style.left = '-8px';
-                        if (handle.includes('e')) handleEl.style.right = '-8px';
 
-                        handleEl.addEventListener('mousedown', handleResizeMouseDown);
+                        handleEl.addEventListener('mousedown', handleCornerMouseDown);
                         hotspotEl.appendChild(handleEl);
                     });
                 }
@@ -3420,12 +3467,25 @@
             let newXPercent = (newX / containerRect.width) * 100;
             let newYPercent = (newY / containerRect.height) * 100;
 
+            // Calcular delta de movimento
+            const deltaX = newXPercent - hotspot.position.x;
+            const deltaY = newYPercent - hotspot.position.y;
+
             // Clamp to bounds
             newXPercent = Math.max(0, Math.min(100 - hotspot.position.width, newXPercent));
             newYPercent = Math.max(0, Math.min(100 - hotspot.position.height, newYPercent));
 
+            // Atualizar position
             hotspot.position.x = newXPercent;
             hotspot.position.y = newYPercent;
+
+            // Se tem corners, mover todos os cantos junto
+            if (hotspot.corners) {
+                hotspot.corners.forEach(corner => {
+                    corner.x += deltaX;
+                    corner.y += deltaY;
+                });
+            }
 
             renderPositionedHotspots(); // Re-render to show movement
         }
@@ -3439,58 +3499,56 @@
             document.removeEventListener('mouseup', handleHotspotMouseUp);
         }
 
-        function handleResizeMouseDown(e) {
+        let draggedCornerIndex = -1;
+
+        function handleCornerMouseDown(e) {
             e.stopPropagation();
             isResizingHotspot = true;
-            hotspotResizeHandle = e.target.dataset.direction;
+            draggedCornerIndex = parseInt(e.target.dataset.cornerIndex);
 
-            document.addEventListener('mousemove', handleResizeMouseMove);
-            document.addEventListener('mouseup', handleResizeMouseUp);
+            document.addEventListener('mousemove', handleCornerMouseMove);
+            document.addEventListener('mouseup', handleCornerMouseUp);
         }
 
-        function handleResizeMouseMove(e) {
-            if (!isResizingHotspot) return;
+        function handleCornerMouseMove(e) {
+            if (!isResizingHotspot || draggedCornerIndex < 0) return;
             e.stopPropagation();
 
             const container = document.getElementById('visual-hotspots-container');
             const containerRect = container.getBoundingClientRect();
             const hotspot = gameLocations[currentLocationId].hotspots[selectedHotspotIndex];
-            const pos = hotspot.position;
 
             const mouseX = e.clientX - containerRect.left;
             const mouseY = e.clientY - containerRect.top;
 
-            const mouseXPercent = (mouseX / containerRect.width) * 100;
-            const mouseYPercent = (mouseY / containerRect.height) * 100;
+            const mouseXPercent = Math.max(0, Math.min(100, (mouseX / containerRect.width) * 100));
+            const mouseYPercent = Math.max(0, Math.min(100, (mouseY / containerRect.height) * 100));
 
-            const right = pos.x + pos.width;
-            const bottom = pos.y + pos.height;
+            // Atualizar apenas o canto sendo arrastado
+            if (hotspot.corners && hotspot.corners[draggedCornerIndex]) {
+                hotspot.corners[draggedCornerIndex].x = mouseXPercent;
+                hotspot.corners[draggedCornerIndex].y = mouseYPercent;
 
-            if (hotspotResizeHandle.includes('e')) {
-                pos.width = Math.max(1, mouseXPercent - pos.x);
-            }
-            if (hotspotResizeHandle.includes('s')) {
-                pos.height = Math.max(1, mouseYPercent - pos.y);
-            }
-            if (hotspotResizeHandle.includes('w')) {
-                pos.width = Math.max(1, right - mouseXPercent);
-                pos.x = mouseXPercent;
-            }
-            if (hotspotResizeHandle.includes('n')) {
-                pos.height = Math.max(1, bottom - mouseYPercent);
-                pos.y = mouseYPercent;
+                // Atualizar position para manter compatibilidade (bounding box)
+                const xs = hotspot.corners.map(c => c.x);
+                const ys = hotspot.corners.map(c => c.y);
+                hotspot.position.x = Math.min(...xs);
+                hotspot.position.y = Math.min(...ys);
+                hotspot.position.width = Math.max(...xs) - hotspot.position.x;
+                hotspot.position.height = Math.max(...ys) - hotspot.position.y;
             }
 
             renderPositionedHotspots();
         }
 
-        function handleResizeMouseUp(e) {
+        function handleCornerMouseUp(e) {
             if (isResizingHotspot) {
                 isResizingHotspot = false;
+                draggedCornerIndex = -1;
                 autoSave();
             }
-            document.removeEventListener('mousemove', handleResizeMouseMove);
-            document.removeEventListener('mouseup', handleResizeMouseUp);
+            document.removeEventListener('mousemove', handleCornerMouseMove);
+            document.removeEventListener('mouseup', handleCornerMouseUp);
         }
 
         function showSelectDialog(title, currentValue, options, defaultValue) {
@@ -4147,7 +4205,13 @@
                         y: y,
                         width: w,
                         height: h
-                    }
+                    },
+                    corners: [
+                        { x: x, y: y },                     // top-left
+                        { x: x + w, y: y },                 // top-right
+                        { x: x + w, y: y + h },             // bottom-right
+                        { x: x, y: y + h }                  // bottom-left
+                    ]
                 };
 
                 location.hotspots.push(newHotspot);
