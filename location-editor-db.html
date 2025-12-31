@@ -5550,10 +5550,10 @@ if (typeof module !== 'undefined' && module.exports) {
                 const select = document.getElementById('hotspotNavTarget');
                 select.innerHTML = '<option value="">-- Selecione uma localização --</option>';
 
-                // Ordenar localizações alfabeticamente por nome
+                // Ordenar localizações alfabeticamente por ID
                 const sortedLocations = Object.keys(gameLocations)
                     .map(id => ({ id, name: gameLocations[id].name }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
+                    .sort((a, b) => a.id.localeCompare(b.id));
 
                 for (const loc of sortedLocations) {
                     const option = document.createElement('option');
