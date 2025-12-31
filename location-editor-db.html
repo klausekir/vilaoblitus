@@ -5550,11 +5550,15 @@ if (typeof module !== 'undefined' && module.exports) {
                 const select = document.getElementById('hotspotNavTarget');
                 select.innerHTML = '<option value="">-- Selecione uma localização --</option>';
 
-                for (const locationId in gameLocations) {
-                    const location = gameLocations[locationId];
+                // Ordenar localizações alfabeticamente por nome
+                const sortedLocations = Object.keys(gameLocations)
+                    .map(id => ({ id, name: gameLocations[id].name }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+
+                for (const loc of sortedLocations) {
                     const option = document.createElement('option');
-                    option.value = locationId;
-                    option.textContent = `${locationId} - ${location.name}`;
+                    option.value = loc.id;
+                    option.textContent = `${loc.id} - ${loc.name}`;
                     select.appendChild(option);
                 }
 
