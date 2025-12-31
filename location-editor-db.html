@@ -6290,6 +6290,11 @@ if (typeof module !== 'undefined' && module.exports) {
                 for (const locationId in gameLocations) {
                     const loc = gameLocations[locationId];
 
+                    // 🔍 DEBUG: Processando location
+                    if (locationId === 'casa_abandonada_01_quintal') {
+                        console.log('🔍 [SYNC DEBUG] Processando casa_abandonada_01_quintal, items:', loc.items?.length);
+                    }
+
                     // Convert editor format to API format
                     const navigationHotspots = (loc.hotspots || []).map(h => ({
                         type: h.action === 'navigate' ? 'navigation' : h.action === 'item' ? 'item' : 'interaction',
