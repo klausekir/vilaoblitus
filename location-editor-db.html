@@ -5997,11 +5997,13 @@ if (typeof module !== 'undefined' && module.exports) {
                     });
                 }
 
-                // Salvar no IndexedDB (agora é seguro - mudanças pendentes já foram sincronizadas)
-                await saveToIndexedDB('editorData', {
-                    locations: gameLocations,
-                    order: locationOrder
-                });
+                // ⚠️ NÃO salvar no IndexedDB aqui! Isso sobrescreve mudanças feitas durante o load.
+                // O IndexedDB é atualizado apenas por handleCornerMouseUp e autoSave.
+                // await saveToIndexedDB('editorData', {
+                //     locations: gameLocations,
+                //     order: locationOrder
+                // });
+                console.log('📋 Dados carregados do MySQL (IndexedDB não foi sobrescrito)');
 
                 renderLocationsList();
 
