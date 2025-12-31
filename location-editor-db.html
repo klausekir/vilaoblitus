@@ -3381,6 +3381,7 @@
                     e.stopPropagation();
                     e.preventDefault();
                     if (hotspot.target) {
+                        autoSave();
                         selectLocation(hotspot.target);
                         showToast(`📍 Navegando para ${hotspot.target}`, 'info');
                     }
