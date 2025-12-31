@@ -4518,7 +4518,9 @@
 
         function saveBasicInfo(triggerAutoSave = true) {
             if (!currentLocationId) return;
-            if (!autoSaveEnabled) return; // ✅ Não salvar automaticamente
+
+            // ✅ SEMPRE salvar na memória (gameLocations)
+            // Só não sincroniza com banco se autoSaveEnabled for false
 
             const oldId = currentLocationId;
             const newId = document.getElementById('edit-id').value.trim();
@@ -4594,7 +4596,8 @@
                 }
             }
 
-            if (triggerAutoSave) {
+            // ✅ Só sincronizar com IndexedDB/banco se autoSaveEnabled estiver true
+            if (triggerAutoSave && autoSaveEnabled) {
                 autoSave();
                 showToast('✓ Informações salvas!');
             }
