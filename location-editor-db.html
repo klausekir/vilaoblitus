@@ -934,7 +934,6 @@
         let draggedItem = null;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
-        let isRendering = false;
 
         const DEFAULT_VISUAL_TRANSFORM = {
             rotation: 0,
@@ -1149,15 +1148,6 @@
             autoSave();
             renderTransformControls();
             highlightSelectedVisual();
-
-            // ✅ Re-renderizar para mostrar resize handles
-            if (!isRendering) {
-                isRendering = true;
-                setTimeout(() => {
-                    renderPositionedItems();
-                    isRendering = false;
-                }, 0);
-            }
         }
 
         // Toast notification function
@@ -3150,15 +3140,7 @@
             selectedVisualType = 'item';
             selectedItemIndex = itemIndex;
             renderTransformControls();
-
-            // ✅ Renderizar para mostrar resize handles (igual quando muda um valor)
-            if (!isRendering) {
-                isRendering = true;
-                setTimeout(() => {
-                    renderPositionedItems();
-                    isRendering = false;
-                }, 0);
-            }
+            highlightSelectedVisual();
         }
 
         function selectPuzzleVisual() {
