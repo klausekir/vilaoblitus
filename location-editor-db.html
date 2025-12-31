@@ -1178,6 +1178,26 @@
             await loadFromDatabase(true); // Carrega automaticamente do banco
         };
 
+        // Sync to database when page becomes hidden (F5, tab switch, close, etc)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (autoSaveTimer) {
+                    clearTimeout(autoSaveTimer);
+                    // Force immediate sync when hiding page
+                    syncToDatabase(true).catch(err => console.error('Sync error:', err));
+                }
+            }
+        });
+
+        // Also sync before page unload as backup
+        window.addEventListener('beforeunload', () => {
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+                // Attempt sync (browser may not wait for it)
+                syncToDatabase(true).catch(err => console.error('Sync error:', err));
+            }
+        });
+
         // Initialize location order
         function initializeLocationOrder() {
             locationOrder = Object.keys(gameLocations);
@@ -1185,7 +1205,7 @@
 
         // Debounce timer for database sync
         let autoSaveTimer = null;
-        const SYNC_DEBOUNCE_MS = 2000; // 2 segundos de debounce
+        const SYNC_DEBOUNCE_MS = 500; // 500ms de debounce (sync mais rápido)
 
         // Auto-save to localStorage
         async function autoSave() {
