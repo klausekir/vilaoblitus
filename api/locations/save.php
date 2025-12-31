@@ -99,11 +99,6 @@ try {
         ");
 
         foreach ($hotspots as $hotspot) {
-            // 🔍 DEBUG: Log árvore recebida
-            if (isset($hotspot['item_id']) && $hotspot['item_id'] === 'arvore') {
-                error_log("🔍 [API DEBUG] Hotspot árvore recebido: " . json_encode($hotspot));
-            }
-
             $interactionData = null;
             if (isset($hotspot['interaction_data'])) {
                 $interactionData = is_string($hotspot['interaction_data'])
