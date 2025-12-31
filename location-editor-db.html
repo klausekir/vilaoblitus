@@ -6320,6 +6320,14 @@ if (typeof module !== 'undefined' && module.exports) {
                     if (result.success) {
                         // Limpar flag de mudanças não sincronizadas
                         localStorage.removeItem('unsyncedChanges');
+
+                        // ✅ CRÍTICO: Salvar também no IndexedDB para persistir ao dar F5
+                        await saveToIndexedDB('editorData', {
+                            locations: gameLocations,
+                            order: locationOrder
+                        });
+                        console.log('💾 Salvo no IndexedDB após sync com MySQL');
+
                         if (!silent) {
                             showToast(`✅ ${result.data.locations} localizações e ${result.data.hotspots} hotspots salvos em ${elapsed}s!`, 'success');
                         }
