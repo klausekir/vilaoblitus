@@ -1077,7 +1077,6 @@
             if (visualType === 'item') {
                 selectedItemIndex = parseInt(target.dataset.itemIndex);
                 selectedVisualType = 'item';
-                console.log('[DEBUG] startDragItem: selecionado item', selectedItemIndex);
             } else if (visualType === 'puzzle') {
                 selectedVisualType = 'puzzle';
                 selectedItemIndex = null;
@@ -1150,8 +1149,7 @@
             renderTransformControls();
 
             // ✅ Re-renderizar para mostrar resize handles
-            console.log('[DEBUG] onDragEnd: chamando renderVisuals()');
-            renderVisuals();
+            renderVisualItemsList();
         }
 
         // Toast notification function
@@ -2361,9 +2359,6 @@
                 ensureItemDefaults(item);
 
                 const isSelected = selectedVisualType === 'item' && selectedItemIndex === index;
-                if (item.id === 'arvore') {
-                    console.log('[DEBUG] renderVisuals arvore:', { index, selectedItemIndex, isSelected });
-                }
 
                 const transforms = [
                     'translate(-50%, -50%)',
@@ -3148,7 +3143,7 @@
             selectedItemIndex = itemIndex;
             renderTransformControls();
             // ✅ Re-renderiza após o evento atual terminar
-            setTimeout(() => renderVisuals(), 0);
+            setTimeout(() => renderVisualItemsList(), 0);
         }
 
         function selectPuzzleVisual() {
