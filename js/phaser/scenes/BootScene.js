@@ -127,6 +127,9 @@ class BootScene extends Phaser.Scene {
 
             // Items in this location
             (location.items || []).forEach(item => {
+                // ✅ Pular itens decorativos (GIFs animados) - usar DOM direto
+                if (item.isDecorative) return;
+
                 if (item.id && item.image && !this.textures.exists(`item_${item.id}`)) {
                     this.load.image(`item_${item.id}`, item.image);
                 }
