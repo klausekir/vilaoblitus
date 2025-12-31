@@ -40,7 +40,9 @@
       "Bash(node check-connections.js:*)",
       "Bash(node clear-puzzle.js:*)",
       "Bash(node check-puzzle.js:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(start run-corners-migration.html)",
+      "Bash(node add-corners-column.js:*)"
     ],
     "deny": [],
     "ask": []
