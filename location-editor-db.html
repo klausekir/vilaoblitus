@@ -5555,8 +5555,6 @@ if (typeof module !== 'undefined' && module.exports) {
         }
 
         async function loadFromDatabase(auto = false) {
-            console.log('🚀 [LOAD FROM DATABASE] Versão com fix de connections - 2025-12-30');
-
             if (!auto) {
                 showToast('🔄 Carregando do banco...', 'info');
             } else {
@@ -5686,7 +5684,6 @@ if (typeof module !== 'undefined' && module.exports) {
                 });
 
                 // ✅ Construir array de connections a partir dos hotspots de navegação
-                console.log('🔗 Construindo connections a partir dos hotspots...');
                 for (const locationId in gameLocations) {
                     const location = gameLocations[locationId];
                     location.connections = []; // Limpar primeiro
@@ -5697,7 +5694,6 @@ if (typeof module !== 'undefined' && module.exports) {
                             // Adicionar conexão se ainda não existe
                             if (!location.connections.includes(h.target)) {
                                 location.connections.push(h.target);
-                                console.log(`  ✅ ${locationId} → ${h.target}`);
                             }
                         }
                     });

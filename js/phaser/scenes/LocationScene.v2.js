@@ -632,24 +632,11 @@ class LocationScene extends Phaser.Scene {
 
         let textureKey = null;
 
-        console.log('🧩 Renderizando puzzle:', {
-            puzzleId: puzzle.id,
-            isSolved,
-            hasBeforeImage: !!visual.beforeImage,
-            hasAfterImage: !!visual.afterImage,
-            beforeImagePath: visual.beforeImage,
-            afterImagePath: visual.afterImage
-        });
-
         if (isSolved && visual.afterImage) {
             textureKey = `puzzle_${this.locationData.id}_after`;
         } else if (!isSolved && visual.beforeImage) {
             textureKey = `puzzle_${this.locationData.id}_before`;
-        } else {
-            console.warn('⚠️ Nenhuma imagem configurada para o puzzle!');
         }
-
-        console.log('🔑 TextureKey:', textureKey, 'Exists:', textureKey ? this.textures.exists(textureKey) : false);
 
         if (textureKey && this.textures.exists(textureKey)) {
             this.puzzleSprite = this.add.image(x, y, textureKey);
@@ -657,21 +644,6 @@ class LocationScene extends Phaser.Scene {
             // ✅ Usar tamanho original da imagem (sem redimensionar)
             // Origin padrão (0.5, 0.5 = centro) - mantém compatibilidade com posições já configuradas
             this.puzzleSprite.setScale(1, 1); // ✅ Escala 1:1 sem distorção
-
-            console.log('🎨 Puzzle sprite criado:', {
-                textureKey,
-                width: this.puzzleSprite.width,
-                height: this.puzzleSprite.height,
-                displayWidth: this.puzzleSprite.displayWidth,
-                displayHeight: this.puzzleSprite.displayHeight,
-                x: this.puzzleSprite.x,
-                y: this.puzzleSprite.y,
-                scaleX: this.puzzleSprite.scaleX,
-                scaleY: this.puzzleSprite.scaleY,
-                originX: this.puzzleSprite.originX,
-                originY: this.puzzleSprite.originY,
-                visible: this.puzzleSprite.visible
-            });
         } else {
             // Fallback for missing image
             this.puzzleSprite = this.add.container(x, y);
@@ -689,8 +661,6 @@ class LocationScene extends Phaser.Scene {
 
             this.puzzleSprite.add([bg, text]);
             this.puzzleSprite.setSize(targetWidth, targetHeight);
-
-            console.warn(`[PUZZLE] Missing texture for puzzle ${puzzle.id}. IsSolved: ${isSolved}, TextureKey: ${textureKey}`);
         }
 
         this.applyPuzzleTransforms(this.puzzleSprite, visual.transform);
@@ -1259,7 +1229,6 @@ class LocationScene extends Phaser.Scene {
 
         // ✅ Não permitir arrastar itens travados (conectados em puzzles)
         if (entry.locked) {
-            console.log(`[DRAG] Item ${entry.id} está travado e não pode ser arrastado`);
             return;
         }
 
@@ -1894,7 +1863,6 @@ class LocationScene extends Phaser.Scene {
 
             if (needsDOM) {
                 // ✅ Usar DOM element para transforms 3D/skew
-                console.log(`[RENDER] Item ${item.id} usa DOM (tem transforms 3D/skew)`, transform);
                 const wrapper = document.createElement('div');
                 wrapper.style.position = 'relative';
                 wrapper.style.width = `${size.width}px`;
