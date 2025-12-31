@@ -2543,63 +2543,17 @@
             // Hotspot controls
             if (visual.type === 'hotspot') {
                 const hotspot = visual.data;
-                const transform = hotspot.transform || {
-                    rotation: 0,
-                    rotateX: 0,
-                    rotateY: 0,
-                    scaleX: 1,
-                    scaleY: 1,
-                    skewX: 0,
-                    skewY: 0,
-                    perspective: 800
-                };
-                hotspot.transform = transform;
 
                 panel.innerHTML = `
                     <div style="margin-bottom: 15px;">
                         <strong style="display: block; margin-bottom: 8px;">🎯 Hotspot: ${hotspot.name}</strong>
                         <div style="font-size: 11px; color: #666; margin-bottom: 10px;">Destino: ${hotspot.target || 'Nenhum'}</div>
 
-                        <div style="margin-bottom: 15px; padding: 10px; background: #f0f0ff; border-radius: 6px;">
-                            <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #667eea;">🎯 Perspectiva 3D</label>
-
-                            <div style="margin-bottom: 10px;">
-                                <label style="font-size: 11px; color: #666;">Inclinar X (horizontal)</label>
-                                <input type="range" id="hotspot-rotate-x" min="-90" max="90" value="${transform.rotateX || 0}"
-                                       style="width: 100%;"
-                                       oninput="updateHotspotTransform()">
-                                <div style="text-align: center; font-size: 11px;" id="hotspot-rotate-x-value">${transform.rotateX || 0}°</div>
+                        <div style="padding: 15px; background: #f0f8ff; border-radius: 6px; border-left: 4px solid #00bfff;">
+                            <div style="font-size: 12px; color: #333; margin-bottom: 5px; font-weight: 600;">💡 Ajustar forma</div>
+                            <div style="font-size: 11px; color: #555; line-height: 1.4;">
+                                Arraste os 4 cantos (bolinhas laranjas) do hotspot na imagem para ajustar a área clicável a qualquer formato (portas em perspectiva, etc).
                             </div>
-
-                            <div style="margin-bottom: 10px;">
-                                <label style="font-size: 11px; color: #666;">Inclinar Y (vertical)</label>
-                                <input type="range" id="hotspot-rotate-y" min="-90" max="90" value="${transform.rotateY || 0}"
-                                       style="width: 100%;"
-                                       oninput="updateHotspotTransform()">
-                                <div style="text-align: center; font-size: 11px;" id="hotspot-rotate-y-value">${transform.rotateY || 0}°</div>
-                            </div>
-
-                            <div style="margin-bottom: 10px;">
-                                <label style="font-size: 11px; color: #666;">Distorcer X (horizontal)</label>
-                                <input type="range" id="hotspot-skew-x" min="-60" max="60" value="${transform.skewX || 0}"
-                                       style="width: 100%;"
-                                       oninput="updateHotspotTransform()">
-                                <div style="text-align: center; font-size: 11px;" id="hotspot-skew-x-value">${transform.skewX || 0}°</div>
-                            </div>
-
-                            <div>
-                                <label style="font-size: 11px; color: #666;">Distorcer Y (vertical)</label>
-                                <input type="range" id="hotspot-skew-y" min="-60" max="60" value="${transform.skewY || 0}"
-                                       style="width: 100%;"
-                                       oninput="updateHotspotTransform()">
-                                <div style="text-align: center; font-size: 11px;" id="hotspot-skew-y-value">${transform.skewY || 0}°</div>
-                            </div>
-                        </div>
-
-                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
-                            <button onclick="resetHotspotTransforms()" class="btn btn-danger btn-small" style="width: 100%;">
-                                🔄 Resetar Distorções
-                            </button>
                         </div>
                     </div>
                 `;
@@ -2916,63 +2870,6 @@
             autoSave();
             renderTransformControls();
             renderPositionedItems();
-        }
-
-        function updateHotspotTransform() {
-            if (!currentLocationId) return;
-            const visual = getSelectedVisual();
-            if (!visual || visual.type !== 'hotspot') return;
-
-            const transform = visual.data.transform || {
-                rotation: 0,
-                rotateX: 0,
-                rotateY: 0,
-                scaleX: 1,
-                scaleY: 1,
-                skewX: 0,
-                skewY: 0,
-                perspective: 800
-            };
-            visual.data.transform = transform;
-
-            const rotateX = parseFloat(document.getElementById('hotspot-rotate-x').value);
-            const rotateY = parseFloat(document.getElementById('hotspot-rotate-y').value);
-            const skewX = parseFloat(document.getElementById('hotspot-skew-x').value);
-            const skewY = parseFloat(document.getElementById('hotspot-skew-y').value);
-
-            if (!Number.isNaN(rotateX)) transform.rotateX = rotateX;
-            if (!Number.isNaN(rotateY)) transform.rotateY = rotateY;
-            if (!Number.isNaN(skewX)) transform.skewX = skewX;
-            if (!Number.isNaN(skewY)) transform.skewY = skewY;
-
-            document.getElementById('hotspot-rotate-x-value').textContent = (transform.rotateX || 0) + '°';
-            document.getElementById('hotspot-rotate-y-value').textContent = (transform.rotateY || 0) + '°';
-            document.getElementById('hotspot-skew-x-value').textContent = (transform.skewX || 0) + '°';
-            document.getElementById('hotspot-skew-y-value').textContent = (transform.skewY || 0) + '°';
-
-            autoSave();
-            renderPositionedHotspots();
-        }
-
-        function resetHotspotTransforms() {
-            if (!currentLocationId) return;
-            const visual = getSelectedVisual();
-            if (!visual || visual.type !== 'hotspot') return;
-
-            visual.data.transform = {
-                rotation: 0,
-                rotateX: 0,
-                rotateY: 0,
-                scaleX: 1,
-                scaleY: 1,
-                skewX: 0,
-                skewY: 0,
-                perspective: 800
-            };
-
-            autoSave();
-            renderTransformControls();
-            renderPositionedHotspots();
         }
 
         function startResizeItem(e) {
