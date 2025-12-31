@@ -46,7 +46,8 @@
       "Bash(node check-corners.js:*)",
       "Bash(node check-puzzles.js:*)",
       "Bash(node fix-duplicate-puzzle-ids.js:*)",
-      "Bash(node add-decorative-column.js:*)"
+      "Bash(node add-decorative-column.js:*)",
+      "Bash(node check-decorative-items.js:*)"
     ],
     "deny": [],
     "ask": []
