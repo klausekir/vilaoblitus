@@ -5050,6 +5050,18 @@
             const hasPuzzle = document.getElementById('has-puzzle').checked;
             const location = gameLocations[currentLocationId];
 
+            // 🔍 DEBUG: Verificar se puzzles estão compartilhados
+            console.log('🔍 Salvando puzzle para location:', currentLocationId);
+            for (const locId in gameLocations) {
+                const loc = gameLocations[locId];
+                if (loc.puzzle && locId !== currentLocationId) {
+                    console.log(`⚠️ Location "${locId}" também tem puzzle:`, loc.puzzle.id);
+                    if (loc.puzzle === location.puzzle) {
+                        console.error('❌ COMPARTILHAMENTO DETECTADO! Puzzles são o MESMO objeto!');
+                    }
+                }
+            }
+
             if (!hasPuzzle) {
                 delete location.puzzle;
                 if (autoSaveEnabled) {
