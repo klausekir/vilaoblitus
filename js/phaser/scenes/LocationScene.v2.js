@@ -1994,14 +1994,11 @@ class LocationScene extends Phaser.Scene {
                 this.applySpriteTransform(element, transform);
 
                 // Interatividade: APENAS se NÃO for decorativo
-                console.log(`[SPRITESHEET] Item: ${item.id}, isDecorative: ${item.isDecorative}, image: ${item.image}`);
                 if (!item.isDecorative) {
                     element.setInteractive({ useHandCursor: true });
                     element.on('pointerdown', () => {
                         this.collectItem(item, element);
                     });
-                } else {
-                    console.log(`[SPRITESHEET] Item ${item.id} é DECORATIVO - sem interatividade`);
                 }
 
                 // Salvar posição percentual para zoom
