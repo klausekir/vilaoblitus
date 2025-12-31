@@ -3568,9 +3568,13 @@
             if (isResizingHotspot) {
                 isResizingHotspot = false;
                 draggedCornerIndex = -1;
+                const hotspot = gameLocations[currentLocationId].hotspots[selectedHotspotIndex];
+                console.log('🔧 Corner mouseup - corners:', JSON.stringify(hotspot.corners));
                 autoSave();
                 // Sync imediatamente ao banco sem debounce (corners são críticos)
-                syncToDatabase(true).catch(err => console.error('Erro ao sincronizar corners:', err));
+                syncToDatabase(true).then(() => {
+                    console.log('✅ Sync após corner drag completado!');
+                }).catch(err => console.error('❌ Erro ao sincronizar corners:', err));
             }
             document.removeEventListener('mousemove', handleCornerMouseMove);
             document.removeEventListener('mouseup', handleCornerMouseUp);
@@ -5799,9 +5803,13 @@ if (typeof module !== 'undefined' && module.exports) {
 
         async function loadFromDatabase(auto = false) {
             // ⚠️ IMPORTANTE: Sync mudanças não sincronizadas antes de carregar!
-            if (localStorage.getItem('unsyncedChanges') === 'true') {
+            const hasUnsyncedChanges = localStorage.getItem('unsyncedChanges') === 'true';
+            console.log('🔍 loadFromDatabase - unsyncedChanges flag:', hasUnsyncedChanges);
+
+            if (hasUnsyncedChanges) {
                 console.log('⏰ Detectadas mudanças não sincronizadas. Carregando do IndexedDB e sincronizando...');
                 await loadFromLocalStorage();
+                console.log('📦 IndexedDB carregado');
                 await syncToDatabase(true);
                 console.log('✅ Mudanças sincronizadas. Agora carregando do banco...');
             }
@@ -6017,20 +6025,26 @@ if (typeof module !== 'undefined' && module.exports) {
                     const loc = gameLocations[locationId];
 
                     // Convert editor format to API format
-                    const navigationHotspots = (loc.hotspots || []).map(h => ({
-                        type: h.action === 'navigate' ? 'navigation' : h.action === 'item' ? 'item' : 'interaction',
-                        x: h.position?.x || 0,
-                        y: h.position?.y || 0,
-                        width: h.position?.width || 10,
-                        height: h.position?.height || 10,
-                        corners: h.corners ? JSON.stringify(h.corners) : null,
-                        label: h.name || '',
-                        description: h.description || '',
-                        target_location: h.target || null,
-                        item_id: h.item || null,
-                        arrow_direction: h.arrowDirection || null,
-                        zoom_direction: h.zoomDirection || null
-                    }));
+                    const navigationHotspots = (loc.hotspots || []).map(h => {
+                        const hotspotData = {
+                            type: h.action === 'navigate' ? 'navigation' : h.action === 'item' ? 'item' : 'interaction',
+                            x: h.position?.x || 0,
+                            y: h.position?.y || 0,
+                            width: h.position?.width || 10,
+                            height: h.position?.height || 10,
+                            corners: h.corners ? JSON.stringify(h.corners) : null,
+                            label: h.name || '',
+                            description: h.description || '',
+                            target_location: h.target || null,
+                            item_id: h.item || null,
+                            arrow_direction: h.arrowDirection || null,
+                            zoom_direction: h.zoomDirection || null
+                        };
+                        if (h.corners) {
+                            console.log(`📤 Enviando hotspot "${h.name}" com corners:`, h.corners);
+                        }
+                        return hotspotData;
+                    });
 
                     // IMPORTANTE: Converter items para hotspots do tipo 'item'
                     const itemHotspots = (loc.items || []).map(item => {
