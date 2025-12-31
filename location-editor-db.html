@@ -1703,7 +1703,11 @@
             event.target.value = '';
 
             const location = gameLocations[currentLocationId];
-            const imagePath = `images/items/${file.name}`;
+            const item = location.items[itemIndex];
+
+            // ✅ Usar images/objects para decorativos, images/items para colecionáveis
+            const folder = item.isDecorative ? 'images/objects' : 'images/items';
+            const imagePath = `${folder}/${file.name}`;
 
             // Save as image path reference (not base64 data)
             location.items[itemIndex].image = imagePath;
