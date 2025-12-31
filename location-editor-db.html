@@ -934,6 +934,7 @@
         let draggedItem = null;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
+        let renderTimeout = null;
 
         const DEFAULT_VISUAL_TRANSFORM = {
             rotation: 0,
@@ -1148,6 +1149,12 @@
             autoSave();
             renderTransformControls();
             highlightSelectedVisual();
+
+            // ✅ Re-renderizar com debounce para mostrar resize handles
+            clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(() => {
+                renderPositionedItems();
+            }, 100);
         }
 
         // Toast notification function
