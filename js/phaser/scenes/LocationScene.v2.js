@@ -1902,17 +1902,17 @@ class LocationScene extends Phaser.Scene {
             const hasShadow = transform && transform.shadowBlur && transform.shadowBlur > 0;
 
             // Verificar se precisa de DOM
-            // DOM para: transforms 3D/skew OU decorativo (GIF) OU sombra (mas NÃO para spritesheets)
-            const needsDOM = !isSpritesheet && (
-                (item.isDecorative) ||
-                (hasShadow) ||  // ✅ Sombra força DOM (exceto spritesheets)
+            // ✅ DECORATIVOS SEMPRE usam DOM (spritesheets animam no DOM automaticamente)
+            // ✅ Outros usam DOM para: transforms 3D/skew OU sombra (mas não spritesheets normais)
+            const needsDOM = item.isDecorative || (!isSpritesheet && (
+                (hasShadow) ||
                 (transform && (
                     (transform.rotateX && transform.rotateX !== 0) ||
                     (transform.rotateY && transform.rotateY !== 0) ||
                     (transform.skewX && transform.skewX !== 0) ||
                     (transform.skewY && transform.skewY !== 0)
                 ))
-            );
+            ));
 
             if (needsDOM) {
                 // ✅ Usar DOM element para transforms 3D/skew (e itens decorativos para GIF)
