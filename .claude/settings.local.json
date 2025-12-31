@@ -42,7 +42,8 @@
       "Bash(node check-puzzle.js:*)",
       "Bash(grep:*)",
       "Bash(start run-corners-migration.html)",
-      "Bash(node add-corners-column.js:*)"
+      "Bash(node add-corners-column.js:*)",
+      "Bash(node check-corners.js:*)"
     ],
     "deny": [],
     "ask": []

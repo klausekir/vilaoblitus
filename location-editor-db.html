@@ -5796,6 +5796,13 @@ if (typeof module !== 'undefined' && module.exports) {
         }
 
         async function loadFromDatabase(auto = false) {
+            // ⚠️ IMPORTANTE: Antes de carregar do banco, sync mudanças pendentes!
+            if (autoSaveTimer) {
+                clearTimeout(autoSaveTimer);
+                console.log('⏰ Sincronizando mudanças pendentes antes de carregar...');
+                await syncToDatabase(true);
+            }
+
             if (!auto) {
                 showToast('🔄 Carregando do banco...', 'info');
             } else {
