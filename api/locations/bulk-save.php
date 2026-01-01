@@ -70,8 +70,8 @@ try {
 
     $hotspotStmt = $pdo->prepare("
         INSERT INTO hotspots
-        (location_id, type, x, y, width, height, corners, label, description, target_location, item_id, is_display_item, display_image, rotation, rotate_x, rotate_y, scale_x, scale_y, skew_x, skew_y, flip_x, flip_y, opacity, shadow_blur, shadow_offset_x, shadow_offset_y, arrow_direction, zoom_direction)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (location_id, type, x, y, width, height, corners, label, description, target_location, item_id, is_display_item, is_decorative, display_image, rotation, rotate_x, rotate_y, scale_x, scale_y, skew_x, skew_y, flip_x, flip_y, opacity, shadow_blur, shadow_offset_x, shadow_offset_y, arrow_direction, zoom_direction)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $itemStmt = $pdo->prepare("
@@ -181,6 +181,7 @@ try {
                     $targetLocation,
                     $itemId,
                     $hotspot['is_display_item'] ?? 0,
+                    $hotspot['is_decorative'] ?? 0,  // ✅ CORRIGIDO!
                     $hotspot['display_image'] ?? null,
                     $hotspot['rotation'] ?? 0,
                     $hotspot['rotate_x'] ?? 0,

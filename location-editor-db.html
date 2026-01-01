@@ -874,7 +874,7 @@
 
     <!-- Save Button -->
     <div class="export-section">
-        <button class="export-btn" onclick="savePuzzle(); saveBasicInfo(false); autoSaveEnabled = true; syncToDatabase().then(() => autoSaveEnabled = false);" style="background: #28a745;">💾 Salvar</button>
+        <button class="export-btn" onclick="manualSave()" style="background: #28a745; font-size: 18px; font-weight: bold;">💾 SALVAR TUDO</button>
         <button class="export-btn" onclick="forceReloadFromDatabase();" style="background: #007bff; margin-left: 10px;">🔄 Recarregar do Banco</button>
     </div>
 
@@ -923,7 +923,7 @@
         let currentLocationId = null;
         let currentTab = 'basic';
         let currentPuzzleType = null;
-        let autoSaveEnabled = false; // ✅ Desabilitar salvamento automático
+        let autoSaveEnabled = false; // ❌ Auto-save DESABILITADO - apenas manual
         let locationOrder = []; // Track order of locations for drag-and-drop
         let draggedElement = null;
 
@@ -1190,25 +1190,24 @@
             }
         };
 
-        // Sync to database when page becomes hidden (F5, tab switch, close, etc)
+        // ❌ AUTO-SAVE DESABILITADO - Apenas salvamento manual
+        /*
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 if (autoSaveTimer) {
                     clearTimeout(autoSaveTimer);
-                    // Force immediate sync when hiding page
                     syncToDatabase(true).catch(err => console.error('Sync error:', err));
                 }
             }
         });
 
-        // Also sync before page unload as backup
         window.addEventListener('beforeunload', () => {
             if (autoSaveTimer) {
                 clearTimeout(autoSaveTimer);
-                // Attempt sync (browser may not wait for it)
                 syncToDatabase(true).catch(err => console.error('Sync error:', err));
             }
         });
+        */
 
         // Initialize location order
         function initializeLocationOrder() {
@@ -5222,6 +5221,31 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        // ✅ SALVAMENTO MANUAL - Salva TUDO no banco MySQL
+        async function manualSave() {
+            if (!currentLocationId) {
+                showToast('⚠️ Selecione uma location primeiro', 'error');
+                return;
+            }
+
+            // Salvar informações básicas da location atual
+            saveBasicInfo(false);  // false = não triggera auto-save
+
+            // Salvar puzzle se existir
+            savePuzzle();
+
+            // Fazer sync completo com MySQL
+            autoSaveEnabled = true;  // Temporariamente habilitar para sync funcionar
+            try {
+                await syncToDatabase(false);  // false = mostrar toast
+                showToast('✅ TUDO SALVO NO BANCO!', 'success');
+            } catch (error) {
+                showToast('❌ Erro ao salvar: ' + error.message, 'error');
+            } finally {
+                autoSaveEnabled = false;  // Desabilitar novamente
+            }
         }
 
         // Save puzzle
