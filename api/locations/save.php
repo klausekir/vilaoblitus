@@ -4,8 +4,6 @@
  * Handles complete location data including hotspots
  */
 
-error_log("🔔 SAVE API - Requisição recebida! Method: " . $_SERVER['REQUEST_METHOD']);
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, PUT');
@@ -21,15 +19,11 @@ require_once '../config.php';
 // Get database connection
 $pdo = getDBConnection();
 
-// Get raw input first for debugging
+// Get raw input
 $rawInput = file_get_contents('php://input');
-error_log("📥 SAVE API - Raw input: " . substr($rawInput, 0, 500));
 
 // Get JSON input
 $input = json_decode($rawInput, true);
-
-// Debug log
-error_log("📥 SAVE API - Parsed JSON: " . json_encode($input));
 
 if (!$input) {
     error_log("❌ SAVE API - JSON inválido ou vazio!");
@@ -99,11 +93,6 @@ try {
         ");
 
         foreach ($hotspots as $hotspot) {
-            // 🔍 DEBUG árvores
-            if (isset($hotspot['item_id']) && strpos($hotspot['item_id'], 'arvore') !== false) {
-                error_log("🔍 [API] Recebendo {$hotspot['item_id']}: is_decorative=" . ($hotspot['is_decorative'] ?? 'NULL'));
-            }
-
             $interactionData = null;
             if (isset($hotspot['interaction_data'])) {
                 $interactionData = is_string($hotspot['interaction_data'])

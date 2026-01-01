@@ -6333,11 +6333,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
                     // IMPORTANTE: Converter items para hotspots do tipo 'item'
                     const itemHotspots = (loc.items || []).map(item => {
-                        // 🔍 DEBUG árvores
-                        if (item.id && item.id.includes('arvore')) {
-                            console.log(`🔍 [MAP] ${item.id}: isDecorative=${item.isDecorative} (${typeof item.isDecorative})`);
-                        }
-
                         const hotspot = {
                             type: 'item',
                             item_id: item.id,

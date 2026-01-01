@@ -1974,13 +1974,15 @@ class LocationScene extends Phaser.Scene {
                 const animKey = `${item.id}_anim`;
                 if (!this.anims.exists(animKey)) {
                     const texture = this.textures.get(textureKey);
-                    const frameCount = texture.frameTotal;
+                    // ✅ Pegar número correto de frames (frameTotal pode estar errado)
+                    const frameNames = texture.getFrameNames();
+                    const actualFrameCount = frameNames.length;
 
                     this.anims.create({
                         key: animKey,
                         frames: this.anims.generateFrameNumbers(textureKey, {
                             start: 0,
-                            end: frameCount - 1
+                            end: Math.max(0, actualFrameCount - 1) // Garantir que não exceda
                         }),
                         frameRate: item.spritesheetFrameRate || 10, // FPS customizável
                         repeat: -1 // Loop infinito

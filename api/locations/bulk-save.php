@@ -4,8 +4,6 @@
  * Muito mais rápido que salvar uma por uma
  */
 
-error_log("🔔 BULK SAVE API - Requisição recebida!");
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
@@ -33,11 +31,6 @@ if (!$input || !isset($input['locations'])) {
 $locations = $input['locations'];
 $order = $input['order'] ?? [];
 $totalLocations = count($locations);
-
-error_log("📥 BULK SAVE - Recebendo $totalLocations localizações");
-if (!empty($order)) {
-    error_log("🔢 Ordem recebida: " . implode(', ', $order));
-}
 
 try {
     // Start transaction - tudo ou nada!
@@ -127,14 +120,11 @@ try {
 
 
         if (empty($locationId) || empty($name)) {
-            error_log("⚠️ BULK SAVE - Localização sem id ou name: " . json_encode($loc));
             continue;
         }
 
         // Insert/Update location
-        error_log("📍 Salvando location: ID=$locationId, Name=$name, Description=$description, BG=$backgroundImage, Order=$displayOrder, FinalScene=$isFinalScene, TransitionVideo=$transitionVideo");
         $locationStmt->execute([$locationId, $name, $description, $backgroundImage, $displayOrder, $isFinalScene, $credits, $transitionVideo, $dramaticMessages, $dramaticMessageDuration]);
-        error_log("✅ Location $locationId salvo com sucesso!");
         $successCount++;
 
         // Delete old hotspots
@@ -156,7 +146,6 @@ try {
                 // Se é hotspot de item, garantir que o item existe na tabela items
                 if ($type === 'item' && $itemId) {
                     $itemImage = $hotspot['item_image'] ?? '';  // Pegar imagem do hotspot
-                    error_log("📦 Salvando item: ID=$itemId, Nome=$label, Image=$itemImage");
 
                     $itemStmt->execute([
                         $itemId,
@@ -258,8 +247,6 @@ try {
 
     // Commit tudo de uma vez!
     $pdo->commit();
-
-    error_log("✅ BULK SAVE - Sucesso! $successCount localizações, $hotspotCount hotspots, $itemCount items, $puzzleCount puzzles, $wallCount walls");
 
     sendResponse(true, [
         'locations' => $successCount,

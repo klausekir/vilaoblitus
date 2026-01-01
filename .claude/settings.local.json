@@ -52,7 +52,10 @@
       "Bash(node set-item-decorative.js:*)",
       "Bash(node update-arvore-spritesheet.js:*)",
       "Bash(node check-arvore.js:*)",
-      "Bash(node fix-arvore.js:*)"
+      "Bash(node fix-arvore.js:*)",
+      "Bash(cmd /c dir \"C:\\\\src\\\\codex.oblitus\\\\images\\\\objects\\\\arvore*.png\" /b)",
+      "Bash(ls:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
