@@ -99,6 +99,11 @@ try {
         ");
 
         foreach ($hotspots as $hotspot) {
+            // 🔍 DEBUG árvores
+            if (isset($hotspot['item_id']) && strpos($hotspot['item_id'], 'arvore') !== false) {
+                error_log("🔍 [API] Recebendo {$hotspot['item_id']}: is_decorative=" . ($hotspot['is_decorative'] ?? 'NULL'));
+            }
+
             $interactionData = null;
             if (isset($hotspot['interaction_data'])) {
                 $interactionData = is_string($hotspot['interaction_data'])
