@@ -874,7 +874,7 @@
 
     <!-- Save Button -->
     <div class="export-section">
-        <button class="export-btn" onclick="manualSave()" style="background: #28a745; font-size: 18px; font-weight: bold;">💾 SALVAR TUDO</button>
+        <button class="export-btn" onclick="manualSave()" style="background: #28a745; font-size: 18px; font-weight: bold;">💾 Salvar</button>
         <button class="export-btn" onclick="forceReloadFromDatabase();" style="background: #007bff; margin-left: 10px;">🔄 Recarregar do Banco</button>
     </div>
 
@@ -1220,6 +1220,8 @@
 
         // Auto-save to localStorage
         async function autoSave() {
+            if (!autoSaveEnabled) return; // ✅ Não fazer nada se auto-save desabilitado
+
             const saveData = {
                 locations: gameLocations,
                 order: locationOrder
