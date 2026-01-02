@@ -431,6 +431,29 @@ class UIManager {
                 display: block;
                 line-height: 1.4;
             }
+            .photo-delete-btn {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: rgba(244, 67, 54, 0.9);
+                border: none;
+                color: white;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
+                line-height: 1;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+            }
+            .photo-delete-btn:hover {
+                background: rgba(244, 67, 54, 1);
+                transform: scale(1.1);
+            }
         `;
         document.head.appendChild(style);
 
@@ -1543,6 +1566,21 @@ class UIManager {
                 info.appendChild(location);
 
                 photoItem.appendChild(info);
+
+                // Botão deletar
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'photo-delete-btn';
+                deleteBtn.textContent = '✕';
+                deleteBtn.title = 'Apagar foto';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Não abrir foto ao clicar no X
+                    if (confirm('Apagar esta foto?')) {
+                        gameStateManager.deletePhoto(photo.id);
+                        this.closePhotoGallery();
+                        this.openPhotoGallery(); // Reabrir para atualizar
+                    }
+                });
+                photoItem.appendChild(deleteBtn);
 
                 // Click para ampliar
                 photoItem.addEventListener('click', () => {

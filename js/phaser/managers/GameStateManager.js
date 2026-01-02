@@ -403,6 +403,26 @@ class GameStateManager {
     }
 
     /**
+     * Deletar uma foto
+     */
+    deletePhoto(photoId) {
+        if (!this.state.photos) {
+            this.state.photos = [];
+            return false;
+        }
+
+        const index = this.state.photos.findIndex(p => p.id === photoId);
+        if (index >= 0) {
+            this.state.photos.splice(index, 1);
+            this.saveProgress();
+            console.log('[CAMERA] Foto deletada:', photoId);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Obter dados crus de um item no inventário
      */
     getInventoryItem(itemId) {
