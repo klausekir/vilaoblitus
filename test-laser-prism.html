@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste: Laser + Prisma</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        #canvas {
+            border: 2px solid #444;
+            background: #0a0a0a;
+            display: block;
+            margin: 20px auto;
+            cursor: crosshair;
+        }
+
+        .controls {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .control-group {
+            margin: 15px 0;
+        }
+
+        label {
+            display: inline-block;
+            width: 200px;
+            color: #aaa;
+        }
+
+        input[type="range"] {
+            width: 300px;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px;
+        }
+
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #357abd;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #333;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-box {
+            width: 30px;
+            height: 15px;
+            border: 1px solid #666;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">🔬 Teste de Física: Laser + Prisma Triangular</h1>
+
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <div class="controls">
+        <h3>Controles do Laser</h3>
+
+        <div class="control-group">
+            <label>Posição X do Laser:</label>
+            <input type="range" id="laserX" min="-350" max="350" value="-300" step="1">
+            <input type="number" id="laserXNum" value="-300">
+        </div>
+
+        <div class="control-group">
+            <label>Posição Y do Laser:</label>
+            <input type="range" id="laserY" min="-250" max="250" value="0" step="1">
+            <input type="number" id="laserYNum" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>Direção do Laser:</label>
+            <input type="range" id="laserDir" min="0" max="270" value="0" step="90">
+            <select id="laserDirSelect">
+                <option value="0">→ Direita (0°)</option>
+                <option value="90">↓ Baixo (90°)</option>
+                <option value="180">← Esquerda (180°)</option>
+                <option value="270">↑ Cima (270°)</option>
+            </select>
+        </div>
+
+        <h3>Controles do Prisma</h3>
+
+        <div class="control-group">
+            <label>Posição X do Prisma:</label>
+            <input type="range" id="prismX" min="-300" max="300" value="0" step="1">
+            <input type="number" id="prismXNum" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>Posição Y do Prisma:</label>
+            <input type="range" id="prismY" min="-200" max="200" value="0" step="1">
+            <input type="number" id="prismYNum" value="0">
+        </div>
+
+        <div class="control-group">
+            <label>Rotação do Prisma:</label>
+            <input type="range" id="prismRot" min="0" max="270" value="0" step="90">
+            <select id="prismRotSelect">
+                <option value="0">↗ 0°</option>
+                <option value="90">↘ 90°</option>
+                <option value="180">↙ 180°</option>
+                <option value="270">↖ 270°</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <button onclick="resetDemo()">🔄 Reset</button>
+            <button onclick="randomTest()">🎲 Teste Aleatório</button>
+        </div>
+
+        <div class="info">
+            <strong>Legenda das Cores:</strong>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="color-box" style="background: #ffff00;"></div>
+                    <span>Amarelo - Laser externo (no ar)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background: #88ddff;"></div>
+                    <span>Azul claro - Laser dentro do prisma (antes reflexão)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background: #00ffff;"></div>
+                    <span>Ciano - Laser dentro do prisma (após reflexão 90°)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background: #ff00ff;"></div>
+                    <span>Magenta - Ponto de reflexão na hipotenusa</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 15px;">
+                <strong>Como funciona:</strong><br>
+                1. Laser entra por uma FACE RETA do triângulo<br>
+                2. Atravessa por dentro em linha reta<br>
+                3. Bate na HIPOTENUSA (face maior)<br>
+                4. Refrata 90 graus<br>
+                5. Atravessa por dentro na nova direção<br>
+                6. Sai pela OUTRA FACE RETA (perpendicular à entrada)
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // State
+        let laser = { x: -300, y: 0, direction: 0 };
+        let prism = { x: 0, y: 0, rotation: 0 };
+
+        // Triangle vertices (base shape at rotation 0)
+        const baseVertices = [
+            { x: -30, y: 20 },   // Bottom-left (90° angle)
+            { x: -30, y: -20 },  // Top-left
+            { x: 30, y: 20 }     // Bottom-right
+        ];
+
+        // Sync inputs
+        function syncInputs() {
+            document.getElementById('laserX').value = laser.x;
+            document.getElementById('laserXNum').value = laser.x;
+            document.getElementById('laserY').value = laser.y;
+            document.getElementById('laserYNum').value = laser.y;
+            document.getElementById('laserDir').value = laser.direction;
+            document.getElementById('laserDirSelect').value = laser.direction;
+
+            document.getElementById('prismX').value = prism.x;
+            document.getElementById('prismXNum').value = prism.x;
+            document.getElementById('prismY').value = prism.y;
+            document.getElementById('prismYNum').value = prism.y;
+            document.getElementById('prismRot').value = prism.rotation;
+            document.getElementById('prismRotSelect').value = prism.rotation;
+        }
+
+        // Event listeners
+        ['laserX', 'laserXNum'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                laser.x = parseInt(e.target.value);
+                syncInputs();
+                draw();
+            });
+        });
+
+        ['laserY', 'laserYNum'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                laser.y = parseInt(e.target.value);
+                syncInputs();
+                draw();
+            });
+        });
+
+        ['laserDir', 'laserDirSelect'].forEach(id => {
+            document.getElementById(id).addEventListener('change', (e) => {
+                laser.direction = parseInt(e.target.value);
+                syncInputs();
+                draw();
+            });
+        });
+
+        ['prismX', 'prismXNum'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                prism.x = parseInt(e.target.value);
+                syncInputs();
+                draw();
+            });
+        });
+
+        ['prismY', 'prismYNum'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                prism.y = parseInt(e.target.value);
+                syncInputs();
+                draw();
+            });
+        });
+
+        ['prismRot', 'prismRotSelect'].forEach(id => {
+            document.getElementById(id).addEventListener('change', (e) => {
+                prism.rotation = parseInt(e.target.value);
+                syncInputs();
+                draw();
+            });
+        });
+
+        function resetDemo() {
+            laser = { x: -300, y: 0, direction: 0 };
+            prism = { x: 0, y: 0, rotation: 0 };
+            syncInputs();
+            draw();
+        }
+
+        function randomTest() {
+            const dirs = [0, 90, 180, 270];
+            laser.x = Math.floor(Math.random() * 600) - 300;
+            laser.y = Math.floor(Math.random() * 400) - 200;
+            laser.direction = dirs[Math.floor(Math.random() * dirs.length)];
+
+            prism.x = Math.floor(Math.random() * 400) - 200;
+            prism.y = Math.floor(Math.random() * 300) - 150;
+            prism.rotation = dirs[Math.floor(Math.random() * dirs.length)];
+
+            syncInputs();
+            draw();
+        }
+
+        // Line intersection helper
+        function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (Math.abs(denom) < 0.0001) return null;
+
+            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                return {
+                    x: x1 + t * (x2 - x1),
+                    y: y1 + t * (y2 - y1)
+                };
+            }
+
+            return null;
+        }
+
+        // Calculate prism refraction (90° reflection)
+        function calculateRefraction(incomingDir, prismRot) {
+            const reflectionMap = {
+                0: { 0: 90, 90: 0, 180: null, 270: null },
+                90: { 0: 270, 90: null, 180: null, 270: 0 },
+                180: { 0: null, 90: 180, 180: 270, 270: null },
+                270: { 0: null, 90: 180, 180: 90, 270: null }
+            };
+
+            return reflectionMap[prismRot]?.[incomingDir] ?? incomingDir;
+        }
+
+        // Calculate laser path through prism
+        function calculatePrismPath(laserX, laserY, laserDir, prismX, prismY, prismRot) {
+            const rad = (laserDir * Math.PI) / 180;
+            const dx = Math.cos(rad);
+            const dy = Math.sin(rad);
+
+            // Rotate vertices
+            const angle = (prismRot * Math.PI) / 180;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            const vertices = baseVertices.map(v => ({
+                x: prismX + (v.x * cos - v.y * sin),
+                y: prismY + (v.x * sin + v.y * cos)
+            }));
+
+            // Define edges
+            const edges = [
+                { start: vertices[0], end: vertices[1], type: 'straight' },
+                { start: vertices[1], end: vertices[2], type: 'hypotenuse' },
+                { start: vertices[2], end: vertices[0], type: 'straight' }
+            ];
+
+            // Find entry point
+            let entryPoint = null;
+            let entryEdge = null;
+
+            for (let edge of edges) {
+                if (edge.type === 'straight') {
+                    const intersection = lineIntersection(
+                        laserX, laserY, laserX + dx * 1000, laserY + dy * 1000,
+                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                    );
+                    if (intersection) {
+                        entryPoint = intersection;
+                        entryEdge = edge;
+                        break;
+                    }
+                }
+            }
+
+            if (!entryPoint) return null;
+
+            // Find hypotenuse
+            const hypotenuse = edges.find(e => e.type === 'hypotenuse');
+            if (!hypotenuse) return null;
+
+            // Calculate reflection point
+            const reflectionPoint = lineIntersection(
+                entryPoint.x, entryPoint.y, entryPoint.x + dx * 1000, entryPoint.y + dy * 1000,
+                hypotenuse.start.x, hypotenuse.start.y, hypotenuse.end.x, hypotenuse.end.y
+            );
+
+            if (!reflectionPoint) return null;
+
+            // Calculate exit direction
+            const exitDir = calculateRefraction(laserDir, prismRot);
+            const exitRad = (exitDir * Math.PI) / 180;
+            const exitDx = Math.cos(exitRad);
+            const exitDy = Math.sin(exitRad);
+
+            // Find exit point
+            let exitPoint = null;
+            for (let edge of edges) {
+                if (edge.type === 'straight' && edge !== entryEdge) {
+                    const intersection = lineIntersection(
+                        reflectionPoint.x, reflectionPoint.y,
+                        reflectionPoint.x + exitDx * 1000, reflectionPoint.y + exitDy * 1000,
+                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                    );
+                    if (intersection) {
+                        exitPoint = intersection;
+                        break;
+                    }
+                }
+            }
+
+            if (!exitPoint) return null;
+
+            return {
+                entry: entryPoint,
+                reflection: reflectionPoint,
+                exit: exitPoint,
+                exitDirection: exitDir
+            };
+        }
+
+        // Draw everything
+        function draw() {
+            // Clear
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw center lines
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+
+            // Draw prism
+            const angle = (prism.rotation * Math.PI) / 180;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            ctx.save();
+            ctx.translate(centerX + prism.x, centerY + prism.y);
+            ctx.rotate(angle);
+
+            ctx.fillStyle = 'rgba(100, 180, 255, 0.3)';
+            ctx.strokeStyle = '#4a9eff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(baseVertices[0].x, baseVertices[0].y);
+            ctx.lineTo(baseVertices[1].x, baseVertices[1].y);
+            ctx.lineTo(baseVertices[2].x, baseVertices[2].y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Mark 90° angle
+            ctx.fillStyle = '#ff6600';
+            ctx.beginPath();
+            ctx.arc(baseVertices[0].x, baseVertices[0].y, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Draw laser source
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(centerX + laser.x - 10, centerY + laser.y - 8, 20, 16);
+            ctx.strokeStyle = '#ff6666';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(centerX + laser.x - 10, centerY + laser.y - 8, 20, 16);
+
+            // Draw laser beam
+            const rad = (laser.direction * Math.PI) / 180;
+            const dx = Math.cos(rad);
+            const dy = Math.sin(rad);
+
+            // Calculate path through prism
+            const prismPath = calculatePrismPath(laser.x, laser.y, laser.direction, prism.x, prism.y, prism.rotation);
+
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(centerX + laser.x, centerY + laser.y);
+
+            if (prismPath) {
+                // Draw to entry
+                ctx.lineTo(centerX + prismPath.entry.x, centerY + prismPath.entry.y);
+                ctx.stroke();
+
+                // Draw entry → reflection (blue)
+                ctx.strokeStyle = '#88ddff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(centerX + prismPath.entry.x, centerY + prismPath.entry.y);
+                ctx.lineTo(centerX + prismPath.reflection.x, centerY + prismPath.reflection.y);
+                ctx.stroke();
+
+                // Mark reflection point
+                ctx.fillStyle = '#ff00ff';
+                ctx.beginPath();
+                ctx.arc(centerX + prismPath.reflection.x, centerY + prismPath.reflection.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw reflection → exit (cyan)
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(centerX + prismPath.reflection.x, centerY + prismPath.reflection.y);
+                ctx.lineTo(centerX + prismPath.exit.x, centerY + prismPath.exit.y);
+                ctx.stroke();
+
+                // Draw exit → beyond
+                ctx.strokeStyle = '#ffff00';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(centerX + prismPath.exit.x, centerY + prismPath.exit.y);
+                const exitRad = (prismPath.exitDirection * Math.PI) / 180;
+                ctx.lineTo(
+                    centerX + prismPath.exit.x + Math.cos(exitRad) * 500,
+                    centerY + prismPath.exit.y + Math.sin(exitRad) * 500
+                );
+                ctx.stroke();
+
+                // Mark entry and exit points
+                ctx.fillStyle = '#00ff00';
+                ctx.beginPath();
+                ctx.arc(centerX + prismPath.entry.x, centerY + prismPath.entry.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(centerX + prismPath.exit.x, centerY + prismPath.exit.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // No intersection, draw straight
+                ctx.lineTo(
+                    centerX + laser.x + dx * 800,
+                    centerY + laser.y + dy * 800
+                );
+                ctx.stroke();
+            }
+        }
+
+        // Initial draw
+        syncInputs();
+        draw();
+    </script>
+</body>
+</html>
