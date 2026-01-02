@@ -379,12 +379,50 @@ class LaserPrismPuzzle {
     }
 
     calculateReflection(incomingDirection, prismRotation) {
-        // Prisma triangular desvia 90° conforme orientação
-        // Rotação do prisma determina para onde o laser é desviado
+        // Física correta do prisma: laser entra pela face isométrica → bate na hipotenusa →
+        // refrata 90° → sai pela outra face isométrica
 
-        // Simplificado: sempre desvia 90° no sentido horário
-        // baseado na orientação do prisma
-        return (incomingDirection + 90) % 360;
+        // Normalize directions to 0-360
+        const incoming = ((incomingDirection % 360) + 360) % 360;
+        const rotation = ((prismRotation % 360) + 360) % 360;
+
+        // Right triangle prism reflection table
+        // For each prism rotation, map incoming direction to outgoing direction
+        const reflectionMap = {
+            0: {    // Prism pointing up-right (default)
+                0: 270,    // Coming from left (0°) → exits up (270°)
+                90: 0,     // Coming from top (90°) → exits right (0°)
+                180: 90,   // Coming from right (180°) → exits down (90°)
+                270: 180   // Coming from bottom (270°) → exits left (180°)
+            },
+            90: {   // Prism rotated 90° (pointing down-right)
+                0: 90,     // Coming from left (0°) → exits down (90°)
+                90: 180,   // Coming from top (90°) → exits left (180°)
+                180: 270,  // Coming from right (180°) → exits up (270°)
+                270: 0     // Coming from bottom (270°) → exits right (0°)
+            },
+            180: {  // Prism rotated 180° (pointing down-left)
+                0: 90,     // Coming from left (0°) → exits down (90°)
+                90: 0,     // Coming from top (90°) → exits right (0°)
+                180: 270,  // Coming from right (180°) → exits up (270°)
+                270: 180   // Coming from bottom (270°) → exits left (180°)
+            },
+            270: {  // Prism rotated 270° (pointing up-left)
+                0: 270,    // Coming from left (0°) → exits up (270°)
+                90: 180,   // Coming from top (90°) → exits left (180°)
+                180: 90,   // Coming from right (180°) → exits down (90°)
+                270: 0     // Coming from bottom (270°) → exits right (0°)
+            }
+        };
+
+        // Find closest rotation angle (0, 90, 180, 270)
+        const rotationKey = Math.round(rotation / 90) * 90 % 360;
+
+        // Find closest incoming direction
+        const incomingKey = Math.round(incoming / 90) * 90 % 360;
+
+        // Get reflection or default to 90° clockwise turn
+        return reflectionMap[rotationKey]?.[incomingKey] ?? (incoming + 90) % 360;
     }
 
     checkPrismCollision(x1, y1, x2, y2) {
