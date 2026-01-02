@@ -1890,14 +1890,15 @@ class LocationScene extends Phaser.Scene {
             const textureKey = `item_${item.id}`;
             let element;
 
-            // ✅ Detectar se é spritesheet
+            // ✅ Detectar tipo de animação
             const isSpritesheet = item.image && item.image.includes('_spritesheet.png');
+            const isAtlas = item.image && item.image.includes('_atlas.png');
 
             // ✅ Verificar se tem sombra
             const hasShadow = transform && transform.shadowBlur && transform.shadowBlur > 0;
 
             // Verificar se precisa de DOM
-            const needsDOM = !isSpritesheet && (
+            const needsDOM = !isSpritesheet && !isAtlas && (
                 (transform && (
                     (transform.rotateX && transform.rotateX !== 0) ||
                     (transform.rotateY && transform.rotateY !== 0) ||
@@ -1991,6 +1992,57 @@ class LocationScene extends Phaser.Scene {
                         }),
                         frameRate: item.spritesheetFrameRate || 10, // FPS customizável
                         repeat: -1 // Loop infinito
+                    });
+                }
+
+                // Reproduzir animação
+                element.play(animKey);
+                element.setDisplaySize(size.width, size.height);
+
+                // Aplicar transforms
+                this.applySpriteTransform(element, transform);
+
+                // Interatividade: APENAS se NÃO for decorativo
+                if (!item.isDecorative) {
+                    element.setInteractive({ useHandCursor: true });
+                    element.on('pointerdown', () => {
+                        this.collectItem(item, element);
+                    });
+                }
+
+                // Salvar posição percentual para zoom
+                element.__itemPercentPosition = {
+                    x: item.position.x,
+                    y: item.position.y
+                };
+
+            } else if (isAtlas && this.textures.exists(textureKey)) {
+                // ✅ TEXTURE ATLAS ANIMADO - criar sprite animado com atlas
+                element = this.add.sprite(x, y, textureKey);
+                element.setOrigin(0.5);
+                element.setDepth(50);
+
+                // Criar animação se ainda não existir
+                const animKey = `${item.id}_anim`;
+                if (!this.anims.exists(animKey)) {
+                    const texture = this.textures.get(textureKey);
+                    const frameNames = texture.getFrameNames();
+
+                    // Determinar o prefixo dos frames (ex: "spider_" de "spider_0")
+                    const firstFrameName = frameNames[0];
+                    const match = firstFrameName.match(/^(.+?)_\d+$/);
+                    const prefix = match ? match[1] + '_' : '';
+
+                    this.anims.create({
+                        key: animKey,
+                        frames: this.anims.generateFrameNames(textureKey, {
+                            prefix: prefix,
+                            start: 0,
+                            end: frameNames.length - 1,
+                            zeroPad: 0
+                        }),
+                        frameRate: item.spritesheetFrameRate || 10,
+                        repeat: -1
                     });
                 }
 
