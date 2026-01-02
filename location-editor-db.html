@@ -5427,13 +5427,40 @@
                 }
 
                 if (hitSlot) {
-                    ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                    // Draw laser path THROUGH the prism (entry → internal → exit)
+                    const prismPath = calculatePrismPath(currentX, currentY, direction, hitSlot);
 
-                    // Calculate proper 90° refraction based on prism orientation
-                    direction = calculatePrismRefraction(direction, hitSlot.rotation);
+                    if (prismPath) {
+                        // Draw to entry point
+                        ctx.lineTo(centerX + prismPath.entry.x, centerY + prismPath.entry.y);
 
-                    currentX = hitSlot.x;
-                    currentY = hitSlot.y;
+                        // Draw internal path (light blue to show it's inside prism)
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#88ddff';
+                        ctx.lineWidth = 2;
+                        ctx.moveTo(centerX + prismPath.entry.x, centerY + prismPath.entry.y);
+                        ctx.lineTo(centerX + prismPath.reflection.x, centerY + prismPath.reflection.y);
+                        ctx.lineTo(centerX + prismPath.exit.x, centerY + prismPath.exit.y);
+                        ctx.stroke();
+
+                        // Resume normal laser from exit point
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#ffff00';
+                        ctx.lineWidth = 3;
+                        ctx.moveTo(centerX + prismPath.exit.x, centerY + prismPath.exit.y);
+
+                        // Update position and direction
+                        currentX = prismPath.exit.x;
+                        currentY = prismPath.exit.y;
+                        direction = prismPath.exitDirection;
+                    } else {
+                        // Fallback: just change direction at center
+                        ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                        direction = calculatePrismRefraction(direction, hitSlot.rotation);
+                        currentX = hitSlot.x;
+                        currentY = hitSlot.y;
+                    }
                 } else {
                     ctx.lineTo(centerX + nextX, centerY + nextY);
 
@@ -5454,6 +5481,119 @@
             }
 
             ctx.stroke();
+        }
+
+        // Calculate laser path through prism (entry → reflection → exit)
+        function calculatePrismPath(startX, startY, laserDir, slot) {
+            const rad = (laserDir * Math.PI) / 180;
+            const dx = Math.cos(rad);
+            const dy = Math.sin(rad);
+
+            // Triangle vertices at rotation 0 (relative to slot center)
+            const baseVertices = [
+                { x: -18, y: 12 },   // Bottom-left (90° angle)
+                { x: -18, y: -12 },  // Top-left
+                { x: 18, y: 12 }     // Bottom-right
+            ];
+
+            // Rotate vertices based on slot rotation
+            const vertices = baseVertices.map(v => {
+                const angle = (slot.rotation * Math.PI) / 180;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                return {
+                    x: slot.x + (v.x * cos - v.y * sin),
+                    y: slot.y + (v.x * sin + v.y * cos)
+                };
+            });
+
+            // Define edges: [start, end, isHypotenuse]
+            const edges = [
+                { start: vertices[0], end: vertices[1], type: 'straight' },  // Left edge
+                { start: vertices[1], end: vertices[2], type: 'hypotenuse' }, // Hypotenuse
+                { start: vertices[2], end: vertices[0], type: 'straight' }   // Bottom edge
+            ];
+
+            // Find entry point (intersection with straight edges)
+            let entryPoint = null;
+            let entryEdge = null;
+
+            for (let edge of edges) {
+                if (edge.type === 'straight') {
+                    const intersection = lineIntersection(
+                        startX, startY, startX + dx * 100, startY + dy * 100,
+                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                    );
+                    if (intersection && !entryPoint) {
+                        entryPoint = intersection;
+                        entryEdge = edge;
+                        break;
+                    }
+                }
+            }
+
+            if (!entryPoint) return null;
+
+            // Find hypotenuse
+            const hypotenuse = edges.find(e => e.type === 'hypotenuse');
+            if (!hypotenuse) return null;
+
+            // Calculate where internal ray hits hypotenuse
+            const reflectionPoint = lineIntersection(
+                entryPoint.x, entryPoint.y, entryPoint.x + dx * 50, entryPoint.y + dy * 50,
+                hypotenuse.start.x, hypotenuse.start.y, hypotenuse.end.x, hypotenuse.end.y
+            );
+
+            if (!reflectionPoint) return null;
+
+            // Calculate refracted direction
+            const exitDirection = calculatePrismRefraction(laserDir, slot.rotation);
+            const exitRad = (exitDirection * Math.PI) / 180;
+            const exitDx = Math.cos(exitRad);
+            const exitDy = Math.sin(exitRad);
+
+            // Find exit point (intersection with other straight edge)
+            let exitPoint = null;
+            for (let edge of edges) {
+                if (edge.type === 'straight' && edge !== entryEdge) {
+                    const intersection = lineIntersection(
+                        reflectionPoint.x, reflectionPoint.y,
+                        reflectionPoint.x + exitDx * 50, reflectionPoint.y + exitDy * 50,
+                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                    );
+                    if (intersection) {
+                        exitPoint = intersection;
+                        break;
+                    }
+                }
+            }
+
+            if (!exitPoint) return null;
+
+            return {
+                entry: entryPoint,
+                reflection: reflectionPoint,
+                exit: exitPoint,
+                exitDirection: exitDirection
+            };
+        }
+
+        // Line-line intersection helper
+        function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (Math.abs(denom) < 0.0001) return null;
+
+            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                return {
+                    x: x1 + t * (x2 - x1),
+                    y: y1 + t * (y2 - y1)
+                };
+            }
+
+            return null;
         }
 
         // Calculate proper 90° refraction based on prism rotation
