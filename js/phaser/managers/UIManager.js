@@ -977,6 +977,10 @@ class UIManager {
                 const optionsWrap = document.createElement('div');
                 optionsWrap.className = 'puzzle-sequence-options';
 
+                // Criar sequenceDisplay ANTES da função updateDisplay
+                const sequenceDisplay = document.createElement('div');
+                sequenceDisplay.className = 'puzzle-sequence-display';
+
                 const updateDisplay = () => {
                     if (!sequenceDisplay) return;
                     if (!context.state.sequence.length) {
@@ -1005,8 +1009,7 @@ class UIManager {
                 });
                 this.puzzleInputArea?.appendChild(optionsWrap);
 
-                const sequenceDisplay = document.createElement('div');
-                sequenceDisplay.className = 'puzzle-sequence-display';
+                // Adicionar sequenceDisplay ao DOM
                 this.puzzleInputArea?.appendChild(sequenceDisplay);
                 updateDisplay();
 
