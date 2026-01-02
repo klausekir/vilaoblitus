@@ -43,19 +43,21 @@ async function optimizePNG(inputPath, outputPath) {
     });
 }
 
-// Optimize spider atlas
-const inputPath = 'images/objects/spider_atlas.png';
-const outputPath = 'images/objects/spider_atlas_optimized.png';
+// Get input path from command line or use default
+const inputPath = process.argv[2] || 'images/objects/spider_atlas.png';
+const outputPath = inputPath.replace('.png', '_optimized.png');
+
+console.log(`\nOptimizing: ${inputPath}\n`);
 
 optimizePNG(inputPath, outputPath)
     .then(result => {
-        console.log('\n✓ Optimization complete!');
+        console.log('\nOptimization complete!');
 
         // Copy optimized version over original
         fs.copyFileSync(outputPath, inputPath);
         fs.unlinkSync(outputPath);
 
-        console.log('✓ Replaced original with optimized version');
+        console.log('Replaced original with optimized version');
     })
     .catch(err => {
         console.error('Error:', err.message);

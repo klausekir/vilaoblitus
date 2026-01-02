@@ -35,19 +35,25 @@
 
     <script>
         document.getElementById('stats').innerHTML = `
-            <strong>File Sizes (from conversion):</strong><br>
-            Original GIF: 292.66 KB<br>
-            Atlas PNG: 7671.32 KB<br>
-            Atlas JSON: 22.41 KB<br>
-            <strong>Total Atlas: 7693.74 KB</strong><br>
+            <strong>Spider Animation - Spritesheet Otimizado</strong><br>
             <br>
-            Difference: <span style="color: #ff6b6b">+7401 KB (+2530%)</span><br>
+            <strong>Original:</strong><br>
+            GIF (67 frames): 292.66 KB<br>
             <br>
-            Frames: 67<br>
-            Atlas Grid: 9x8<br>
+            <strong>Otimizado:</strong><br>
+            Atlas PNG-8: 37.57 KB<br>
+            Atlas JSON: 5.76 KB<br>
+            ─────────────────────<br>
+            <strong>Total: 43.33 KB</strong> ✅<br>
+            <br>
+            Economia: <span style="color: #51cf66"><strong>85% menor!</strong></span><br>
+            <br>
+            Frames: 17 (reduzido de 67)<br>
+            Atlas Grid: 5x4<br>
             Frame Size: 500x215px<br>
+            Fundo: Transparente ✓<br>
             <br>
-            <span style="color: #ffd700">⚠️ Precisa rodar com servidor HTTP</span>
+            <span style="color: #51cf66">✓ Servidor HTTP rodando</span>
         `;
 
         const config = {

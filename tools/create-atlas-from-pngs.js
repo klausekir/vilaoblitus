@@ -100,10 +100,17 @@ async function createAtlasFromPNGs(framesDir, outputName) {
     return { pngPath, jsonPath, frames: files.length, cols, rows };
 }
 
+// Get directory from command line argument or use default
+const framesDir = process.argv[2] || 'frames_spider_no_bg';
+const outputName = process.argv[3] || 'spider';
+
+console.log(`Input: ${framesDir}`);
+console.log(`Output: ${outputName}_atlas.png/json\n`);
+
 // Create atlas from extracted frames
-createAtlasFromPNGs('frames_spider_no_bg', 'spider')
+createAtlasFromPNGs(framesDir, outputName)
     .then(result => {
-        console.log(`\n✓ Atlas created successfully!`);
+        console.log(`\nAtlas created successfully!`);
         console.log(`  Frames: ${result.frames}`);
         console.log(`  Grid: ${result.cols}x${result.rows}`);
     })

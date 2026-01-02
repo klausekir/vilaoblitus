@@ -132,9 +132,13 @@ class BootScene extends Phaser.Scene {
                 const textureKey = `item_${item.id}`;
                 if (this.textures.exists(textureKey)) return;
 
-                // ✅ Detectar se é spritesheet (termina com _spritesheet.png)
-                if (item.image.includes('_spritesheet.png')) {
-                    // Carregar como spritesheet
+                // ✅ Detectar formato de animação
+                if (item.image.includes('_atlas.png')) {
+                    // Texture atlas (PNG + JSON) - mais eficiente
+                    const jsonPath = item.image.replace('.png', '.json');
+                    this.load.atlas(textureKey, item.image, jsonPath);
+                } else if (item.image.includes('_spritesheet.png')) {
+                    // Spritesheet simples (grid regular)
                     const frameWidth = item.spritesheetFrameWidth || 249; // Default ou customizado
                     const frameHeight = item.spritesheetFrameHeight || 341;
 

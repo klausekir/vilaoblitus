@@ -1,0 +1,352 @@
+{
+  "frames": {
+    "spider_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_1": {
+      "frame": {
+        "x": 500,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_2": {
+      "frame": {
+        "x": 1000,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_3": {
+      "frame": {
+        "x": 1500,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_4": {
+      "frame": {
+        "x": 2000,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_5": {
+      "frame": {
+        "x": 0,
+        "y": 215,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_6": {
+      "frame": {
+        "x": 500,
+        "y": 215,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_7": {
+      "frame": {
+        "x": 1000,
+        "y": 215,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_8": {
+      "frame": {
+        "x": 1500,
+        "y": 215,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_9": {
+      "frame": {
+        "x": 2000,
+        "y": 215,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_10": {
+      "frame": {
+        "x": 0,
+        "y": 430,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_11": {
+      "frame": {
+        "x": 500,
+        "y": 430,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_12": {
+      "frame": {
+        "x": 1000,
+        "y": 430,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_13": {
+      "frame": {
+        "x": 1500,
+        "y": 430,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_14": {
+      "frame": {
+        "x": 2000,
+        "y": 430,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_15": {
+      "frame": {
+        "x": 0,
+        "y": 645,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    },
+    "spider_16": {
+      "frame": {
+        "x": 500,
+        "y": 645,
+        "w": 500,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 500,
+        "h": 215
+      }
+    }
+  },
+  "meta": {
+    "image": "spider_atlas.png",
+    "size": {
+      "w": 2500,
+      "h": 860
+    },
+    "scale": "1"
+  }
+}

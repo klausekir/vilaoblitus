@@ -65,7 +65,10 @@
       "WebFetch(domain:phaser.io)",
       "WebFetch(domain:www.codeandweb.com)",
       "Bash(node optimize-png.js:*)",
-      "Bash(node create-atlas-from-pngs.js:*)"
+      "Bash(node create-atlas-from-pngs.js:*)",
+      "Bash(node tools/create-atlas-from-pngs.js:*)",
+      "Bash(node tools/optimize-png.js:*)",
+      "Bash(start http://localhost:8000/test-spider-round-trip.html)"
     ],
     "deny": [],
     "ask": []

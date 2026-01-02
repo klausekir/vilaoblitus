@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Spider Round Trip Animation Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            font-family: monospace;
+            color: #fff;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        #game-container {
+            margin-top: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h2>Spider Animation - Ida e Volta (Round Trip)</h2>
+        <div id="stats">
+            <strong>Spider Round Trip Animation</strong><br>
+            <br>
+            <strong>Original (só ida):</strong><br>
+            17 frames: 43.33 KB<br>
+            <br>
+            <strong>Round Trip (ida + volta):</strong><br>
+            34 frames: 74.00 KB<br>
+            <br>
+            <strong>Animação:</strong><br>
+            Frames 0-16: Ida (direita → esquerda)<br>
+            Frames 17-33: Volta (esquerda → direita, espelhado)<br>
+            <br>
+            Grid: 6x6<br>
+            Frame Size: 500x215px<br>
+            Fundo: Transparente ✓<br>
+        </div>
+    </div>
+    <div id="game-container"></div>
+
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 400,
+            parent: 'game-container',
+            backgroundColor: '#2d2d2d',
+            scene: {
+                preload: preload,
+                create: create
+            }
+        };
+
+        const game = new Phaser.Game(config);
+
+        function preload() {
+            this.load.on('loaderror', function(file) {
+                console.error('Error loading:', file.key, file.url);
+            });
+
+            this.load.on('filecomplete', function(key) {
+                console.log('Loaded:', key);
+            });
+
+            this.load.atlas('spider', 'images/objects/spider_round_trip_atlas.png', 'images/objects/spider_round_trip_atlas.json');
+        }
+
+        function create() {
+            if (!this.textures.exists('spider')) {
+                console.error('Spider texture not loaded!');
+                this.add.text(400, 200, 'ERRO: Arquivos não carregaram\nAbra com servidor HTTP\n\nRode: python -m http.server 8000', {
+                    fontSize: '16px',
+                    color: '#ff6b6b',
+                    align: 'center'
+                }).setOrigin(0.5);
+                return;
+            }
+
+            // Create animation - apenas ida (frames originais)
+            this.anims.create({
+                key: 'spider_walk_right',
+                frames: this.anims.generateFrameNames('spider', {
+                    prefix: 'spider_round_trip_',
+                    start: 0,
+                    end: 16,
+                    zeroPad: 0
+                }),
+                frameRate: 10,
+                yoyo: true,  // Volta automaticamente
+                repeat: -1
+            });
+
+            // Também criar animação completa para comparação
+            this.anims.create({
+                key: 'spider_round_trip_full',
+                frames: this.anims.generateFrameNames('spider', {
+                    prefix: 'spider_round_trip_',
+                    start: 0,
+                    end: 33,
+                    zeroPad: 0
+                }),
+                frameRate: 10,
+                repeat: -1
+            });
+
+            // Add sprite 1 - Yoyo mode (Phaser nativo)
+            const spider1 = this.add.sprite(200, 150, 'spider', 'spider_round_trip_0');
+            spider1.setScale(0.4);
+
+            // Add sprite 2 - Frames espelhados manuais
+            const spider2 = this.add.sprite(600, 150, 'spider', 'spider_round_trip_0');
+            spider2.setScale(0.4);
+
+            // Add labels
+            this.add.text(200, 280, 'Yoyo Mode\n(Phaser)', {
+                fontSize: '14px',
+                color: '#ffd700',
+                align: 'center'
+            }).setOrigin(0.5);
+
+            this.add.text(600, 280, 'Frames Espelhados\n(Manual)', {
+                fontSize: '14px',
+                color: '#51cf66',
+                align: 'center'
+            }).setOrigin(0.5);
+
+            // Aguardar um frame antes de iniciar animações
+            this.time.delayedCall(50, () => {
+                spider1.play('spider_walk_right');
+                spider2.play('spider_round_trip_full');
+            });
+
+            // Add text
+            this.add.text(400, 350, 'Spider Animation - Ida e Volta!', {
+                fontSize: '20px',
+                color: '#51cf66'
+            }).setOrigin(0.5);
+
+            // Add instructions
+            this.add.text(400, 25, 'Aranha anda para esquerda → volta espelhada para direita', {
+                fontSize: '14px',
+                color: '#aaa'
+            }).setOrigin(0.5);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+{
+  "frames": {
+    "arvore01_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_1": {
+      "frame": {
+        "x": 249,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_2": {
+      "frame": {
+        "x": 498,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_3": {
+      "frame": {
+        "x": 747,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_4": {
+      "frame": {
+        "x": 0,
+        "y": 341,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_5": {
+      "frame": {
+        "x": 249,
+        "y": 341,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_6": {
+      "frame": {
+        "x": 498,
+        "y": 341,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_7": {
+      "frame": {
+        "x": 747,
+        "y": 341,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_8": {
+      "frame": {
+        "x": 0,
+        "y": 682,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_9": {
+      "frame": {
+        "x": 249,
+        "y": 682,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_10": {
+      "frame": {
+        "x": 498,
+        "y": 682,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    },
+    "arvore01_11": {
+      "frame": {
+        "x": 747,
+        "y": 682,
+        "w": 249,
+        "h": 341
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 249,
+        "h": 341
+      },
+      "sourceSize": {
+        "w": 249,
+        "h": 341
+      }
+    }
+  },
+  "meta": {
+    "image": "arvore01_atlas.png",
+    "size": {
+      "w": 996,
+      "h": 1023
+    },
+    "scale": "1"
+  }
+}
