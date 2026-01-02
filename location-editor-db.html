@@ -4994,7 +4994,8 @@
                             <div style="margin-top: 15px; padding: 10px; background: rgba(74, 144, 226, 0.1); border-radius: 4px; font-size: 11px; color: #4a90e2;">
                                 <strong>💡 Controles:</strong><br>
                                 🖱️ <strong>Arrastar:</strong> Mover laser (vermelho), sensor (verde) ou slots (laranja)<br>
-                                🔄 <strong>Rotacionar prisma:</strong> Duplo-clique OU botão direito no slot<br>
+                                🔄 <strong>Botão direito no slot:</strong> Rotacionar 90° (sentido horário)<br>
+                                🪞 <strong>Duplo-clique no slot:</strong> Espelhar prisma (flip 180°)<br>
                                 ⚡ <strong>Laser em tempo real!</strong> Ponto laranja = ângulo de 90° do prisma
                             </div>
                         </div>
@@ -5116,12 +5117,12 @@
             const mouseX = (e.clientX - rect.left) - centerX;
             const mouseY = (e.clientY - rect.top) - centerY;
 
-            // Check if double-clicked on a slot - rotate it
+            // Check if double-clicked on a slot - MIRROR it (flip 180°)
             for (let i = 0; i < 4; i++) {
                 const slot = laserPreviewState.slots[i];
                 if (Math.hypot(mouseX - slot.x, mouseY - slot.y) < 30) {
-                    // Rotate 90 degrees
-                    slot.rotation = (slot.rotation + 90) % 360;
+                    // Mirror = flip 180 degrees
+                    slot.rotation = (slot.rotation + 180) % 360;
 
                     // Update form field
                     const rotEl = document.getElementById(`slot${i + 1}-rotation`);
