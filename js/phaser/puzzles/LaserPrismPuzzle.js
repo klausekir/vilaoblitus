@@ -349,6 +349,8 @@ class LaserPrismPuzzle {
                     currentX = prismPath.exit.x;
                     currentY = prismPath.exit.y;
                     direction = prismPath.exitDirection;
+                    // Force direction to nearest 90° to prevent "bent" lasers
+                    direction = Math.round(direction / 90) * 90 % 360;
                 } else {
                     // Falha ao calcular caminho, pular prisma
                     currentX = nextPoint.x;

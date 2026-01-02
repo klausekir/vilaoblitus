@@ -5144,7 +5144,9 @@
 
             const laserDirEl = document.getElementById('laser-direction');
             if (laserDirEl) {
-                laserPreviewState.laserDirection = parseInt(laserDirEl.value) || 0;
+                const rawDir = parseInt(laserDirEl.value) || 0;
+                // Force to nearest 90° multiple (0, 90, 180, 270)
+                laserPreviewState.laserDirection = Math.round(rawDir / 90) * 90 % 360;
             }
 
             const sensorPosEl = document.getElementById('receptor-position');
@@ -5488,6 +5490,8 @@
                         currentX = prismPath.exit.x;
                         currentY = prismPath.exit.y;
                         direction = prismPath.exitDirection;
+                        // Force direction to nearest 90° to prevent "bent" lasers
+                        direction = Math.round(direction / 90) * 90 % 360;
                     } else {
                         // Fallback: just change direction at center
                         ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
@@ -6233,7 +6237,9 @@
                 // Parse laser direction
                 const laserDirEl = document.getElementById('laser-direction');
                 if (laserDirEl) {
-                    puzzle.laserDirection = parseInt(laserDirEl.value) || 0;
+                    const rawDir = parseInt(laserDirEl.value) || 0;
+                    // Force to nearest 90° multiple (0, 90, 180, 270)
+                    puzzle.laserDirection = Math.round(rawDir / 90) * 90 % 360;
                 }
 
                 // Parse receptor position
