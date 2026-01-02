@@ -182,7 +182,10 @@ class BootScene extends Phaser.Scene {
         // Load static/global assets (always needed)
         this.load.image('projectile_bullet', 'images/effects/bullet.png');
         this.load.image('wall_texture', 'images/objects/wall_texture.png');
-        
+
+        // Laser puzzle prism (optional - currently drawn with graphics)
+        // this.load.image('prism', 'images/objects/prism.png');
+
         // Load common UI items if needed (example: generic icons not part of location)
         // ...
     }

@@ -789,6 +789,10 @@
                                     <div>🔷 Conecta Blocos</div>
                                     <small>Encaixar formas</small>
                                 </div>
+                                <div class="puzzle-type-btn" onclick="selectPuzzleType('laser_prism')">
+                                    <div>🔦 Laser e Prismas</div>
+                                    <small>Redirecionar luz</small>
+                                </div>
                             </div>
                         </div>
 
@@ -4956,6 +4960,76 @@
                     </div>
 
                     ${getUnlockActionHTML()}
+                `,
+                laser_prism: `
+                    <div class="form-group">
+                        <label>Título</label>
+                        <input type="text" id="puzzle-title" placeholder="Sistema de Laser" onchange="savePuzzle()">
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea id="puzzle-description" placeholder="Redirecione o laser até o receptor..." onchange="savePuzzle()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Posição do Laser (x, y)</label>
+                        <input type="text" id="laser-position" placeholder="-200, 0" onchange="savePuzzle()">
+                        <div class="form-hint">Coordenadas x,y da fonte de laser (ex: -200, 0)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Direção Inicial do Laser (graus)</label>
+                        <select id="laser-direction" onchange="savePuzzle()">
+                            <option value="0">0° (Direita →)</option>
+                            <option value="90">90° (Baixo ↓)</option>
+                            <option value="180">180° (Esquerda ←)</option>
+                            <option value="270">270° (Cima ↑)</option>
+                        </select>
+                        <div class="form-hint">Direção que o laser aponta inicialmente</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Posição do Receptor (x, y)</label>
+                        <input type="text" id="receptor-position" placeholder="200, 0" onchange="savePuzzle()">
+                        <div class="form-hint">Coordenadas x,y do sensor alvo (ex: 200, 0)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom: 10px; display: block;">Slots para Prismas (4 posições)</label>
+                        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            ${[1, 2, 3, 4].map(i => `
+                                <div style="background: white; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 2px solid #e0e0e0;">
+                                    <div style="font-weight: bold; margin-bottom: 8px; color: #333;">Slot ${i}</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label style="font-size: 11px; color: #666; display: block; margin-bottom: 3px;">Posição (x, y):</label>
+                                            <input type="text" id="slot${i}-position" placeholder="0, 0" onchange="savePuzzle()" style="width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 11px; color: #666; display: block; margin-bottom: 3px;">Rotação Correta:</label>
+                                            <select id="slot${i}-rotation" onchange="savePuzzle()" style="width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+                                                <option value="0">0° (↑ Face cima)</option>
+                                                <option value="90">90° (→ Face direita)</option>
+                                                <option value="180">180° (↓ Face baixo)</option>
+                                                <option value="270">270° (← Face esquerda)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <div style="font-size: 11px; color: #666; line-height: 1.4; margin-top: 10px;">
+                                <strong>Dica:</strong> Configure as posições dos 4 slots onde os prismas serão colocados. A rotação correta é o ângulo que o prisma deve ter para refletir o laser corretamente.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dicas (JSON array - opcional)</label>
+                        <textarea id="puzzle-hints" placeholder='[{"text": "Procure por prismas de vidro escondidos..."}]' onchange="savePuzzle()"></textarea>
+                        <div class="form-hint">Formato: Array de objetos com propriedade "text"</div>
+                    </div>
+
+                    ${getUnlockActionHTML()}
                 `
             };
 
@@ -5133,6 +5207,48 @@
                         currentMolds = puzzle.molds.map(m => ({ ...m }));
                         renderShapeMatchMolds();
                     }
+                } else if (puzzle.type === 'laser_prism') {
+                    const titleEl = document.getElementById('puzzle-title');
+                    if (titleEl && puzzle.title) titleEl.value = puzzle.title;
+
+                    const descEl = document.getElementById('puzzle-description');
+                    if (descEl && puzzle.description) descEl.value = puzzle.description;
+
+                    const laserPosEl = document.getElementById('laser-position');
+                    if (laserPosEl && puzzle.laserPosition) {
+                        laserPosEl.value = `${puzzle.laserPosition.x}, ${puzzle.laserPosition.y}`;
+                    }
+
+                    const laserDirEl = document.getElementById('laser-direction');
+                    if (laserDirEl && puzzle.laserDirection !== undefined) {
+                        laserDirEl.value = puzzle.laserDirection;
+                    }
+
+                    const receptorPosEl = document.getElementById('receptor-position');
+                    if (receptorPosEl && puzzle.receptorPosition) {
+                        receptorPosEl.value = `${puzzle.receptorPosition.x}, ${puzzle.receptorPosition.y}`;
+                    }
+
+                    // Carregar slots
+                    if (puzzle.slots && Array.isArray(puzzle.slots)) {
+                        puzzle.slots.forEach((slot, index) => {
+                            const slotNum = index + 1;
+                            const posEl = document.getElementById(`slot${slotNum}-position`);
+                            const rotEl = document.getElementById(`slot${slotNum}-rotation`);
+
+                            if (posEl) {
+                                posEl.value = `${slot.x}, ${slot.y}`;
+                            }
+                            if (rotEl && slot.correctRotation !== undefined) {
+                                rotEl.value = slot.correctRotation;
+                            }
+                        });
+                    }
+
+                    const hintsEl = document.getElementById('puzzle-hints');
+                    if (hintsEl && puzzle.hints) {
+                        hintsEl.value = JSON.stringify(puzzle.hints, null, 2);
+                    }
                 }
 
                 // ✅ Carregar unlock action para TODOS os tipos de puzzle
@@ -5176,7 +5292,8 @@
                 item_combination: 'Combinar Itens',
                 padlock_5digit: 'Cadeado 5 Dígitos',
                 egyptian: 'Parede Egípcia',
-                shape_match: 'Conecta Blocos'
+                shape_match: 'Conecta Blocos',
+                laser_prism: 'Laser e Prismas'
             };
             return names[type] || type;
         }
@@ -5452,6 +5569,58 @@
 
                 // Salvar moldes
                 puzzle.molds = currentMolds.map(m => ({ ...m }));
+            } else if (currentPuzzleType === 'laser_prism') {
+                const titleEl = document.getElementById('puzzle-title');
+                if (titleEl && titleEl.value) puzzle.title = titleEl.value;
+
+                const descEl = document.getElementById('puzzle-description');
+                if (descEl && descEl.value) puzzle.description = descEl.value;
+
+                // Parse laser position
+                const laserPosEl = document.getElementById('laser-position');
+                if (laserPosEl && laserPosEl.value) {
+                    const [x, y] = laserPosEl.value.split(',').map(n => parseFloat(n.trim()));
+                    puzzle.laserPosition = { x: x || 0, y: y || 0 };
+                }
+
+                // Parse laser direction
+                const laserDirEl = document.getElementById('laser-direction');
+                if (laserDirEl) {
+                    puzzle.laserDirection = parseInt(laserDirEl.value) || 0;
+                }
+
+                // Parse receptor position
+                const receptorPosEl = document.getElementById('receptor-position');
+                if (receptorPosEl && receptorPosEl.value) {
+                    const [x, y] = receptorPosEl.value.split(',').map(n => parseFloat(n.trim()));
+                    puzzle.receptorPosition = { x: x || 0, y: y || 0 };
+                }
+
+                // Parse slots (4 slots)
+                puzzle.slots = [];
+                for (let i = 1; i <= 4; i++) {
+                    const posEl = document.getElementById(`slot${i}-position`);
+                    const rotEl = document.getElementById(`slot${i}-rotation`);
+
+                    if (posEl && posEl.value) {
+                        const [x, y] = posEl.value.split(',').map(n => parseFloat(n.trim()));
+                        puzzle.slots.push({
+                            x: x || 0,
+                            y: y || 0,
+                            correctRotation: rotEl ? parseInt(rotEl.value) : 0
+                        });
+                    }
+                }
+
+                const hintsEl = document.getElementById('puzzle-hints');
+                if (hintsEl && hintsEl.value) {
+                    try {
+                        puzzle.hints = JSON.parse(hintsEl.value);
+                    } catch (e) {
+                        console.warn('Hints inválidos:', e);
+                        puzzle.hints = [];
+                    }
+                }
             }
 
             // ✅ Salvar unlock action para TODOS os tipos de puzzle

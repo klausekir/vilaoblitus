@@ -24,6 +24,8 @@ class PuzzleManager {
                 return this.createEgyptianPuzzle(config);
             case 'rotating_discs':
                 return this.createRotatingDiscsPuzzle(config);
+            case 'laser_prism':
+                return this.createLaserPrismPuzzle(config);
             case 'code':
                 return this.createCodePuzzle(config);
             case 'pattern':
@@ -71,6 +73,21 @@ class PuzzleManager {
      */
     createRotatingDiscsPuzzle(config) {
         const puzzle = new RotatingDiscsPuzzle(this.scene, config);
+        const centerX = this.scene.scale.width / 2;
+        const centerY = this.scene.scale.height / 2;
+
+        puzzle.create(centerX, centerY);
+        this.activePuzzle = puzzle;
+        this.startHintTimer(config);
+
+        return puzzle;
+    }
+
+    /**
+     * PUZZLE: Laser e Prismas
+     */
+    createLaserPrismPuzzle(config) {
+        const puzzle = new LaserPrismPuzzle(this.scene, config);
         const centerX = this.scene.scale.width / 2;
         const centerY = this.scene.scale.height / 2;
 
