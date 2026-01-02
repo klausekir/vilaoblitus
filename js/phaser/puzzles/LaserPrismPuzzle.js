@@ -386,32 +386,32 @@ class LaserPrismPuzzle {
         const incoming = ((incomingDirection % 360) + 360) % 360;
         const rotation = ((prismRotation % 360) + 360) % 360;
 
-        // Right triangle prism reflection table
-        // For each prism rotation, map incoming direction to outgoing direction
+        // Right triangle prism reflection table (90° angle at bottom-left)
+        // Laser enters through STRAIGHT edge, hits hypotenuse, refracts 90°, exits other STRAIGHT edge
         const reflectionMap = {
-            0: {    // Prism pointing up-right (default)
-                0: 270,    // Coming from left (0°) → exits up (270°)
-                90: 0,     // Coming from top (90°) → exits right (0°)
-                180: 90,   // Coming from right (180°) → exits down (90°)
-                270: 180   // Coming from bottom (270°) → exits left (180°)
+            0: {    // ↗ Right angle at bottom-left (vertical + horizontal edges)
+                0: 90,     // → enters left edge, exits down (clockwise 90°)
+                90: 0,     // ↓ enters bottom edge, exits right (counter-clockwise 90°)
+                180: null, // ← can't enter (hypotenuse side)
+                270: null  // ↑ can't enter (no edge)
             },
-            90: {   // Prism rotated 90° (pointing down-right)
-                0: 90,     // Coming from left (0°) → exits down (90°)
-                90: 180,   // Coming from top (90°) → exits left (180°)
-                180: 270,  // Coming from right (180°) → exits up (270°)
-                270: 0     // Coming from bottom (270°) → exits right (0°)
+            90: {   // ↘ Right angle at top-left (vertical + horizontal edges)
+                0: 270,    // → enters left edge, exits up (counter-clockwise 90°)
+                90: null,  // ↓ can't enter (no edge)
+                180: null, // ← can't enter (hypotenuse side)
+                270: 0     // ↑ enters top edge, exits right (clockwise 90°)
             },
-            180: {  // Prism rotated 180° (pointing down-left)
-                0: 90,     // Coming from left (0°) → exits down (90°)
-                90: 0,     // Coming from top (90°) → exits right (0°)
-                180: 270,  // Coming from right (180°) → exits up (270°)
-                270: 180   // Coming from bottom (270°) → exits left (180°)
+            180: {  // ↙ Right angle at top-right (vertical + horizontal edges)
+                0: null,   // → can't enter (no edge)
+                90: 180,   // ↓ enters top edge, exits left (clockwise 90°)
+                180: 270,  // ← enters right edge, exits up (counter-clockwise 90°)
+                270: null  // ↑ can't enter (hypotenuse side)
             },
-            270: {  // Prism rotated 270° (pointing up-left)
-                0: 270,    // Coming from left (0°) → exits up (270°)
-                90: 180,   // Coming from top (90°) → exits left (180°)
-                180: 90,   // Coming from right (180°) → exits down (90°)
-                270: 0     // Coming from bottom (270°) → exits right (0°)
+            270: {  // ↖ Right angle at bottom-right (vertical + horizontal edges)
+                0: null,   // → can't enter (hypotenuse side)
+                90: 180,   // ↓ enters bottom edge, exits left (counter-clockwise 90°)
+                180: 90,   // ← enters right edge, exits down (clockwise 90°)
+                270: null  // ↑ can't enter (no edge)
             }
         };
 
@@ -421,8 +421,15 @@ class LaserPrismPuzzle {
         // Find closest incoming direction
         const incomingKey = Math.round(incoming / 90) * 90 % 360;
 
-        // Get reflection or default to 90° clockwise turn
-        return reflectionMap[rotationKey]?.[incomingKey] ?? (incoming + 90) % 360;
+        // Get reflection (null means laser can't enter from this direction - passes through)
+        const refracted = reflectionMap[rotationKey]?.[incomingKey];
+
+        // If null (invalid entry), laser passes through without refracting
+        if (refracted === null || refracted === undefined) {
+            return incoming; // Continue same direction
+        }
+
+        return refracted;
     }
 
     checkPrismCollision(x1, y1, x2, y2) {
