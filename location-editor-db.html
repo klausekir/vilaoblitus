@@ -5418,69 +5418,53 @@
                 const nextX = currentX + Math.cos(rad) * 100;
                 const nextY = currentY + Math.sin(rad) * 100;
 
-                // Try to calculate path through each slot (like working demo)
-                let prismPath = null;
+                // SIMPLE: Check if laser is near any slot
                 let hitSlot = null;
-
                 for (let slot of laserPreviewState.slots) {
-                    prismPath = calculatePrismPath(currentX, currentY, direction, slot);
-                    if (prismPath) {
+                    const dist = Math.hypot(nextX - slot.x, nextY - slot.y);
+                    if (dist < 40) {
                         hitSlot = slot;
                         break;
                     }
                 }
 
-                if (prismPath && hitSlot) {
-                    // Draw laser path THROUGH the prism (entry → internal → exit)
+                if (hitSlot) {
+                    // SIMPLE refraction: 90° turn
+                    const slotRotation = hitSlot.rotation || 0;
 
-                    if (prismPath) {
-                        // Draw to entry point
-                        ctx.lineTo(centerX + prismPath.entry.x, centerY + prismPath.entry.y);
+                    // Calculate new direction (90° refraction based on prism rotation)
+                    const newDirection = calculatePrismRefraction(direction, slotRotation);
 
-                        // Draw internal path (light blue to show it's inside prism)
-                        ctx.stroke();
+                    // Draw laser to prism
+                    ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                    ctx.stroke();
 
-                        // Segment 1: Entry → Reflection (before refraction)
-                        ctx.beginPath();
-                        ctx.strokeStyle = '#88ddff';  // Light blue
-                        ctx.lineWidth = 2;
-                        ctx.moveTo(centerX + prismPath.entry.x, centerY + prismPath.entry.y);
-                        ctx.lineTo(centerX + prismPath.reflection.x, centerY + prismPath.reflection.y);
-                        ctx.stroke();
+                    // Draw internal refraction (cyan bend showing 90° turn)
+                    const entryRad = (direction * Math.PI) / 180;
+                    const exitRad = (newDirection * Math.PI) / 180;
 
-                        // Mark reflection point
-                        ctx.fillStyle = '#ff00ff';  // Magenta dot at reflection
-                        ctx.beginPath();
-                        ctx.arc(centerX + prismPath.reflection.x, centerY + prismPath.reflection.y, 3, 0, Math.PI * 2);
-                        ctx.fill();
+                    const entryX = hitSlot.x - Math.cos(entryRad) * 20;
+                    const entryY = hitSlot.y - Math.sin(entryRad) * 20;
+                    const exitX = hitSlot.x + Math.cos(exitRad) * 20;
+                    const exitY = hitSlot.y + Math.sin(exitRad) * 20;
 
-                        // Segment 2: Reflection → Exit (after 90° refraction)
-                        ctx.beginPath();
-                        ctx.strokeStyle = '#00ffff';  // Cyan (different color after refraction)
-                        ctx.lineWidth = 2;
-                        ctx.moveTo(centerX + prismPath.reflection.x, centerY + prismPath.reflection.y);
-                        ctx.lineTo(centerX + prismPath.exit.x, centerY + prismPath.exit.y);
-                        ctx.stroke();
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(centerX + entryX, centerY + entryY);
+                    ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                    ctx.lineTo(centerX + exitX, centerY + exitY);
+                    ctx.stroke();
 
-                        // Resume normal laser from exit point
-                        ctx.beginPath();
-                        ctx.strokeStyle = '#ffff00';
-                        ctx.lineWidth = 3;
-                        ctx.moveTo(centerX + prismPath.exit.x, centerY + prismPath.exit.y);
+                    // Resume laser from exit
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#ffff00';
+                    ctx.lineWidth = 3;
+                    ctx.moveTo(centerX + exitX, centerY + exitY);
 
-                        // Update position and direction
-                        currentX = prismPath.exit.x;
-                        currentY = prismPath.exit.y;
-                        direction = prismPath.exitDirection;
-                        // Force direction to nearest 90° to prevent "bent" lasers
-                        direction = Math.round(direction / 90) * 90 % 360;
-                    } else {
-                        // Fallback: just change direction at center
-                        ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
-                        direction = calculatePrismRefraction(direction, hitSlot.rotation);
-                        currentX = hitSlot.x;
-                        currentY = hitSlot.y;
-                    }
+                    currentX = exitX;
+                    currentY = exitY;
+                    direction = newDirection;
                 } else {
                     ctx.lineTo(centerX + nextX, centerY + nextY);
 
