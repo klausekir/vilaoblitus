@@ -5471,13 +5471,41 @@
                         currentX = path.exit.x;
                         currentY = path.exit.y;
                         direction = path.newDirection;
-                        lastSlot = hitSlot;  // Remember this slot to skip next time
+                        lastSlot = hitSlot;
                     } else {
-                        // No valid path - pass through
-                        ctx.lineTo(centerX + nextX, centerY + nextY);
-                        currentX = nextX;
-                        currentY = nextY;
-                        lastSlot = null;
+                        // Fallback: simple refraction at hit point
+                        const newDir = calculatePrismRefraction(direction, hitSlot.rotation || 0);
+                        if (newDir !== direction) {
+                            ctx.lineTo(centerX + hitPoint.x, centerY + hitPoint.y);
+                            ctx.stroke();
+
+                            const exitRad = (newDir * Math.PI) / 180;
+                            const exitX = hitPoint.x + Math.cos(exitRad) * 50;
+                            const exitY = hitPoint.y + Math.sin(exitRad) * 50;
+
+                            ctx.beginPath();
+                            ctx.strokeStyle = '#00ffff';
+                            ctx.lineWidth = 2;
+                            ctx.moveTo(centerX + hitPoint.x, centerY + hitPoint.y);
+                            ctx.lineTo(centerX + exitX, centerY + exitY);
+                            ctx.stroke();
+
+                            ctx.beginPath();
+                            ctx.strokeStyle = '#ffff00';
+                            ctx.lineWidth = 3;
+                            ctx.moveTo(centerX + exitX, centerY + exitY);
+
+                            currentX = exitX;
+                            currentY = exitY;
+                            direction = newDir;
+                            lastSlot = hitSlot;
+                        } else {
+                            // Hypotenuse - pass through
+                            ctx.lineTo(centerX + nextX, centerY + nextY);
+                            currentX = nextX;
+                            currentY = nextY;
+                            lastSlot = null;
+                        }
                     }
                 } else {
                     lastSlot = null;  // Reset when no hit

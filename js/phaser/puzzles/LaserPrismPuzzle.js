@@ -376,13 +376,39 @@ class LaserPrismPuzzle {
                     currentX = path.exit.x;
                     currentY = path.exit.y;
                     direction = path.newDirection;
-                    lastSlot = hitSlot;  // Remember this slot to skip next time
+                    lastSlot = hitSlot;
                 } else {
-                    // No valid path - pass through
-                    this.laserPath.lineTo(nextPoint.x, nextPoint.y);
-                    currentX = nextPoint.x;
-                    currentY = nextPoint.y;
-                    lastSlot = null;
+                    // Fallback: simple refraction at hit point
+                    const newDir = this.calculateReflection(direction, hitSlot.prism.rotation || 0);
+                    if (newDir !== direction) {
+                        this.laserPath.lineTo(hitPoint.x, hitPoint.y);
+                        this.laserPath.strokePath();
+
+                        const exitRad = Phaser.Math.DegToRad(newDir);
+                        const exitX = hitPoint.x + Math.cos(exitRad) * 50;
+                        const exitY = hitPoint.y + Math.sin(exitRad) * 50;
+
+                        this.laserPath.lineStyle(3, 0x00ffff, 1);
+                        this.laserPath.beginPath();
+                        this.laserPath.moveTo(hitPoint.x, hitPoint.y);
+                        this.laserPath.lineTo(exitX, exitY);
+                        this.laserPath.strokePath();
+
+                        this.laserPath.lineStyle(3, 0xffff00, 1);
+                        this.laserPath.beginPath();
+                        this.laserPath.moveTo(exitX, exitY);
+
+                        currentX = exitX;
+                        currentY = exitY;
+                        direction = newDir;
+                        lastSlot = hitSlot;
+                    } else {
+                        // Hypotenuse - pass through
+                        this.laserPath.lineTo(nextPoint.x, nextPoint.y);
+                        currentX = nextPoint.x;
+                        currentY = nextPoint.y;
+                        lastSlot = null;
+                    }
                 }
             } else {
                 lastSlot = null;  // Reset when no hit
