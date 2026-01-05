@@ -5418,10 +5418,11 @@
                 const nextX = currentX + Math.cos(rad) * 100;
                 const nextY = currentY + Math.sin(rad) * 100;
 
-                // Check if LASER LINE intersects any slot (not just endpoint)
+                // Check if laser hits any slot
                 let hitSlot = null;
+                let hitPoint = null;
+
                 for (let slot of laserPreviewState.slots) {
-                    // Distance from line segment to slot center
                     const dx = nextX - currentX;
                     const dy = nextY - currentY;
                     const lineLenSq = dx * dx + dy * dy;
@@ -5432,40 +5433,36 @@
                     const closestY = currentY + t * dy;
                     const dist = Math.hypot(closestX - slot.x, closestY - slot.y);
 
-                    if (dist < 35) {  // Collision radius
+                    if (dist < 35) {
                         hitSlot = slot;
+                        hitPoint = { x: closestX, y: closestY };  // SAVE THE HIT POINT!
                         break;
                     }
                 }
 
-                if (hitSlot) {
+                if (hitSlot && hitPoint) {
                     const slotRotation = hitSlot.rotation || 0;
                     const newDirection = calculatePrismRefraction(direction, slotRotation);
 
-                    // Only refract if direction actually changes (not hypotenuse entry)
+                    // Check if actually refracts (not hypotenuse)
                     if (newDirection !== direction) {
-                        // Draw laser to prism
-                        ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                        // Draw to hit point (NOT center!)
+                        ctx.lineTo(centerX + hitPoint.x, centerY + hitPoint.y);
                         ctx.stroke();
 
-                        // Draw internal refraction (cyan V showing 90° turn)
-                        const entryRad = (direction * Math.PI) / 180;
+                        // Small V showing 90° refraction
                         const exitRad = (newDirection * Math.PI) / 180;
-
-                        const entryX = hitSlot.x - Math.cos(entryRad) * 20;
-                        const entryY = hitSlot.y - Math.sin(entryRad) * 20;
-                        const exitX = hitSlot.x + Math.cos(exitRad) * 20;
-                        const exitY = hitSlot.y + Math.sin(exitRad) * 20;
+                        const exitX = hitPoint.x + Math.cos(exitRad) * 15;
+                        const exitY = hitPoint.y + Math.sin(exitRad) * 15;
 
                         ctx.beginPath();
                         ctx.strokeStyle = '#00ffff';
                         ctx.lineWidth = 2;
-                        ctx.moveTo(centerX + entryX, centerY + entryY);
-                        ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                        ctx.moveTo(centerX + hitPoint.x, centerY + hitPoint.y);
                         ctx.lineTo(centerX + exitX, centerY + exitY);
                         ctx.stroke();
 
-                        // Resume laser from exit
+                        // Resume laser
                         ctx.beginPath();
                         ctx.strokeStyle = '#ffff00';
                         ctx.lineWidth = 3;
@@ -5475,7 +5472,7 @@
                         currentY = exitY;
                         direction = newDirection;
                     } else {
-                        // Hypotenuse entry - laser passes straight through
+                        // Hypotenuse - passes straight
                         ctx.lineTo(centerX + nextX, centerY + nextY);
                         currentX = nextX;
                         currentY = nextY;
