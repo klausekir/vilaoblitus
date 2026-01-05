@@ -68,7 +68,10 @@
       "Bash(node create-atlas-from-pngs.js:*)",
       "Bash(node tools/create-atlas-from-pngs.js:*)",
       "Bash(node tools/optimize-png.js:*)",
-      "Bash(start http://localhost:8000/test-spider-round-trip.html)"
+      "Bash(start http://localhost:8000/test-spider-round-trip.html)",
+      "Bash(node:*)",
+      "Bash(start \"C:\\\\src\\\\codex.oblitus\\\\location-editor-db.html\")",
+      "Bash(cmd /c \"findstr /n /i laser C:\\\\src\\\\codex.oblitus\\\\location-editor-db.html\")"
     ],
     "deny": [],
     "ask": []
