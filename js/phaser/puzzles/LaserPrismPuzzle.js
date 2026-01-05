@@ -325,12 +325,13 @@ class LaserPrismPuzzle {
             // Calcular próximo ponto (100px na direção atual)
             const nextPoint = this.getNextPoint(currentX, currentY, direction, 100);
 
-            // Check if LASER LINE intersects any slot (not just endpoint)
+            // Check if laser hits any slot
             let hitSlot = null;
+            let hitPoint = null;
+
             for (let slot of this.slots) {
                 if (!slot.prism) continue;
 
-                // Distance from line segment to slot center
                 const dx = nextPoint.x - currentX;
                 const dy = nextPoint.y - currentY;
                 const lineLenSq = dx * dx + dy * dy;
@@ -341,38 +342,34 @@ class LaserPrismPuzzle {
                 const closestY = currentY + t * dy;
                 const dist = Phaser.Math.Distance.Between(closestX, closestY, slot.x, slot.y);
 
-                if (dist < 35) {  // Collision radius
+                if (dist < 35) {
                     hitSlot = slot;
+                    hitPoint = { x: closestX, y: closestY };  // SAVE THE HIT POINT!
                     break;
                 }
             }
 
-            if (hitSlot) {
+            if (hitSlot && hitPoint) {
                 const newDirection = this.calculateReflection(direction, hitSlot.prism.rotation);
 
-                // Only refract if direction actually changes (not hypotenuse entry)
+                // Check if actually refracts (not hypotenuse)
                 if (newDirection !== direction) {
-                    // Draw to prism center
-                    this.laserPath.lineTo(hitSlot.x, hitSlot.y);
+                    // Draw to hit point (NOT center!)
+                    this.laserPath.lineTo(hitPoint.x, hitPoint.y);
                     this.laserPath.strokePath();
 
-                    // Draw internal refraction (cyan V showing 90° turn)
-                    const entryRad = Phaser.Math.DegToRad(direction);
+                    // Refraction line (long enough to exit collision area)
                     const exitRad = Phaser.Math.DegToRad(newDirection);
-
-                    const entryX = hitSlot.x - Math.cos(entryRad) * 20;
-                    const entryY = hitSlot.y - Math.sin(entryRad) * 20;
-                    const exitX = hitSlot.x + Math.cos(exitRad) * 20;
-                    const exitY = hitSlot.y + Math.sin(exitRad) * 20;
+                    const exitX = hitPoint.x + Math.cos(exitRad) * 50;
+                    const exitY = hitPoint.y + Math.sin(exitRad) * 50;
 
                     this.laserPath.lineStyle(3, 0x00ffff, 1);
                     this.laserPath.beginPath();
-                    this.laserPath.moveTo(entryX, entryY);
-                    this.laserPath.lineTo(hitSlot.x, hitSlot.y);
+                    this.laserPath.moveTo(hitPoint.x, hitPoint.y);
                     this.laserPath.lineTo(exitX, exitY);
                     this.laserPath.strokePath();
 
-                    // Resume laser from exit
+                    // Resume laser
                     this.laserPath.lineStyle(3, 0xffff00, 1);
                     this.laserPath.beginPath();
                     this.laserPath.moveTo(exitX, exitY);
@@ -381,7 +378,7 @@ class LaserPrismPuzzle {
                     currentY = exitY;
                     direction = newDirection;
                 } else {
-                    // Hypotenuse entry - laser passes straight through
+                    // Hypotenuse - passes straight
                     this.laserPath.lineTo(nextPoint.x, nextPoint.y);
                     currentX = nextPoint.x;
                     currentY = nextPoint.y;

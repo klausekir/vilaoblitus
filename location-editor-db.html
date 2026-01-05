@@ -5450,10 +5450,10 @@
                         ctx.lineTo(centerX + hitPoint.x, centerY + hitPoint.y);
                         ctx.stroke();
 
-                        // Small V showing 90° refraction
+                        // Refraction line (long enough to exit collision area)
                         const exitRad = (newDirection * Math.PI) / 180;
-                        const exitX = hitPoint.x + Math.cos(exitRad) * 15;
-                        const exitY = hitPoint.y + Math.sin(exitRad) * 15;
+                        const exitX = hitPoint.x + Math.cos(exitRad) * 50;
+                        const exitY = hitPoint.y + Math.sin(exitRad) * 50;
 
                         ctx.beginPath();
                         ctx.strokeStyle = '#00ffff';
