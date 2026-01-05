@@ -326,7 +326,7 @@ class LaserPrismPuzzle {
             // Calcular próximo ponto (100px na direção atual)
             const nextPoint = this.getNextPoint(currentX, currentY, direction, 100);
 
-            // Check if laser hits any slot
+            // Check if laser hits any slot (only on straight edges, not hypotenuse)
             let hitSlot = null;
             let hitPoint = null;
 
@@ -334,21 +334,43 @@ class LaserPrismPuzzle {
                 if (!slot.prism) continue;
                 if (slot === lastSlot) continue;  // Skip last processed slot
 
-                const dx = nextPoint.x - currentX;
-                const dy = nextPoint.y - currentY;
-                const lineLenSq = dx * dx + dy * dy;
-                if (lineLenSq === 0) continue;
+                // Calculate rotated triangle vertices
+                const baseVertices = [
+                    { x: -30, y: 20 },   // Bottom-left (90° angle)
+                    { x: -30, y: -20 },  // Top-left
+                    { x: 30, y: 20 }     // Bottom-right
+                ];
 
-                const t = Math.max(0, Math.min(1, ((slot.x - currentX) * dx + (slot.y - currentY) * dy) / lineLenSq));
-                const closestX = currentX + t * dx;
-                const closestY = currentY + t * dy;
-                const dist = Phaser.Math.Distance.Between(closestX, closestY, slot.x, slot.y);
+                const angle = Phaser.Math.DegToRad(slot.prism.rotation || 0);
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
 
-                if (dist < 35) {
-                    hitSlot = slot;
-                    hitPoint = { x: closestX, y: closestY };
-                    break;
+                const vertices = baseVertices.map(v => ({
+                    x: slot.x + (v.x * cos - v.y * sin),
+                    y: slot.y + (v.x * sin + v.y * cos)
+                }));
+
+                // Define ONLY straight edges (not hypotenuse)
+                const straightEdges = [
+                    { start: vertices[0], end: vertices[1] },  // Left edge
+                    { start: vertices[2], end: vertices[0] }   // Bottom edge
+                ];
+                // Hypotenuse (vertices[1] to vertices[2]) is NOT included!
+
+                // Test laser against straight edges only
+                for (let edge of straightEdges) {
+                    const intersection = this.lineIntersection(
+                        currentX, currentY, nextPoint.x, nextPoint.y,
+                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                    );
+                    if (intersection) {
+                        hitSlot = slot;
+                        hitPoint = intersection;
+                        break;
+                    }
                 }
+
+                if (hitSlot) break;
             }
 
             if (hitSlot && hitPoint) {
