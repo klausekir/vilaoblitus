@@ -325,49 +325,67 @@ class LaserPrismPuzzle {
             // Calcular próximo ponto (100px na direção atual)
             const nextPoint = this.getNextPoint(currentX, currentY, direction, 100);
 
-            // SIMPLE: Check distance to prism slots
+            // Check if LASER LINE intersects any slot (not just endpoint)
             let hitSlot = null;
             for (let slot of this.slots) {
                 if (!slot.prism) continue;
-                const dist = Phaser.Math.Distance.Between(nextPoint.x, nextPoint.y, slot.x, slot.y);
-                if (dist < 40) {
+
+                // Distance from line segment to slot center
+                const dx = nextPoint.x - currentX;
+                const dy = nextPoint.y - currentY;
+                const lineLenSq = dx * dx + dy * dy;
+                if (lineLenSq === 0) continue;
+
+                const t = Math.max(0, Math.min(1, ((slot.x - currentX) * dx + (slot.y - currentY) * dy) / lineLenSq));
+                const closestX = currentX + t * dx;
+                const closestY = currentY + t * dy;
+                const dist = Phaser.Math.Distance.Between(closestX, closestY, slot.x, slot.y);
+
+                if (dist < 35) {  // Collision radius
                     hitSlot = slot;
                     break;
                 }
             }
 
             if (hitSlot) {
-                // SIMPLE refraction: 90° turn
                 const newDirection = this.calculateReflection(direction, hitSlot.prism.rotation);
 
-                // Draw to prism center
-                this.laserPath.lineTo(hitSlot.x, hitSlot.y);
-                this.laserPath.strokePath();
+                // Only refract if direction actually changes (not hypotenuse entry)
+                if (newDirection !== direction) {
+                    // Draw to prism center
+                    this.laserPath.lineTo(hitSlot.x, hitSlot.y);
+                    this.laserPath.strokePath();
 
-                // Draw internal refraction (cyan showing 90° turn)
-                const entryRad = Phaser.Math.DegToRad(direction);
-                const exitRad = Phaser.Math.DegToRad(newDirection);
+                    // Draw internal refraction (cyan V showing 90° turn)
+                    const entryRad = Phaser.Math.DegToRad(direction);
+                    const exitRad = Phaser.Math.DegToRad(newDirection);
 
-                const entryX = hitSlot.x - Math.cos(entryRad) * 20;
-                const entryY = hitSlot.y - Math.sin(entryRad) * 20;
-                const exitX = hitSlot.x + Math.cos(exitRad) * 20;
-                const exitY = hitSlot.y + Math.sin(exitRad) * 20;
+                    const entryX = hitSlot.x - Math.cos(entryRad) * 20;
+                    const entryY = hitSlot.y - Math.sin(entryRad) * 20;
+                    const exitX = hitSlot.x + Math.cos(exitRad) * 20;
+                    const exitY = hitSlot.y + Math.sin(exitRad) * 20;
 
-                this.laserPath.lineStyle(3, 0x00ffff, 1);
-                this.laserPath.beginPath();
-                this.laserPath.moveTo(entryX, entryY);
-                this.laserPath.lineTo(hitSlot.x, hitSlot.y);
-                this.laserPath.lineTo(exitX, exitY);
-                this.laserPath.strokePath();
+                    this.laserPath.lineStyle(3, 0x00ffff, 1);
+                    this.laserPath.beginPath();
+                    this.laserPath.moveTo(entryX, entryY);
+                    this.laserPath.lineTo(hitSlot.x, hitSlot.y);
+                    this.laserPath.lineTo(exitX, exitY);
+                    this.laserPath.strokePath();
 
-                // Resume laser from exit
-                this.laserPath.lineStyle(3, 0xffff00, 1);
-                this.laserPath.beginPath();
-                this.laserPath.moveTo(exitX, exitY);
+                    // Resume laser from exit
+                    this.laserPath.lineStyle(3, 0xffff00, 1);
+                    this.laserPath.beginPath();
+                    this.laserPath.moveTo(exitX, exitY);
 
-                currentX = exitX;
-                currentY = exitY;
-                direction = newDirection;
+                    currentX = exitX;
+                    currentY = exitY;
+                    direction = newDirection;
+                } else {
+                    // Hypotenuse entry - laser passes straight through
+                    this.laserPath.lineTo(nextPoint.x, nextPoint.y);
+                    currentX = nextPoint.x;
+                    currentY = nextPoint.y;
+                }
             } else {
                 // Desenhar até o próximo ponto
                 this.laserPath.lineTo(nextPoint.x, nextPoint.y);

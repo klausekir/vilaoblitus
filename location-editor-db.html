@@ -5418,53 +5418,68 @@
                 const nextX = currentX + Math.cos(rad) * 100;
                 const nextY = currentY + Math.sin(rad) * 100;
 
-                // SIMPLE: Check if laser is near any slot
+                // Check if LASER LINE intersects any slot (not just endpoint)
                 let hitSlot = null;
                 for (let slot of laserPreviewState.slots) {
-                    const dist = Math.hypot(nextX - slot.x, nextY - slot.y);
-                    if (dist < 40) {
+                    // Distance from line segment to slot center
+                    const dx = nextX - currentX;
+                    const dy = nextY - currentY;
+                    const lineLenSq = dx * dx + dy * dy;
+                    if (lineLenSq === 0) continue;
+
+                    const t = Math.max(0, Math.min(1, ((slot.x - currentX) * dx + (slot.y - currentY) * dy) / lineLenSq));
+                    const closestX = currentX + t * dx;
+                    const closestY = currentY + t * dy;
+                    const dist = Math.hypot(closestX - slot.x, closestY - slot.y);
+
+                    if (dist < 35) {  // Collision radius
                         hitSlot = slot;
                         break;
                     }
                 }
 
                 if (hitSlot) {
-                    // SIMPLE refraction: 90° turn
                     const slotRotation = hitSlot.rotation || 0;
-
-                    // Calculate new direction (90° refraction based on prism rotation)
                     const newDirection = calculatePrismRefraction(direction, slotRotation);
 
-                    // Draw laser to prism
-                    ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
-                    ctx.stroke();
+                    // Only refract if direction actually changes (not hypotenuse entry)
+                    if (newDirection !== direction) {
+                        // Draw laser to prism
+                        ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                        ctx.stroke();
 
-                    // Draw internal refraction (cyan bend showing 90° turn)
-                    const entryRad = (direction * Math.PI) / 180;
-                    const exitRad = (newDirection * Math.PI) / 180;
+                        // Draw internal refraction (cyan V showing 90° turn)
+                        const entryRad = (direction * Math.PI) / 180;
+                        const exitRad = (newDirection * Math.PI) / 180;
 
-                    const entryX = hitSlot.x - Math.cos(entryRad) * 20;
-                    const entryY = hitSlot.y - Math.sin(entryRad) * 20;
-                    const exitX = hitSlot.x + Math.cos(exitRad) * 20;
-                    const exitY = hitSlot.y + Math.sin(exitRad) * 20;
+                        const entryX = hitSlot.x - Math.cos(entryRad) * 20;
+                        const entryY = hitSlot.y - Math.sin(entryRad) * 20;
+                        const exitX = hitSlot.x + Math.cos(exitRad) * 20;
+                        const exitY = hitSlot.y + Math.sin(exitRad) * 20;
 
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#00ffff';
-                    ctx.lineWidth = 2;
-                    ctx.moveTo(centerX + entryX, centerY + entryY);
-                    ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
-                    ctx.lineTo(centerX + exitX, centerY + exitY);
-                    ctx.stroke();
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#00ffff';
+                        ctx.lineWidth = 2;
+                        ctx.moveTo(centerX + entryX, centerY + entryY);
+                        ctx.lineTo(centerX + hitSlot.x, centerY + hitSlot.y);
+                        ctx.lineTo(centerX + exitX, centerY + exitY);
+                        ctx.stroke();
 
-                    // Resume laser from exit
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#ffff00';
-                    ctx.lineWidth = 3;
-                    ctx.moveTo(centerX + exitX, centerY + exitY);
+                        // Resume laser from exit
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#ffff00';
+                        ctx.lineWidth = 3;
+                        ctx.moveTo(centerX + exitX, centerY + exitY);
 
-                    currentX = exitX;
-                    currentY = exitY;
-                    direction = newDirection;
+                        currentX = exitX;
+                        currentY = exitY;
+                        direction = newDirection;
+                    } else {
+                        // Hypotenuse entry - laser passes straight through
+                        ctx.lineTo(centerX + nextX, centerY + nextY);
+                        currentX = nextX;
+                        currentY = nextY;
+                    }
                 } else {
                     ctx.lineTo(centerX + nextX, centerY + nextY);
 
