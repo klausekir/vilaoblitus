@@ -2396,7 +2396,7 @@ class LocationScene extends Phaser.Scene {
         }
 
         // Puzzles do PuzzleManager (Phaser)
-        const phaserPuzzleTypes = ['egyptian', 'rotating_discs', 'pattern', 'sequence_buttons', 'shape_match', 'laser_prism'];
+        const phaserPuzzleTypes = ['egyptian', 'rotating_discs', 'pattern', 'sequence_buttons', 'shape_match'];
         if (phaserPuzzleTypes.includes(puzzleType)) {
 
             if (!this.puzzleManager) {
