@@ -320,6 +320,7 @@ class LaserPrismPuzzle {
 
         const maxSteps = 20;  // Evitar loop infinito
         let reachedReceptor = false;
+        let lastSlot = null;  // Track last processed slot to avoid re-hitting it
 
         for (let step = 0; step < maxSteps; step++) {
             // Calcular próximo ponto (100px na direção atual)
@@ -331,6 +332,7 @@ class LaserPrismPuzzle {
 
             for (let slot of this.slots) {
                 if (!slot.prism) continue;
+                if (slot === lastSlot) continue;  // Skip last processed slot
 
                 const dx = nextPoint.x - currentX;
                 const dy = nextPoint.y - currentY;
@@ -344,7 +346,7 @@ class LaserPrismPuzzle {
 
                 if (dist < 35) {
                     hitSlot = slot;
-                    hitPoint = { x: closestX, y: closestY };  // SAVE THE HIT POINT!
+                    hitPoint = { x: closestX, y: closestY };
                     break;
                 }
             }
@@ -374,13 +376,16 @@ class LaserPrismPuzzle {
                     currentX = path.exit.x;
                     currentY = path.exit.y;
                     direction = path.newDirection;
+                    lastSlot = hitSlot;  // Remember this slot to skip next time
                 } else {
                     // No valid path - pass through
                     this.laserPath.lineTo(nextPoint.x, nextPoint.y);
                     currentX = nextPoint.x;
                     currentY = nextPoint.y;
+                    lastSlot = null;
                 }
             } else {
+                lastSlot = null;  // Reset when no hit
                 // Desenhar até o próximo ponto
                 this.laserPath.lineTo(nextPoint.x, nextPoint.y);
 

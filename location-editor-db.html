@@ -5413,6 +5413,8 @@
             ctx.moveTo(centerX + currentX, centerY + currentY);
 
             const maxSteps = 20;
+            let lastSlot = null;  // Track last processed slot to avoid re-hitting it
+
             for (let step = 0; step < maxSteps; step++) {
                 const rad = (direction * Math.PI) / 180;
                 const nextX = currentX + Math.cos(rad) * 100;
@@ -5423,6 +5425,8 @@
                 let hitPoint = null;
 
                 for (let slot of laserPreviewState.slots) {
+                    if (slot === lastSlot) continue;  // Skip last processed slot
+
                     const dx = nextX - currentX;
                     const dy = nextY - currentY;
                     const lineLenSq = dx * dx + dy * dy;
@@ -5435,7 +5439,7 @@
 
                     if (dist < 35) {
                         hitSlot = slot;
-                        hitPoint = { x: closestX, y: closestY };  // SAVE THE HIT POINT!
+                        hitPoint = { x: closestX, y: closestY };
                         break;
                     }
                 }
@@ -5467,13 +5471,16 @@
                         currentX = path.exit.x;
                         currentY = path.exit.y;
                         direction = path.newDirection;
+                        lastSlot = hitSlot;  // Remember this slot to skip next time
                     } else {
                         // No valid path - pass through
                         ctx.lineTo(centerX + nextX, centerY + nextY);
                         currentX = nextX;
                         currentY = nextY;
+                        lastSlot = null;
                     }
                 } else {
+                    lastSlot = null;  // Reset when no hit
                     ctx.lineTo(centerX + nextX, centerY + nextY);
 
                     // Check if hit sensor
