@@ -325,51 +325,49 @@ class LaserPrismPuzzle {
             // Calcular próximo ponto (100px na direção atual)
             const nextPoint = this.getNextPoint(currentX, currentY, direction, 100);
 
-            // Verificar se bateu em prisma
-            const hitPrism = this.checkPrismCollision(currentX, currentY, nextPoint.x, nextPoint.y);
-
-            if (hitPrism) {
-                // Calcular caminho ATRAVÉS do prisma (entrada → reflexão → saída)
-                const prismPath = this.calculatePrismPath(currentX, currentY, direction, hitPrism);
-
-                if (prismPath) {
-                    // Desenhar laser externo até entrada do prisma
-                    this.laserPath.lineTo(prismPath.entry.x, prismPath.entry.y);
-                    this.laserPath.strokePath();
-
-                    // Segment 1: Entry → Reflection (before refraction)
-                    this.laserPath.lineStyle(3, 0x88ddff, 1);  // Light blue
-                    this.laserPath.beginPath();
-                    this.laserPath.moveTo(prismPath.entry.x, prismPath.entry.y);
-                    this.laserPath.lineTo(prismPath.reflection.x, prismPath.reflection.y);
-                    this.laserPath.strokePath();
-
-                    // Mark reflection point
-                    this.laserPath.fillStyle(0xff00ff, 1);  // Magenta dot
-                    this.laserPath.fillCircle(prismPath.reflection.x, prismPath.reflection.y, 3);
-
-                    // Segment 2: Reflection → Exit (after 90° refraction)
-                    this.laserPath.lineStyle(3, 0x00ffff, 1);  // Cyan
-                    this.laserPath.beginPath();
-                    this.laserPath.moveTo(prismPath.reflection.x, prismPath.reflection.y);
-                    this.laserPath.lineTo(prismPath.exit.x, prismPath.exit.y);
-                    this.laserPath.strokePath();
-
-                    // Retomar laser externo (amarelo) saindo do prisma
-                    this.laserPath.lineStyle(3, 0xffff00, 1);
-                    this.laserPath.beginPath();
-                    this.laserPath.moveTo(prismPath.exit.x, prismPath.exit.y);
-
-                    currentX = prismPath.exit.x;
-                    currentY = prismPath.exit.y;
-                    direction = prismPath.exitDirection;
-                    // Force direction to nearest 90° to prevent "bent" lasers
-                    direction = Math.round(direction / 90) * 90 % 360;
-                } else {
-                    // Falha ao calcular caminho, pular prisma
-                    currentX = nextPoint.x;
-                    currentY = nextPoint.y;
+            // SIMPLE: Check distance to prism slots
+            let hitSlot = null;
+            for (let slot of this.slots) {
+                if (!slot.prism) continue;
+                const dist = Phaser.Math.Distance.Between(nextPoint.x, nextPoint.y, slot.x, slot.y);
+                if (dist < 40) {
+                    hitSlot = slot;
+                    break;
                 }
+            }
+
+            if (hitSlot) {
+                // SIMPLE refraction: 90° turn
+                const newDirection = this.calculateReflection(direction, hitSlot.prism.rotation);
+
+                // Draw to prism center
+                this.laserPath.lineTo(hitSlot.x, hitSlot.y);
+                this.laserPath.strokePath();
+
+                // Draw internal refraction (cyan showing 90° turn)
+                const entryRad = Phaser.Math.DegToRad(direction);
+                const exitRad = Phaser.Math.DegToRad(newDirection);
+
+                const entryX = hitSlot.x - Math.cos(entryRad) * 20;
+                const entryY = hitSlot.y - Math.sin(entryRad) * 20;
+                const exitX = hitSlot.x + Math.cos(exitRad) * 20;
+                const exitY = hitSlot.y + Math.sin(exitRad) * 20;
+
+                this.laserPath.lineStyle(3, 0x00ffff, 1);
+                this.laserPath.beginPath();
+                this.laserPath.moveTo(entryX, entryY);
+                this.laserPath.lineTo(hitSlot.x, hitSlot.y);
+                this.laserPath.lineTo(exitX, exitY);
+                this.laserPath.strokePath();
+
+                // Resume laser from exit
+                this.laserPath.lineStyle(3, 0xffff00, 1);
+                this.laserPath.beginPath();
+                this.laserPath.moveTo(exitX, exitY);
+
+                currentX = exitX;
+                currentY = exitY;
+                direction = newDirection;
             } else {
                 // Desenhar até o próximo ponto
                 this.laserPath.lineTo(nextPoint.x, nextPoint.y);
