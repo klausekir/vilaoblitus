@@ -350,35 +350,32 @@ class LaserPrismPuzzle {
             }
 
             if (hitSlot && hitPoint) {
-                const newDirection = this.calculateReflection(direction, hitSlot.prism.rotation);
+                // Calculate REAL path through prism
+                const path = this.calculateSimplePrismPath(hitPoint, direction, hitSlot);
 
-                // Check if actually refracts (not hypotenuse)
-                if (newDirection !== direction) {
-                    // Draw to hit point (NOT center!)
+                if (path) {
+                    // Draw to entry
                     this.laserPath.lineTo(hitPoint.x, hitPoint.y);
                     this.laserPath.strokePath();
 
-                    // Refraction line (long enough to exit collision area)
-                    const exitRad = Phaser.Math.DegToRad(newDirection);
-                    const exitX = hitPoint.x + Math.cos(exitRad) * 50;
-                    const exitY = hitPoint.y + Math.sin(exitRad) * 50;
-
+                    // Draw internal path (cyan)
                     this.laserPath.lineStyle(3, 0x00ffff, 1);
                     this.laserPath.beginPath();
                     this.laserPath.moveTo(hitPoint.x, hitPoint.y);
-                    this.laserPath.lineTo(exitX, exitY);
+                    this.laserPath.lineTo(path.reflection.x, path.reflection.y);
+                    this.laserPath.lineTo(path.exit.x, path.exit.y);
                     this.laserPath.strokePath();
 
                     // Resume laser
                     this.laserPath.lineStyle(3, 0xffff00, 1);
                     this.laserPath.beginPath();
-                    this.laserPath.moveTo(exitX, exitY);
+                    this.laserPath.moveTo(path.exit.x, path.exit.y);
 
-                    currentX = exitX;
-                    currentY = exitY;
-                    direction = newDirection;
+                    currentX = path.exit.x;
+                    currentY = path.exit.y;
+                    direction = path.newDirection;
                 } else {
-                    // Hypotenuse - passes straight
+                    // No valid path - pass through
                     this.laserPath.lineTo(nextPoint.x, nextPoint.y);
                     currentX = nextPoint.x;
                     currentY = nextPoint.y;
@@ -545,6 +542,72 @@ class LaserPrismPuzzle {
                 x: x1 + t * (x2 - x1),
                 y: y1 + t * (y2 - y1)
             };
+        }
+
+        return null;
+    }
+
+    calculateSimplePrismPath(entryPoint, laserDir, hitSlot) {
+        const rad = Phaser.Math.DegToRad(laserDir);
+        const dx = Math.cos(rad);
+        const dy = Math.sin(rad);
+
+        // Triangle vertices (rotated)
+        const angle = Phaser.Math.DegToRad(hitSlot.prism.rotation || 0);
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        const baseVerts = [
+            { x: -30, y: 20 },  // Bottom-left (90°)
+            { x: -30, y: -20 }, // Top-left
+            { x: 30, y: 20 }    // Bottom-right
+        ];
+
+        const verts = baseVerts.map(v => ({
+            x: hitSlot.x + (v.x * cos - v.y * sin),
+            y: hitSlot.y + (v.x * sin + v.y * cos)
+        }));
+
+        // Hypotenuse = edge from top-left to bottom-right
+        const hyp = { start: verts[1], end: verts[2] };
+
+        // Find where laser hits hypotenuse
+        const reflPt = this.lineIntersection(
+            entryPoint.x, entryPoint.y,
+            entryPoint.x + dx * 200, entryPoint.y + dy * 200,
+            hyp.start.x, hyp.start.y, hyp.end.x, hyp.end.y
+        );
+
+        if (!reflPt) return null;
+
+        // Calculate new direction
+        const newDir = this.calculateReflection(laserDir, hitSlot.prism.rotation || 0);
+        if (newDir === laserDir) return null; // Hypotenuse entry
+
+        // Find exit point
+        const exitRad = Phaser.Math.DegToRad(newDir);
+        const exitDx = Math.cos(exitRad);
+        const exitDy = Math.sin(exitRad);
+
+        // Test other two edges for exit
+        const edges = [
+            { start: verts[0], end: verts[1] }, // Left
+            { start: verts[2], end: verts[0] }  // Bottom
+        ];
+
+        for (let edge of edges) {
+            const exitPt = this.lineIntersection(
+                reflPt.x, reflPt.y,
+                reflPt.x + exitDx * 200, reflPt.y + exitDy * 200,
+                edge.start.x, edge.start.y, edge.end.x, edge.end.y
+            );
+            if (exitPt) {
+                return {
+                    reflection: reflPt,
+                    exit: exitPt,
+                    newDirection: newDir
+                };
+            }
         }
 
         return null;
