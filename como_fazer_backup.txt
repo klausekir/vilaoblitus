@@ -1,0 +1,170 @@
+═══════════════════════════════════════════════════════════════
+  COMO FAZER BACKUP DO CODEX OBLITUS
+═══════════════════════════════════════════════════════════════
+
+📋 ÍNDICE:
+  1. Backup Automático (Recomendado)
+  2. Backup Manual
+  3. Onde ficam os backups
+  4. Como restaurar um backup
+  5. Importante: Acesso ao banco de dados
+
+═══════════════════════════════════════════════════════════════
+1️⃣ BACKUP AUTOMÁTICO (RECOMENDADO)
+═══════════════════════════════════════════════════════════════
+
+COMANDO:
+  node backup.js
+
+O QUE FAZ:
+  ✅ Conecta ao banco MySQL na Hostinger
+  ✅ Exporta TODAS as tabelas para SQL
+  ✅ Copia todos os arquivos do projeto
+  ✅ Compacta tudo em um arquivo ZIP
+  ✅ Nomeia com data e hora: codex_oblitus_2026-01-06_11-34-50.zip
+
+TABELAS EXPORTADAS:
+  • connections
+  • destructible_walls
+  • game_progress
+  • game_settings
+  • hotspots
+  • items
+  • location_puzzles
+  • locations
+  • password_reset_tokens
+  • user_sessions
+  • users
+  • waitlist
+
+═══════════════════════════════════════════════════════════════
+2️⃣ BACKUP MANUAL
+═══════════════════════════════════════════════════════════════
+
+Se o script automático falhar, você pode fazer manualmente:
+
+PASSO 1: Exportar banco de dados
+  1. Acesse phpMyAdmin da Hostinger
+  2. Selecione o banco: u811529511_vobadmin
+  3. Clique em "Exportar"
+  4. Escolha "Método rápido"
+  5. Formato: SQL
+  6. Clique em "Executar"
+
+PASSO 2: Copiar arquivos do projeto
+  Copie estas pastas/arquivos para um local seguro:
+  • game-phaser.html
+  • location-editor-db.html
+  • index.php
+  • /js/
+  • /api/
+  • /css/
+  • /images/
+  • /sounds/
+
+═══════════════════════════════════════════════════════════════
+3️⃣ ONDE FICAM OS BACKUPS
+═══════════════════════════════════════════════════════════════
+
+PASTA LOCAL:
+  C:\src\codex.oblitus\backups\
+
+ESTRUTURA:
+  backups/
+  ├── codex_oblitus_2026-01-06_11-34-50.zip  (arquivo completo)
+  └── 2026-01-06_11-34-50/                    (pasta descompactada)
+      ├── database_backup.sql                 (banco de dados)
+      ├── game-phaser.html
+      ├── location-editor-db.html
+      ├── js/
+      ├── api/
+      └── ...
+
+TAMANHO MÉDIO:
+  ~60 MB por backup
+
+═══════════════════════════════════════════════════════════════
+4️⃣ COMO RESTAURAR UM BACKUP
+═══════════════════════════════════════════════════════════════
+
+RESTAURAR BANCO DE DADOS:
+  1. Acesse phpMyAdmin da Hostinger
+  2. Selecione o banco: u811529511_vobadmin
+  3. Clique em "Importar"
+  4. Escolha o arquivo: database_backup.sql
+  5. Clique em "Executar"
+
+RESTAURAR ARQUIVOS:
+  1. Descompacte o arquivo ZIP do backup
+  2. Copie os arquivos para o servidor via FTP/SFTP
+  3. Ou copie localmente para C:\src\codex.oblitus\
+
+⚠️ ATENÇÃO:
+  • Faça backup ANTES de fazer alterações importantes
+  • Restaurar sobrescreve os dados atuais
+  • Confirme antes de restaurar
+
+═══════════════════════════════════════════════════════════════
+5️⃣ IMPORTANTE: ACESSO AO BANCO DE DADOS
+═══════════════════════════════════════════════════════════════
+
+ERRO COMUM:
+  ❌ Access denied for user 'u811529511_vobadmin'@'IP' (using password: YES)
+
+SOLUÇÃO:
+  1. Acesse o painel da Hostinger
+  2. Vá em "Bases de Dados" → "MySQL Remoto"
+  3. Adicione seu IP atual à lista de IPs permitidos
+  4. Aguarde alguns minutos para aplicar
+  5. Execute o backup novamente
+
+VERIFICAR SEU IP:
+  • Google: "qual meu ip"
+  • Ou visite: https://www.whatismyip.com/
+
+ARQUIVO DE CONFIGURAÇÃO:
+  • Credenciais do banco estão em: backup.js
+  • NÃO compartilhe este arquivo!
+
+═══════════════════════════════════════════════════════════════
+📅 RECOMENDAÇÕES
+═══════════════════════════════════════════════════════════════
+
+FREQUÊNCIA RECOMENDADA:
+  ✅ Diário: Se está desenvolvendo ativamente
+  ✅ Semanal: Durante manutenção
+  ✅ SEMPRE: Antes de grandes mudanças
+
+MANTER BACKUPS:
+  • Últimos 7 dias: Backups diários
+  • Último mês: Backups semanais
+  • Último ano: Backups mensais
+
+BACKUP PARA NUVEM:
+  Considere copiar backups importantes para:
+  • Google Drive
+  • Dropbox
+  • OneDrive
+
+═══════════════════════════════════════════════════════════════
+🆘 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+ERRO: "Access denied"
+  → Adicione seu IP no MySQL Remoto da Hostinger
+
+ERRO: "ECONNREFUSED"
+  → Verifique se o MySQL está rodando
+  → Verifique host: 193.203.184.96
+
+ERRO: "Out of memory"
+  → Banco muito grande
+  → Faça backup manual via phpMyAdmin
+
+BACKUP MUITO GRANDE:
+  → Considere fazer backup apenas do banco (sem imagens)
+  → Comprima imagens antes de adicionar ao projeto
+
+═══════════════════════════════════════════════════════════════
+✅ ÚLTIMA ATUALIZAÇÃO: 2026-01-06
+═══════════════════════════════════════════════════════════════
