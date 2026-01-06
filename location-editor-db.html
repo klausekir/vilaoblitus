@@ -624,34 +624,52 @@
                     </div>
 
                     <div class="checkbox-group">
-                        <input type="checkbox" id="edit-final-scene" onchange="saveBasicInfo(); toggleCreditsSection(); syncToDatabase(true);">
+                        <input type="checkbox" id="edit-final-scene"
+                            onchange="saveBasicInfo(); toggleCreditsSection(); syncToDatabase(true);">
                         <label for="edit-final-scene">🎬 Cena Final (Mostrar Créditos Estilo Star Wars)</label>
                     </div>
 
-                    <div id="transition-video-section" style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <div id="transition-video-section"
+                        style="display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
                         <h4 style="margin-bottom: 10px; color: #856404;">🎥 Vídeo de Transição</h4>
                         <div class="form-group">
-                            <label for="edit-transition-video" style="font-weight: normal; color: #856404;">Caminho do vídeo MP4 (relativo à raiz do projeto)</label>
-                            <input type="text" id="edit-transition-video" placeholder="images/Fuga_da_Vila_com_Salvação_Policial.mp4" onchange="saveBasicInfo(); syncToDatabase(true);" style="width: 100%; padding: 8px; border: 1px solid #ffc107; border-radius: 4px;">
-                            <small style="color: #856404; display: block; margin-top: 5px;">Este vídeo será reproduzido antes de entrar na cena final</small>
+                            <label for="edit-transition-video" style="font-weight: normal; color: #856404;">Caminho do
+                                vídeo MP4 (relativo à raiz do projeto)</label>
+                            <input type="text" id="edit-transition-video"
+                                placeholder="images/Fuga_da_Vila_com_Salvação_Policial.mp4"
+                                onchange="saveBasicInfo(); syncToDatabase(true);"
+                                style="width: 100%; padding: 8px; border: 1px solid #ffc107; border-radius: 4px;">
+                            <small style="color: #856404; display: block; margin-top: 5px;">Este vídeo será reproduzido
+                                antes de entrar na cena final</small>
                         </div>
                     </div>
 
-                    <div id="dramatic-messages-section" style="display: none; margin-top: 15px; padding: 15px; background: #ffe4e1; border-radius: 8px; border-left: 4px solid #dc3545;">
+                    <div id="dramatic-messages-section"
+                        style="display: none; margin-top: 15px; padding: 15px; background: #ffe4e1; border-radius: 8px; border-left: 4px solid #dc3545;">
                         <h4 style="margin-bottom: 10px; color: #721c24;">⚡ Mensagens Dramáticas</h4>
                         <div class="form-group">
-                            <label for="edit-dramatic-messages" style="font-weight: normal; color: #721c24;">Mensagens (uma por linha)</label>
-                            <textarea id="edit-dramatic-messages" rows="5" placeholder="VOCÊ CONSEGUIU SAIR DA VILA&#10;MAS ESPERE A VILA NÃO ESTAVA ABANDONADA&#10;OLHE PARA TRÁS E VEJA" onchange="saveBasicInfo(); syncToDatabase(true);" style="width: 100%; padding: 8px; border: 1px solid #dc3545; border-radius: 4px; font-family: Arial, sans-serif;"></textarea>
-                            <small style="color: #721c24; display: block; margin-top: 5px;">Cada linha será exibida em sequência antes do vídeo</small>
+                            <label for="edit-dramatic-messages" style="font-weight: normal; color: #721c24;">Mensagens
+                                (uma por linha)</label>
+                            <textarea id="edit-dramatic-messages" rows="5"
+                                placeholder="VOCÊ CONSEGUIU SAIR DA VILA&#10;MAS ESPERE A VILA NÃO ESTAVA ABANDONADA&#10;OLHE PARA TRÁS E VEJA"
+                                onchange="saveBasicInfo(); syncToDatabase(true);"
+                                style="width: 100%; padding: 8px; border: 1px solid #dc3545; border-radius: 4px; font-family: Arial, sans-serif;"></textarea>
+                            <small style="color: #721c24; display: block; margin-top: 5px;">Cada linha será exibida em
+                                sequência antes do vídeo</small>
                         </div>
                         <div class="form-group" style="margin-top: 10px;">
-                            <label for="edit-dramatic-duration" style="font-weight: normal; color: #721c24;">Duração por mensagem (segundos)</label>
-                            <input type="number" id="edit-dramatic-duration" placeholder="5" min="1" max="30" value="5" onchange="saveBasicInfo(); syncToDatabase(true);" style="width: 150px; padding: 8px; border: 1px solid #dc3545; border-radius: 4px;">
-                            <small style="color: #721c24; display: block; margin-top: 5px;">Tempo que cada mensagem ficará na tela (padrão: 5 segundos)</small>
+                            <label for="edit-dramatic-duration" style="font-weight: normal; color: #721c24;">Duração por
+                                mensagem (segundos)</label>
+                            <input type="number" id="edit-dramatic-duration" placeholder="5" min="1" max="30" value="5"
+                                onchange="saveBasicInfo(); syncToDatabase(true);"
+                                style="width: 150px; padding: 8px; border: 1px solid #dc3545; border-radius: 4px;">
+                            <small style="color: #721c24; display: block; margin-top: 5px;">Tempo que cada mensagem
+                                ficará na tela (padrão: 5 segundos)</small>
                         </div>
                     </div>
 
-                    <div id="credits-section" style="display: none; margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4a90e2;">
+                    <div id="credits-section"
+                        style="display: none; margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4a90e2;">
                         <h4 style="margin-bottom: 15px; color: #2a5885;">✨ Créditos Finais</h4>
                         <div style="margin-bottom: 10px;">
                             <button class="btn btn-primary" onclick="addCreditLine()" style="width: 100%;">
@@ -697,6 +715,52 @@
                             <div id="visual-walls-list">
                                 <!-- Populated by JS -->
                             </div>
+
+                            <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+
+                            <h4 style="margin-bottom: 10px;">💡 Elementos de Prisma</h4>
+                            <div id="visual-prism-controls" style="display: none;">
+                                <div style="font-size: 11px; color: #666; margin-bottom: 10px;">
+                                    Arraste para posicionar | Duplo-clique para rotacionar | Botão direito para espelhar
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div
+                                        style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #e8f5e9; border-radius: 4px;">
+                                        <span style="font-size: 20px;">🔆</span>
+                                        <span style="font-size: 12px;">Emissor</span>
+                                    </div>
+                                    <div
+                                        style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #fff8e1; border-radius: 4px;">
+                                        <span style="font-size: 20px;">🎯</span>
+                                        <span style="font-size: 12px;">Receptor</span>
+                                    </div>
+                                    <div
+                                        style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #e3f2fd; border-radius: 4px;">
+                                        <span style="font-size: 20px;">🔺</span>
+                                        <span style="font-size: 12px;">Prisma 1</span>
+                                        <span id="prism1-info" style="font-size: 10px; color: #666"></span>
+                                    </div>
+                                    <div
+                                        style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #e3f2fd; border-radius: 4px;">
+                                        <span style="font-size: 20px;">🔺</span>
+                                        <span style="font-size: 12px;">Prisma 2</span>
+                                        <span id="prism2-info" style="font-size: 10px; color: #666"></span>
+                                    </div>
+                                    <div
+                                        style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #e3f2fd; border-radius: 4px;">
+                                        <span style="font-size: 20px;">🔺</span>
+                                        <span style="font-size: 12px;">Prisma 3</span>
+                                        <span id="prism3-info" style="font-size: 10px; color: #666"></span>
+                                    </div>
+                                </div>
+                                <div id="prism-light-status"
+                                    style="margin-top: 10px; padding: 8px; border-radius: 4px; font-size: 12px; text-align: center;">
+                                </div>
+                            </div>
+                            <div id="visual-prism-no-puzzle"
+                                style="color: #999; font-size: 12px; text-align: center; padding: 15px;">
+                                Configure um puzzle tipo "Prisma de Luz" na aba Enigma
+                            </div>
                         </div>
 
                         <!-- Canvas Area -->
@@ -719,6 +783,10 @@
                                     style="position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; perspective: 1000px; z-index: 50;">
                                     <!-- Items positioned here -->
                                 </div>
+                                <svg id="visual-prism-container"
+                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 60;">
+                                    <!-- Prism elements and light ray drawn here -->
+                                </svg>
                             </div>
                             <div id="visual-no-image" style="color: #999; text-align: center; padding: 100px 20px;">
                                 <div style="font-size: 48px; margin-bottom: 20px;">🖼️</div>
@@ -874,8 +942,10 @@
 
     <!-- Save Button -->
     <div class="export-section">
-        <button class="export-btn" onclick="manualSave()" style="background: #28a745; font-size: 18px; font-weight: bold;">💾 Salvar</button>
-        <button class="export-btn" onclick="forceReloadFromDatabase();" style="background: #007bff; margin-left: 10px;">🔄 Recarregar do Banco</button>
+        <button class="export-btn" onclick="manualSave()"
+            style="background: #28a745; font-size: 18px; font-weight: bold;">💾 Salvar</button>
+        <button class="export-btn" onclick="forceReloadFromDatabase();"
+            style="background: #007bff; margin-left: 10px;">🔄 Recarregar do Banco</button>
     </div>
 
     <!-- Save Indicator -->
@@ -900,7 +970,8 @@
             <h2 id="hotspotNavModalTitle">Adicionar Hotspot de Navegação</h2>
             <div class="form-group">
                 <label>Nome do Hotspot:</label>
-                <input type="text" id="hotspotNavName" placeholder="Ex: Porta da Entrada" style="width: 100%; padding: 8px; margin-top: 5px;">
+                <input type="text" id="hotspotNavName" placeholder="Ex: Porta da Entrada"
+                    style="width: 100%; padding: 8px; margin-top: 5px;">
             </div>
             <div class="form-group" style="margin-top: 15px;">
                 <label>Local de Destino:</label>
@@ -909,8 +980,10 @@
                 </select>
             </div>
             <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button onclick="cancelHotspotNav()" style="padding: 10px 20px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
-                <button onclick="confirmHotspotNav()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Confirmar</button>
+                <button onclick="cancelHotspotNav()"
+                    style="padding: 10px 20px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                <button onclick="confirmHotspotNav()"
+                    style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Confirmar</button>
             </div>
         </div>
     </div>
@@ -1574,6 +1647,7 @@
                     renderPositionedItems();
                     renderPositionedHotspots();
                     renderPositionedWalls();
+                    renderVisualPrisms();
                 };
 
                 // Render items list
@@ -1592,6 +1666,7 @@
                     renderPositionedItems();
                     renderPositionedHotspots();
                     renderPositionedWalls();
+                    renderVisualPrisms();
                 }
 
             } else {
@@ -3353,22 +3428,22 @@
             cursor: pointer;
             `;
                     // ✅ Emoji de seta baseado em arrowDirection
-                const arrowEmoji = {
-                    'up': '⬆️',
-                    'down': '⬇️',
-                    'left': '⬅️',
-                    'right': '➡️'
-                };
-                const arrowDisplay = hotspot.arrowDirection ? arrowEmoji[hotspot.arrowDirection] || '' : '';
+                    const arrowEmoji = {
+                        'up': '⬆️',
+                        'down': '⬇️',
+                        'left': '⬅️',
+                        'right': '➡️'
+                    };
+                    const arrowDisplay = hotspot.arrowDirection ? arrowEmoji[hotspot.arrowDirection] || '' : '';
 
-                // ✅ Emoji de zoom baseado em zoomDirection
-                const zoomEmoji = {
-                    'in': '🔍+',
-                    'out': '🔍-'
-                };
-                const zoomDisplay = hotspot.zoomDirection ? zoomEmoji[hotspot.zoomDirection] || '' : '';
+                    // ✅ Emoji de zoom baseado em zoomDirection
+                    const zoomEmoji = {
+                        'in': '🔍+',
+                        'out': '🔍-'
+                    };
+                    const zoomDisplay = hotspot.zoomDirection ? zoomEmoji[hotspot.zoomDirection] || '' : '';
 
-                hotspotEl.innerHTML = `
+                    hotspotEl.innerHTML = `
                 <div style="font-weight: bold; margin-bottom: 4px;">📍 ${hotspot.name || 'Hotspot ' + (index + 1)} ${arrowDisplay} ${zoomDisplay}</div>
                         <div style="color: #666; font-size: 10px;">→ ${hotspot.target || 'destino'}</div>
                         <div style="margin-top: 6px; display: flex; gap: 4px;">
@@ -4026,7 +4101,7 @@
                 pointer-events: none;
                 display: block;
                 `;
-                    img.onerror = function() {
+                    img.onerror = function () {
                         // Se a imagem não carregar, mostrar background colorido
                         wallEl.style.background = isSelected ? 'rgba(255, 68, 68, 0.3)' : 'rgba(85, 85, 85, 0.5)';
                         this.style.display = 'none';
@@ -5046,7 +5121,7 @@
         }
 
         // 🔍 DEBUG: Função para inspecionar puzzles (chamar no console)
-        window.debugPuzzles = function() {
+        window.debugPuzzles = function () {
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             console.log('🔍 DEBUG: Estado atual de todos os puzzles');
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -5424,6 +5499,1078 @@
                 </div>
             `).join('');
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PRISM LIGHT PUZZLE - VISUALIZADOR INTERATIVO
+        // ═══════════════════════════════════════════════════════════════════
+
+        let prismPreviewState = {
+            canvas: null,
+            ctx: null,
+            emitter: { x: 100, y: 250, direction: 0, color: '#00ff00' },
+            receptor: { x: 700, y: 250, width: 40, height: 40 },
+            prisms: [
+                { x: 250, y: 250, rotation: 0, flipX: false, id: 'slot1' },
+                { x: 400, y: 250, rotation: 0, flipX: false, id: 'slot2' },
+                { x: 550, y: 250, rotation: 0, flipX: false, id: 'slot3' }
+            ],
+            dragging: null,
+            dragOffset: { x: 0, y: 0 }
+        };
+
+        function initPrismPreview() {
+            const canvas = document.getElementById('prism-preview-canvas');
+            if (!canvas) return;
+
+            prismPreviewState.canvas = canvas;
+            prismPreviewState.ctx = canvas.getContext('2d');
+
+            // Carregar valores dos campos
+            loadPrismValuesFromForm();
+
+            // Event listeners
+            canvas.addEventListener('mousedown', handlePrismMouseDown);
+            canvas.addEventListener('mousemove', handlePrismMouseMove);
+            canvas.addEventListener('mouseup', handlePrismMouseUp);
+            canvas.addEventListener('contextmenu', handlePrismRightClick);
+            canvas.addEventListener('dblclick', handlePrismDoubleClick);
+
+            // Renderizar inicial
+            renderPrismPreview();
+        }
+
+        function loadPrismValuesFromForm() {
+            // Emissor
+            const emX = document.getElementById('emitter-x');
+            const emY = document.getElementById('emitter-y');
+            const emDir = document.getElementById('emitter-direction');
+            const emColor = document.getElementById('emitter-color');
+
+            if (emX && emX.value) prismPreviewState.emitter.x = parseInt(emX.value) + 400; // Offset para centralizar
+            if (emY && emY.value) prismPreviewState.emitter.y = parseInt(emY.value) + 250;
+            if (emDir) prismPreviewState.emitter.direction = parseInt(emDir.value) || 0;
+            if (emColor && emColor.value) {
+                // Converter 0x00ff00 para #00ff00
+                let color = emColor.value;
+                if (color.startsWith('0x')) color = '#' + color.slice(2);
+                prismPreviewState.emitter.color = color;
+            }
+
+            // Receptor
+            const recX = document.getElementById('receptor-x');
+            const recY = document.getElementById('receptor-y');
+            const recW = document.getElementById('receptor-width');
+            const recH = document.getElementById('receptor-height');
+
+            if (recX && recX.value) prismPreviewState.receptor.x = parseInt(recX.value) + 400;
+            if (recY && recY.value) prismPreviewState.receptor.y = parseInt(recY.value) + 250;
+            if (recW && recW.value) prismPreviewState.receptor.width = parseInt(recW.value);
+            if (recH && recH.value) prismPreviewState.receptor.height = parseInt(recH.value);
+
+            // Slots de prismas
+            for (let i = 1; i <= 3; i++) {
+                const xEl = document.getElementById(`slot${i}-x`);
+                const yEl = document.getElementById(`slot${i}-y`);
+
+                if (xEl && xEl.value && yEl && yEl.value) {
+                    prismPreviewState.prisms[i - 1].x = parseInt(xEl.value) + 400;
+                    prismPreviewState.prisms[i - 1].y = parseInt(yEl.value) + 250;
+                }
+            }
+        }
+
+        function savePrismValuesToForm() {
+            // Emissor - converter de volta (remover offset)
+            const emX = document.getElementById('emitter-x');
+            const emY = document.getElementById('emitter-y');
+
+            if (emX) emX.value = prismPreviewState.emitter.x - 400;
+            if (emY) emY.value = prismPreviewState.emitter.y - 250;
+
+            // Receptor
+            const recX = document.getElementById('receptor-x');
+            const recY = document.getElementById('receptor-y');
+
+            if (recX) recX.value = prismPreviewState.receptor.x - 400;
+            if (recY) recY.value = prismPreviewState.receptor.y - 250;
+
+            // Slots de prismas
+            for (let i = 1; i <= 3; i++) {
+                const xEl = document.getElementById(`slot${i}-x`);
+                const yEl = document.getElementById(`slot${i}-y`);
+
+                if (xEl) xEl.value = prismPreviewState.prisms[i - 1].x - 400;
+                if (yEl) yEl.value = prismPreviewState.prisms[i - 1].y - 250;
+            }
+
+            // Salvar puzzle
+            savePuzzle();
+        }
+
+        function handlePrismMouseDown(e) {
+            const rect = prismPreviewState.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Verificar clique em prismas
+            for (let i = prismPreviewState.prisms.length - 1; i >= 0; i--) {
+                const prism = prismPreviewState.prisms[i];
+                if (isPointInPrism(x, y, prism)) {
+                    prismPreviewState.dragging = { type: 'prism', index: i };
+                    prismPreviewState.dragOffset = { x: x - prism.x, y: y - prism.y };
+                    return;
+                }
+            }
+
+            // Verificar clique no emissor
+            if (isPointInCircle(x, y, prismPreviewState.emitter.x, prismPreviewState.emitter.y, 20)) {
+                prismPreviewState.dragging = { type: 'emitter' };
+                prismPreviewState.dragOffset = { x: x - prismPreviewState.emitter.x, y: y - prismPreviewState.emitter.y };
+                return;
+            }
+
+            // Verificar clique no receptor
+            const rec = prismPreviewState.receptor;
+            if (x >= rec.x - rec.width / 2 && x <= rec.x + rec.width / 2 &&
+                y >= rec.y - rec.height / 2 && y <= rec.y + rec.height / 2) {
+                prismPreviewState.dragging = { type: 'receptor' };
+                prismPreviewState.dragOffset = { x: x - rec.x, y: y - rec.y };
+            }
+        }
+
+        function handlePrismMouseMove(e) {
+            if (!prismPreviewState.dragging) return;
+
+            const rect = prismPreviewState.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const drag = prismPreviewState.dragging;
+
+            if (drag.type === 'prism') {
+                prismPreviewState.prisms[drag.index].x = x - prismPreviewState.dragOffset.x;
+                prismPreviewState.prisms[drag.index].y = y - prismPreviewState.dragOffset.y;
+            } else if (drag.type === 'emitter') {
+                prismPreviewState.emitter.x = x - prismPreviewState.dragOffset.x;
+                prismPreviewState.emitter.y = y - prismPreviewState.dragOffset.y;
+            } else if (drag.type === 'receptor') {
+                prismPreviewState.receptor.x = x - prismPreviewState.dragOffset.x;
+                prismPreviewState.receptor.y = y - prismPreviewState.dragOffset.y;
+            }
+
+            renderPrismPreview();
+        }
+
+        function handlePrismMouseUp(e) {
+            if (prismPreviewState.dragging) {
+                savePrismValuesToForm();
+            }
+            prismPreviewState.dragging = null;
+        }
+
+        function handlePrismRightClick(e) {
+            e.preventDefault();
+            const rect = prismPreviewState.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Verificar clique em prismas - flip (espelhar)
+            for (let i = prismPreviewState.prisms.length - 1; i >= 0; i--) {
+                const prism = prismPreviewState.prisms[i];
+                if (isPointInPrism(x, y, prism)) {
+                    prism.flipX = !prism.flipX;
+                    renderPrismPreview();
+                    return;
+                }
+            }
+        }
+
+        function handlePrismDoubleClick(e) {
+            const rect = prismPreviewState.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Verificar clique em prismas - rotacionar
+            for (let i = prismPreviewState.prisms.length - 1; i >= 0; i--) {
+                const prism = prismPreviewState.prisms[i];
+                if (isPointInPrism(x, y, prism)) {
+                    prism.rotation = (prism.rotation + 90) % 360;
+                    renderPrismPreview();
+                    return;
+                }
+            }
+
+            // Verificar clique no emissor - mudar direção
+            if (isPointInCircle(x, y, prismPreviewState.emitter.x, prismPreviewState.emitter.y, 20)) {
+                prismPreviewState.emitter.direction = (prismPreviewState.emitter.direction + 90) % 360;
+                const emDir = document.getElementById('emitter-direction');
+                if (emDir) emDir.value = prismPreviewState.emitter.direction;
+                renderPrismPreview();
+                savePuzzle();
+            }
+        }
+
+        function isPointInCircle(px, py, cx, cy, radius) {
+            return Math.hypot(px - cx, py - cy) <= radius;
+        }
+
+        function isPointInPrism(px, py, prism) {
+            // Simplificação: usar bounding box
+            return Math.abs(px - prism.x) < 35 && Math.abs(py - prism.y) < 35;
+        }
+
+        function renderPrismPreview() {
+            const ctx = prismPreviewState.ctx;
+            const canvas = prismPreviewState.canvas;
+            if (!ctx || !canvas) return;
+
+            // Limpar canvas
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar grid
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Desenhar emissor
+            const em = prismPreviewState.emitter;
+            ctx.fillStyle = em.color;
+            ctx.beginPath();
+            ctx.arc(em.x, em.y, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Seta de direção do emissor
+            ctx.strokeStyle = em.color;
+            ctx.lineWidth = 3;
+            const dirRad = em.direction * Math.PI / 180;
+            ctx.beginPath();
+            ctx.moveTo(em.x, em.y);
+            ctx.lineTo(em.x + Math.cos(dirRad) * 30, em.y + Math.sin(dirRad) * 30);
+            ctx.stroke();
+
+            // Label do emissor
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            ctx.fillText('EMISSOR', em.x - 25, em.y - 25);
+            ctx.fillText('(dbl-click: girar)', em.x - 40, em.y - 12);
+
+            // Desenhar receptor
+            const rec = prismPreviewState.receptor;
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 3;
+            ctx.fillRect(rec.x - rec.width / 2, rec.y - rec.height / 2, rec.width, rec.height);
+            ctx.strokeRect(rec.x - rec.width / 2, rec.y - rec.height / 2, rec.width, rec.height);
+
+            // Alvo no receptor
+            ctx.strokeStyle = '#ffff00';
+            ctx.beginPath();
+            ctx.arc(rec.x, rec.y, 12, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(rec.x - 15, rec.y);
+            ctx.lineTo(rec.x + 15, rec.y);
+            ctx.moveTo(rec.x, rec.y - 15);
+            ctx.lineTo(rec.x, rec.y + 15);
+            ctx.stroke();
+
+            // Label do receptor
+            ctx.fillStyle = '#ffff00';
+            ctx.fillText('RECEPTOR', rec.x - 30, rec.y - rec.height / 2 - 10);
+
+            // Desenhar prismas
+            prismPreviewState.prisms.forEach((prism, i) => {
+                drawPrismOnCanvas(ctx, prism, i);
+            });
+
+            // Desenhar raio de luz
+            drawLightRay(ctx);
+
+            // Instruções
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '11px Arial';
+            ctx.fillText('Arraste: mover | Duplo-clique: rotacionar | Botão direito: espelhar', 10, canvas.height - 10);
+        }
+
+        function drawPrismOnCanvas(ctx, prism, index) {
+            ctx.save();
+            ctx.translate(prism.x, prism.y);
+            ctx.rotate(prism.rotation * Math.PI / 180);
+            if (prism.flipX) ctx.scale(-1, 1);
+
+            const size = 30;
+
+            // Triângulo reto
+            ctx.beginPath();
+            ctx.moveTo(-size, size);   // Canto 90° (inferior esquerdo)
+            ctx.lineTo(-size, -size);  // Superior esquerdo
+            ctx.lineTo(size, size);    // Inferior direito
+            ctx.closePath();
+
+            // Preenchimento
+            ctx.fillStyle = 'rgba(100, 200, 255, 0.5)';
+            ctx.fill();
+
+            // Borda
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Marcar ângulo de 90° (ponto laranja)
+            ctx.fillStyle = '#ff6600';
+            ctx.beginPath();
+            ctx.arc(-size, size, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Label
+            ctx.fillStyle = '#00ffff';
+            ctx.font = '10px Arial';
+            ctx.fillText(`P${index + 1}`, prism.x - 8, prism.y - 40);
+            ctx.fillText(`${prism.rotation}°${prism.flipX ? ' ↔' : ''}`, prism.x - 15, prism.y + 50);
+        }
+
+        function drawLightRay(ctx) {
+            const em = prismPreviewState.emitter;
+            let currentX = em.x;
+            let currentY = em.y;
+            let currentDir = em.direction;
+
+            ctx.strokeStyle = em.color;
+            ctx.lineWidth = 4;
+            ctx.shadowColor = em.color;
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.moveTo(currentX, currentY);
+
+            const maxBounces = 15;
+            let hitReceptor = false;
+
+            for (let bounce = 0; bounce < maxBounces; bounce++) {
+                // Calcular próximo ponto
+                const dirRad = currentDir * Math.PI / 180;
+                const rayLength = 1000;
+                const nextX = currentX + Math.cos(dirRad) * rayLength;
+                const nextY = currentY + Math.sin(dirRad) * rayLength;
+
+                // Verificar colisão com prismas
+                let closestHit = null;
+                let closestDist = Infinity;
+
+                prismPreviewState.prisms.forEach((prism, i) => {
+                    const hit = rayPrismIntersectionPreview(currentX, currentY, nextX, nextY, prism);
+                    if (hit && hit.distance < closestDist && hit.distance > 1) {
+                        closestHit = hit;
+                        closestDist = hit.distance;
+                    }
+                });
+
+                // Verificar colisão com receptor
+                const rec = prismPreviewState.receptor;
+                const recHit = rayRectIntersection(
+                    currentX, currentY, nextX, nextY,
+                    rec.x - rec.width / 2, rec.y - rec.height / 2, rec.width, rec.height
+                );
+
+                if (recHit && recHit.distance < closestDist) {
+                    ctx.lineTo(recHit.x, recHit.y);
+                    hitReceptor = true;
+                    break;
+                }
+
+                if (closestHit) {
+                    ctx.lineTo(closestHit.point.x, closestHit.point.y);
+                    currentX = closestHit.point.x;
+                    currentY = closestHit.point.y;
+                    currentDir = closestHit.newDirection;
+                } else {
+                    // Desenhar até a borda
+                    const edgeX = Math.max(0, Math.min(800, nextX));
+                    const edgeY = Math.max(0, Math.min(500, nextY));
+                    ctx.lineTo(edgeX, edgeY);
+                    break;
+                }
+            }
+
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Indicador de sucesso
+            if (hitReceptor) {
+                ctx.fillStyle = '#00ff00';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('✓ LUZ ATINGIU O RECEPTOR!', 280, 30);
+            }
+        }
+
+        function rayPrismIntersectionPreview(rayStartX, rayStartY, rayEndX, rayEndY, prism) {
+            const size = 30;
+
+            // Vértices do triângulo base
+            let vertices = [
+                { x: -size, y: size },   // 90°
+                { x: -size, y: -size },
+                { x: size, y: size }
+            ];
+
+            // Aplicar flip
+            if (prism.flipX) {
+                vertices = vertices.map(v => ({ x: -v.x, y: v.y }));
+            }
+
+            // Aplicar rotação
+            const angle = prism.rotation * Math.PI / 180;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            vertices = vertices.map(v => ({
+                x: prism.x + (v.x * cos - v.y * sin),
+                y: prism.y + (v.x * sin + v.y * cos)
+            }));
+
+            // Arestas: 0-1 (face reta), 1-2 (hipotenusa), 2-0 (face reta)
+            const edges = [
+                { start: vertices[0], end: vertices[1], isHypotenuse: false },
+                { start: vertices[1], end: vertices[2], isHypotenuse: true },
+                { start: vertices[2], end: vertices[0], isHypotenuse: false }
+            ];
+
+            let closestHit = null;
+            let closestDist = Infinity;
+
+            edges.forEach(edge => {
+                const intersection = lineIntersectionPreview(
+                    rayStartX, rayStartY, rayEndX, rayEndY,
+                    edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                );
+
+                if (intersection) {
+                    const dist = Math.hypot(intersection.x - rayStartX, intersection.y - rayStartY);
+
+                    if (dist < closestDist && dist > 1) {
+                        closestDist = dist;
+
+                        let newDir;
+                        const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
+
+                        if (edge.isHypotenuse) {
+                            // Passa reto
+                            newDir = currentDir;
+                        } else {
+                            // Gira 90°
+                            newDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX);
+                        }
+
+                        closestHit = {
+                            point: intersection,
+                            distance: dist,
+                            newDirection: newDir,
+                            hitHypotenuse: edge.isHypotenuse
+                        };
+                    }
+                }
+            });
+
+            return closestHit;
+        }
+
+        function calculateReflectionPreview(incomingDir, prismRotation, flipX) {
+            // Normalizar direção
+            let normalizedIn = Math.round(incomingDir / 90) * 90;
+            normalizedIn = ((normalizedIn % 360) + 360) % 360;
+
+            // Mapa de reflexões para cada rotação do prisma
+            const reflectionMap = {
+                0: { 0: 270, 90: 180, 180: 90, 270: 0 },
+                90: { 0: 90, 90: 0, 180: 270, 270: 180 },
+                180: { 0: 90, 90: 0, 180: 270, 270: 180 },
+                270: { 0: 270, 90: 180, 180: 90, 270: 0 }
+            };
+
+            let effectiveRotation = prismRotation;
+            if (flipX) {
+                effectiveRotation = (360 - prismRotation) % 360;
+            }
+
+            const outDir = reflectionMap[effectiveRotation]?.[normalizedIn];
+            return outDir !== undefined ? outDir : normalizedIn + 90;
+        }
+
+        function lineIntersectionPreview(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (Math.abs(denom) < 0.0001) return null;
+
+            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                return {
+                    x: x1 + t * (x2 - x1),
+                    y: y1 + t * (y2 - y1)
+                };
+            }
+            return null;
+        }
+
+        function rayRectIntersection(x1, y1, x2, y2, rx, ry, rw, rh) {
+            const edges = [
+                { x1: rx, y1: ry, x2: rx + rw, y2: ry },
+                { x1: rx + rw, y1: ry, x2: rx + rw, y2: ry + rh },
+                { x1: rx + rw, y1: ry + rh, x2: rx, y2: ry + rh },
+                { x1: rx, y1: ry + rh, x2: rx, y2: ry }
+            ];
+
+            let closest = null;
+            let minDist = Infinity;
+
+            edges.forEach(edge => {
+                const hit = lineIntersectionPreview(x1, y1, x2, y2, edge.x1, edge.y1, edge.x2, edge.y2);
+                if (hit) {
+                    const dist = Math.hypot(hit.x - x1, hit.y - y1);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = { x: hit.x, y: hit.y, distance: dist };
+                    }
+                }
+            });
+
+            return closest;
+        }
+
+        // Inicializar preview quando o tipo prism_light for selecionado
+        const originalRenderPuzzleOptions = renderPuzzleOptions;
+        renderPuzzleOptions = function (type) {
+            originalRenderPuzzleOptions(type);
+            if (type === 'prism_light') {
+                setTimeout(initPrismPreview, 100);
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // FIM DO VISUALIZADOR DE PRISMAS (CANVAS)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // ═══════════════════════════════════════════════════════════════════
+        // PRISMAS NO VISUALIZADOR (SVG) - Aba Visualizador
+        // ═══════════════════════════════════════════════════════════════════
+
+        let visualPrismState = {
+            emitter: { x: 50, y: 50, direction: 0, color: '#00ff00' },
+            receptor: { x: 80, y: 50, width: 40, height: 40 },
+            prisms: [
+                { x: 30, y: 50, rotation: 0, flipX: false },
+                { x: 45, y: 50, rotation: 0, flipX: false },
+                { x: 60, y: 50, rotation: 0, flipX: false }
+            ],
+            dragging: null,
+            imageWidth: 800,
+            imageHeight: 600
+        };
+
+        function renderVisualPrisms() {
+            const location = gameLocations[currentLocationId];
+            if (!location) return;
+
+            const svg = document.getElementById('visual-prism-container');
+            const controlsDiv = document.getElementById('visual-prism-controls');
+            const noPuzzleDiv = document.getElementById('visual-prism-no-puzzle');
+
+            if (!svg) return;
+
+            // Verificar se tem puzzle prism_light
+            const hasPrismPuzzle = location.puzzle && location.puzzle.type === 'prism_light';
+
+            if (!hasPrismPuzzle) {
+                svg.innerHTML = '';
+                if (controlsDiv) controlsDiv.style.display = 'none';
+                if (noPuzzleDiv) noPuzzleDiv.style.display = 'block';
+                return;
+            }
+
+            if (controlsDiv) controlsDiv.style.display = 'block';
+            if (noPuzzleDiv) noPuzzleDiv.style.display = 'none';
+
+            // Obter dimensões do wrapper
+            const wrapper = document.getElementById('visual-wrapper');
+            const img = document.getElementById('visual-location-image');
+            if (!wrapper || !img) return;
+
+            const rect = img.getBoundingClientRect();
+            visualPrismState.imageWidth = img.naturalWidth || rect.width;
+            visualPrismState.imageHeight = img.naturalHeight || rect.height;
+
+            // Atualizar tamanho do SVG
+            svg.setAttribute('width', rect.width);
+            svg.setAttribute('height', rect.height);
+            svg.setAttribute('viewBox', `0 0 ${visualPrismState.imageWidth} ${visualPrismState.imageHeight}`);
+
+            // Carregar dados do puzzle
+            loadVisualPrismData(location.puzzle);
+
+            // Renderizar SVG
+            drawPrismsSVG(svg);
+
+            // Atualizar info no painel
+            updatePrismInfoPanel();
+        }
+
+        function loadVisualPrismData(puzzle) {
+            if (!puzzle) return;
+
+            // Emissor
+            if (puzzle.emitter) {
+                visualPrismState.emitter.x = percentFromCoord(puzzle.emitter.x, visualPrismState.imageWidth);
+                visualPrismState.emitter.y = percentFromCoord(puzzle.emitter.y, visualPrismState.imageHeight);
+                visualPrismState.emitter.direction = puzzle.emitter.direction || 0;
+                let color = puzzle.emitter.color || '0x00ff00';
+                if (typeof color === 'string' && color.startsWith('0x')) color = '#' + color.slice(2);
+                visualPrismState.emitter.color = color;
+            }
+
+            // Receptor
+            if (puzzle.receptor) {
+                visualPrismState.receptor.x = percentFromCoord(puzzle.receptor.x, visualPrismState.imageWidth);
+                visualPrismState.receptor.y = percentFromCoord(puzzle.receptor.y, visualPrismState.imageHeight);
+                visualPrismState.receptor.width = puzzle.receptor.width || 40;
+                visualPrismState.receptor.height = puzzle.receptor.height || 40;
+            }
+
+            // Prismas
+            if (puzzle.prismSlots && Array.isArray(puzzle.prismSlots)) {
+                puzzle.prismSlots.forEach((slot, i) => {
+                    if (i < 3) {
+                        visualPrismState.prisms[i].x = percentFromCoord(slot.x, visualPrismState.imageWidth);
+                        visualPrismState.prisms[i].y = percentFromCoord(slot.y, visualPrismState.imageHeight);
+                        visualPrismState.prisms[i].rotation = slot.rotation || 0;
+                        visualPrismState.prisms[i].flipX = slot.flipX || false;
+                    }
+                });
+            }
+        }
+
+        function percentFromCoord(coord, max) {
+            // Se coord < 100, assumir que já é porcentagem
+            // Se coord > 100, converter de pixels para porcentagem
+            if (Math.abs(coord) < 100) return coord + 50; // Offset do centro
+            return (coord / max) * 100 + 50;
+        }
+
+        function coordFromPercent(percent, max) {
+            return ((percent - 50) / 100) * max;
+        }
+
+        function drawPrismsSVG(svg) {
+            const w = visualPrismState.imageWidth;
+            const h = visualPrismState.imageHeight;
+            const em = visualPrismState.emitter;
+            const rec = visualPrismState.receptor;
+
+            let html = '';
+
+            // Calcular coordenadas absolutas
+            const emX = (em.x / 100) * w;
+            const emY = (em.y / 100) * h;
+            const recX = (rec.x / 100) * w;
+            const recY = (rec.y / 100) * h;
+
+            // Raio de luz
+            html += drawLightRaySVG(emX, emY, em.direction, em.color, recX, recY, rec.width, rec.height);
+
+            // Emissor
+            html += `<circle cx="${emX}" cy="${emY}" r="15" fill="${em.color}" 
+                      style="cursor: grab; pointer-events: auto;"
+                      onmousedown="startDragPrismElement(event, 'emitter')"
+                      ondblclick="rotatePrismElement('emitter')"/>`;
+            // Seta de direção
+            const dirRad = em.direction * Math.PI / 180;
+            const arrowX = emX + Math.cos(dirRad) * 25;
+            const arrowY = emY + Math.sin(dirRad) * 25;
+            html += `<line x1="${emX}" y1="${emY}" x2="${arrowX}" y2="${arrowY}" 
+                      stroke="${em.color}" stroke-width="4"/>`;
+
+            // Receptor
+            html += `<rect x="${recX - rec.width / 2}" y="${recY - rec.height / 2}" 
+                      width="${rec.width}" height="${rec.height}"
+                      fill="rgba(255,255,0,0.3)" stroke="#ffff00" stroke-width="3"
+                      style="cursor: grab; pointer-events: auto;"
+                      onmousedown="startDragPrismElement(event, 'receptor')"/>`;
+            // Alvo no receptor
+            html += `<circle cx="${recX}" cy="${recY}" r="12" fill="none" stroke="#ffff00" stroke-width="2"/>`;
+            html += `<line x1="${recX - 15}" y1="${recY}" x2="${recX + 15}" y2="${recY}" stroke="#ffff00" stroke-width="2"/>`;
+            html += `<line x1="${recX}" y1="${recY - 15}" x2="${recX}" y2="${recY + 15}" stroke="#ffff00" stroke-width="2"/>`;
+
+            // Prismas
+            visualPrismState.prisms.forEach((prism, i) => {
+                const px = (prism.x / 100) * w;
+                const py = (prism.y / 100) * h;
+                html += drawPrismSVG(px, py, prism.rotation, prism.flipX, i);
+            });
+
+            svg.innerHTML = html;
+        }
+
+        function drawPrismSVG(x, y, rotation, flipX, index) {
+            const size = 30;
+
+            // Vértices do triângulo
+            let points = [
+                { x: -size, y: size },   // 90° corner
+                { x: -size, y: -size },
+                { x: size, y: size }
+            ];
+
+            // Aplicar flip
+            if (flipX) {
+                points = points.map(p => ({ x: -p.x, y: p.y }));
+            }
+
+            // Converter para string de pontos SVG
+            const pointsStr = points.map(p => `${p.x},${p.y}`).join(' ');
+
+            return `<g transform="translate(${x},${y}) rotate(${rotation})"
+                       style="cursor: grab; pointer-events: auto;"
+                       onmousedown="startDragPrismElement(event, 'prism', ${index})"
+                       ondblclick="rotatePrismElement('prism', ${index})"
+                       oncontextmenu="flipPrismElement(event, ${index})">
+                      <polygon points="${pointsStr}" fill="rgba(100,200,255,0.6)" 
+                               stroke="#00ffff" stroke-width="3"/>
+                      <circle cx="${points[0].x}" cy="${points[0].y}" r="5" fill="#ff6600"/>
+                      <text x="0" y="-35" text-anchor="middle" fill="#00ffff" font-size="12">P${index + 1}</text>
+                    </g>`;
+        }
+
+        function drawLightRaySVG(startX, startY, direction, color, recX, recY, recW, recH) {
+            const w = visualPrismState.imageWidth;
+            const h = visualPrismState.imageHeight;
+
+            let rayPath = `M ${startX} ${startY}`;
+            let currentX = startX;
+            let currentY = startY;
+            let currentDir = direction;
+            let hitReceptor = false;
+
+            const maxBounces = 15;
+
+            for (let bounce = 0; bounce < maxBounces; bounce++) {
+                const dirRad = currentDir * Math.PI / 180;
+                const rayLength = Math.max(w, h) * 2;
+                const nextX = currentX + Math.cos(dirRad) * rayLength;
+                const nextY = currentY + Math.sin(dirRad) * rayLength;
+
+                // Verificar colisão com prismas
+                let closestHit = null;
+                let closestDist = Infinity;
+
+                visualPrismState.prisms.forEach((prism, i) => {
+                    const px = (prism.x / 100) * w;
+                    const py = (prism.y / 100) * h;
+                    const hit = rayPrismIntersectionSVG(currentX, currentY, nextX, nextY, px, py, prism.rotation, prism.flipX);
+                    if (hit && hit.distance < closestDist && hit.distance > 2) {
+                        closestHit = hit;
+                        closestDist = hit.distance;
+                    }
+                });
+
+                // Verificar colisão com receptor
+                const recHit = rayRectIntersectionSVG(currentX, currentY, nextX, nextY,
+                    recX - recW / 2, recY - recH / 2, recW, recH);
+
+                if (recHit && recHit.distance < closestDist) {
+                    rayPath += ` L ${recHit.x} ${recHit.y}`;
+                    hitReceptor = true;
+                    break;
+                }
+
+                if (closestHit) {
+                    rayPath += ` L ${closestHit.point.x} ${closestHit.point.y}`;
+                    currentX = closestHit.point.x;
+                    currentY = closestHit.point.y;
+                    currentDir = closestHit.newDirection;
+                } else {
+                    // Até a borda
+                    const edgeX = Math.max(0, Math.min(w, nextX));
+                    const edgeY = Math.max(0, Math.min(h, nextY));
+                    rayPath += ` L ${edgeX} ${edgeY}`;
+                    break;
+                }
+            }
+
+            // Atualizar status
+            const statusDiv = document.getElementById('prism-light-status');
+            if (statusDiv) {
+                if (hitReceptor) {
+                    statusDiv.style.background = '#e8f5e9';
+                    statusDiv.style.color = '#2e7d32';
+                    statusDiv.innerHTML = '✓ Luz atingiu o receptor!';
+                } else {
+                    statusDiv.style.background = '#ffebee';
+                    statusDiv.style.color = '#c62828';
+                    statusDiv.innerHTML = '✗ Ajuste os prismas';
+                }
+            }
+
+            return `<path d="${rayPath}" fill="none" stroke="${color}" stroke-width="4" 
+                     filter="url(#glow)" style="pointer-events: none;"/>
+                    <defs>
+                      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge>
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>`;
+        }
+
+        function rayPrismIntersectionSVG(x1, y1, x2, y2, px, py, rotation, flipX) {
+            const size = 30;
+            let vertices = [
+                { x: -size, y: size },
+                { x: -size, y: -size },
+                { x: size, y: size }
+            ];
+
+            if (flipX) vertices = vertices.map(v => ({ x: -v.x, y: v.y }));
+
+            const angle = rotation * Math.PI / 180;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            vertices = vertices.map(v => ({
+                x: px + (v.x * cos - v.y * sin),
+                y: py + (v.x * sin + v.y * cos)
+            }));
+
+            const edges = [
+                { start: vertices[0], end: vertices[1], isHypotenuse: false },
+                { start: vertices[1], end: vertices[2], isHypotenuse: true },
+                { start: vertices[2], end: vertices[0], isHypotenuse: false }
+            ];
+
+            let closestHit = null;
+            let closestDist = Infinity;
+
+            edges.forEach(edge => {
+                const hit = lineIntersectionSVG(x1, y1, x2, y2, edge.start.x, edge.start.y, edge.end.x, edge.end.y);
+                if (hit) {
+                    const dist = Math.hypot(hit.x - x1, hit.y - y1);
+                    if (dist < closestDist && dist > 2) {
+                        closestDist = dist;
+                        const currentDir = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                        let newDir = edge.isHypotenuse ? currentDir : calcReflectionSVG(currentDir, rotation, flipX);
+                        closestHit = { point: hit, distance: dist, newDirection: newDir };
+                    }
+                }
+            });
+
+            return closestHit;
+        }
+
+        function calcReflectionSVG(inDir, prismRotation, flipX) {
+            let normalizedIn = Math.round(inDir / 90) * 90;
+            normalizedIn = ((normalizedIn % 360) + 360) % 360;
+
+            const reflectionMap = {
+                0: { 0: 270, 90: 180, 180: 90, 270: 0 },
+                90: { 0: 90, 90: 0, 180: 270, 270: 180 },
+                180: { 0: 90, 90: 0, 180: 270, 270: 180 },
+                270: { 0: 270, 90: 180, 180: 90, 270: 0 }
+            };
+
+            let effectiveRot = flipX ? (360 - prismRotation) % 360 : prismRotation;
+            return reflectionMap[effectiveRot]?.[normalizedIn] ?? normalizedIn + 90;
+        }
+
+        function lineIntersectionSVG(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (Math.abs(denom) < 0.0001) return null;
+
+            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1) };
+            }
+            return null;
+        }
+
+        function rayRectIntersectionSVG(x1, y1, x2, y2, rx, ry, rw, rh) {
+            const edges = [
+                { x1: rx, y1: ry, x2: rx + rw, y2: ry },
+                { x1: rx + rw, y1: ry, x2: rx + rw, y2: ry + rh },
+                { x1: rx + rw, y1: ry + rh, x2: rx, y2: ry + rh },
+                { x1: rx, y1: ry + rh, x2: rx, y2: ry }
+            ];
+
+            let closest = null;
+            let minDist = Infinity;
+
+            edges.forEach(edge => {
+                const hit = lineIntersectionSVG(x1, y1, x2, y2, edge.x1, edge.y1, edge.x2, edge.y2);
+                if (hit) {
+                    const dist = Math.hypot(hit.x - x1, hit.y - y1);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = { x: hit.x, y: hit.y, distance: dist };
+                    }
+                }
+            });
+
+            return closest;
+        }
+
+        // Funções de interação
+        function startDragPrismElement(event, type, index) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            visualPrismState.dragging = { type, index };
+
+            document.addEventListener('mousemove', dragPrismElement);
+            document.addEventListener('mouseup', stopDragPrismElement);
+        }
+
+        function dragPrismElement(event) {
+            if (!visualPrismState.dragging) return;
+
+            const svg = document.getElementById('visual-prism-container');
+            const rect = svg.getBoundingClientRect();
+
+            // Converter para porcentagem
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+            const drag = visualPrismState.dragging;
+
+            if (drag.type === 'emitter') {
+                visualPrismState.emitter.x = Math.max(5, Math.min(95, x));
+                visualPrismState.emitter.y = Math.max(5, Math.min(95, y));
+            } else if (drag.type === 'receptor') {
+                visualPrismState.receptor.x = Math.max(5, Math.min(95, x));
+                visualPrismState.receptor.y = Math.max(5, Math.min(95, y));
+            } else if (drag.type === 'prism') {
+                visualPrismState.prisms[drag.index].x = Math.max(5, Math.min(95, x));
+                visualPrismState.prisms[drag.index].y = Math.max(5, Math.min(95, y));
+            }
+
+            drawPrismsSVG(svg);
+            updatePrismInfoPanel();
+        }
+
+        function stopDragPrismElement(event) {
+            if (visualPrismState.dragging) {
+                savePrismPositionsToForm();
+            }
+            visualPrismState.dragging = null;
+            document.removeEventListener('mousemove', dragPrismElement);
+            document.removeEventListener('mouseup', stopDragPrismElement);
+        }
+
+        function rotatePrismElement(type, index) {
+            if (type === 'emitter') {
+                visualPrismState.emitter.direction = (visualPrismState.emitter.direction + 90) % 360;
+            } else if (type === 'prism' && index !== undefined) {
+                visualPrismState.prisms[index].rotation = (visualPrismState.prisms[index].rotation + 90) % 360;
+            }
+
+            const svg = document.getElementById('visual-prism-container');
+            drawPrismsSVG(svg);
+            updatePrismInfoPanel();
+            savePrismPositionsToForm();
+        }
+
+        function flipPrismElement(event, index) {
+            event.preventDefault();
+            visualPrismState.prisms[index].flipX = !visualPrismState.prisms[index].flipX;
+
+            const svg = document.getElementById('visual-prism-container');
+            drawPrismsSVG(svg);
+            updatePrismInfoPanel();
+            savePrismPositionsToForm();
+        }
+
+        function updatePrismInfoPanel() {
+            visualPrismState.prisms.forEach((prism, i) => {
+                const infoEl = document.getElementById(`prism${i + 1}-info`);
+                if (infoEl) {
+                    infoEl.textContent = `${prism.rotation}°${prism.flipX ? ' ↔' : ''}`;
+                }
+            });
+        }
+
+        function savePrismPositionsToForm() {
+            const location = gameLocations[currentLocationId];
+            if (!location || !location.puzzle || location.puzzle.type !== 'prism_light') return;
+
+            const w = visualPrismState.imageWidth;
+            const h = visualPrismState.imageHeight;
+
+            // Converter de porcentagem para coordenadas do puzzle
+            location.puzzle.emitter = {
+                x: Math.round(coordFromPercent(visualPrismState.emitter.x, w)),
+                y: Math.round(coordFromPercent(visualPrismState.emitter.y, h)),
+                direction: visualPrismState.emitter.direction,
+                color: visualPrismState.emitter.color
+            };
+
+            location.puzzle.receptor = {
+                x: Math.round(coordFromPercent(visualPrismState.receptor.x, w)),
+                y: Math.round(coordFromPercent(visualPrismState.receptor.y, h)),
+                width: visualPrismState.receptor.width,
+                height: visualPrismState.receptor.height
+            };
+
+            location.puzzle.prismSlots = visualPrismState.prisms.map((prism, i) => ({
+                id: `slot${i + 1}`,
+                x: Math.round(coordFromPercent(prism.x, w)),
+                y: Math.round(coordFromPercent(prism.y, h)),
+                rotation: prism.rotation,
+                flipX: prism.flipX,
+                requiredItem: location.puzzle.prismSlots?.[i]?.requiredItem || 'prisma'
+            }));
+
+            // Atualizar campos do formulário na aba Enigma também
+            const emitterX = document.getElementById('emitter-x');
+            const emitterY = document.getElementById('emitter-y');
+            const emitterDir = document.getElementById('emitter-direction');
+
+            if (emitterX) emitterX.value = location.puzzle.emitter.x;
+            if (emitterY) emitterY.value = location.puzzle.emitter.y;
+            if (emitterDir) emitterDir.value = location.puzzle.emitter.direction;
+
+            const receptorX = document.getElementById('receptor-x');
+            const receptorY = document.getElementById('receptor-y');
+
+            if (receptorX) receptorX.value = location.puzzle.receptor.x;
+            if (receptorY) receptorY.value = location.puzzle.receptor.y;
+
+            for (let i = 0; i < 3; i++) {
+                const slotX = document.getElementById(`slot${i + 1}-x`);
+                const slotY = document.getElementById(`slot${i + 1}-y`);
+                if (slotX) slotX.value = location.puzzle.prismSlots[i].x;
+                if (slotY) slotY.value = location.puzzle.prismSlots[i].y;
+            }
+
+            showToast('✓ Posições atualizadas');
+            autoSave();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // FIM DOS PRISMAS NO VISUALIZADOR (SVG)
+        // ═══════════════════════════════════════════════════════════════════
 
         // ✅ SALVAMENTO MANUAL - Salva TUDO no banco MySQL
         async function manualSave() {
@@ -6581,23 +7728,23 @@ if (typeof module !== 'undefined' && module.exports) {
                             is_decorative: item.isDecorative ? 1 : 0,
                             // ✅ Para decorativos, usar item.image como display_image (spritesheets/GIFs)
                             display_image: item.isDecorative ? item.image : (item.displayImage || null),
-                        x: item.position.x,
-                        y: item.position.y,
-                        width: item.size.width,
-                        height: item.size.height,
-                        rotation: item.transform?.rotation || 0,
-                        rotate_x: item.transform?.rotateX || 0,
-                        rotate_y: item.transform?.rotateY || 0,
-                        scale_x: item.transform?.scaleX || 1,
-                        scale_y: item.transform?.scaleY || 1,
-                        skew_x: item.transform?.skewX || 0,
-                        skew_y: item.transform?.skewY || 0,
-                        flip_x: item.transform?.flipX ? 1 : 0,
-                        flip_y: item.transform?.flipY ? 1 : 0,
-                        opacity: item.transform?.opacity || 1,
-                        shadow_blur: item.transform?.shadowBlur || 0,
-                        shadow_offset_x: item.transform?.shadowOffsetX || 0,
-                        shadow_offset_y: item.transform?.shadowOffsetY || 0
+                            x: item.position.x,
+                            y: item.position.y,
+                            width: item.size.width,
+                            height: item.size.height,
+                            rotation: item.transform?.rotation || 0,
+                            rotate_x: item.transform?.rotateX || 0,
+                            rotate_y: item.transform?.rotateY || 0,
+                            scale_x: item.transform?.scaleX || 1,
+                            scale_y: item.transform?.scaleY || 1,
+                            skew_x: item.transform?.skewX || 0,
+                            skew_y: item.transform?.skewY || 0,
+                            flip_x: item.transform?.flipX ? 1 : 0,
+                            flip_y: item.transform?.flipY ? 1 : 0,
+                            opacity: item.transform?.opacity || 1,
+                            shadow_blur: item.transform?.shadowBlur || 0,
+                            shadow_offset_x: item.transform?.shadowOffsetX || 0,
+                            shadow_offset_y: item.transform?.shadowOffsetY || 0
                         };
 
                         return hotspot;
@@ -6634,55 +7781,55 @@ if (typeof module !== 'undefined' && module.exports) {
                 });
 
                 if (!response.ok) {
-                        const text = await response.text();
-                        console.error(`❌ HTTP ${response.status}:`, text);
-                        if (!silent) {
-                            showToast('❌ Erro ao salvar: ' + text.substring(0, 100), 'error');
-                        }
-                        return;
-                    }
-
-                    const result = await response.json();
-
-                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-
-                    if (result.success) {
-                        // Limpar flag de mudanças não sincronizadas
-                        localStorage.removeItem('unsyncedChanges');
-
-                        // ✅ CRÍTICO: Salvar também no IndexedDB para persistir ao dar F5
-                        await saveToIndexedDB('editorData', {
-                            locations: gameLocations,
-                            order: locationOrder
-                        });
-
-                        if (!silent) {
-                            showToast(`✅ ${result.data.locations} localizações e ${result.data.hotspots} hotspots salvos em ${elapsed}s!`, 'success');
-                        }
-                    } else {
-                        console.error(`❌ Erro:`, result.message);
-                        if (!silent) {
-                            showToast(`❌ Erro: ${result.message}`, 'error');
-                        }
-                    }
-
-                } catch (error) {
-                    console.error('❌ Erro ao sincronizar:', error);
+                    const text = await response.text();
+                    console.error(`❌ HTTP ${response.status}:`, text);
                     if (!silent) {
-                        showToast('❌ Erro ao sincronizar: ' + error.message, 'error');
+                        showToast('❌ Erro ao salvar: ' + text.substring(0, 100), 'error');
+                    }
+                    return;
+                }
+
+                const result = await response.json();
+
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+                if (result.success) {
+                    // Limpar flag de mudanças não sincronizadas
+                    localStorage.removeItem('unsyncedChanges');
+
+                    // ✅ CRÍTICO: Salvar também no IndexedDB para persistir ao dar F5
+                    await saveToIndexedDB('editorData', {
+                        locations: gameLocations,
+                        order: locationOrder
+                    });
+
+                    if (!silent) {
+                        showToast(`✅ ${result.data.locations} localizações e ${result.data.hotspots} hotspots salvos em ${elapsed}s!`, 'success');
+                    }
+                } else {
+                    console.error(`❌ Erro:`, result.message);
+                    if (!silent) {
+                        showToast(`❌ Erro: ${result.message}`, 'error');
                     }
                 }
+
+            } catch (error) {
+                console.error('❌ Erro ao sincronizar:', error);
+                if (!silent) {
+                    showToast('❌ Erro ao sincronizar: ' + error.message, 'error');
+                }
             }
+        }
 
         // Ajustar escala quando janela redimensiona
         let editorResizeTimeout;
-            window.addEventListener('resize', () => {
-                clearTimeout(editorResizeTimeout);
-                editorResizeTimeout = setTimeout(() => {
-                    adjustEditorContainer();
-                    renderPositionedHotspots();
-                }, 100);
-            });
+        window.addEventListener('resize', () => {
+            clearTimeout(editorResizeTimeout);
+            editorResizeTimeout = setTimeout(() => {
+                adjustEditorContainer();
+                renderPositionedHotspots();
+            }, 100);
+        });
     </script>
 </body>
 
