@@ -139,6 +139,9 @@ class PrismLightPuzzle {
     createPrismSlots() {
         const slots = this.config.prismSlots || [];
 
+        // Carregar estado salvo dos prismas
+        const savedState = this.loadPrismState();
+
         slots.forEach(slotConfig => {
             // Verificar se jogador tem o item necessário
             const hasItem = this.checkInventoryForItem(slotConfig.requiredItem);
@@ -154,6 +157,9 @@ class PrismLightPuzzle {
             slotCircle.setStrokeStyle(2, hasItem ? 0x00ff00 : 0xff0000);
             this.container.add(slotCircle);
 
+            // Carregar estado salvo para este slot
+            const slotState = savedState[slotConfig.id] || { rotation: 0, flipX: false };
+
             // Dados do slot
             const slot = {
                 id: slotConfig.id,
@@ -161,8 +167,8 @@ class PrismLightPuzzle {
                 y: slotConfig.y,
                 requiredItem: slotConfig.requiredItem,
                 hasItem: hasItem,
-                rotation: 0,
-                flipX: false,
+                rotation: slotState.rotation,
+                flipX: slotState.flipX,
                 graphics: null,
                 circle: slotCircle
             };
@@ -262,6 +268,7 @@ class PrismLightPuzzle {
         slot.rotation = (slot.rotation + 90) % 360;
         this.drawPrism(slot);
         this.updateRay();
+        this.savePrismState();
         this.scene.sound.play('click', { volume: 0.3 });
     }
 
@@ -269,7 +276,37 @@ class PrismLightPuzzle {
         slot.flipX = !slot.flipX;
         this.drawPrism(slot);
         this.updateRay();
+        this.savePrismState();
         this.scene.sound.play('click', { volume: 0.3 });
+    }
+
+    loadPrismState() {
+        // Carregar estado dos prismas do localStorage
+        const puzzleId = this.config.id || 'prism_light_puzzle';
+        const savedData = localStorage.getItem(`prism_state_${puzzleId}`);
+        if (savedData) {
+            try {
+                return JSON.parse(savedData);
+            } catch (e) {
+                console.error('Erro ao carregar estado dos prismas:', e);
+            }
+        }
+        return {};
+    }
+
+    savePrismState() {
+        // Salvar estado dos prismas no localStorage
+        const puzzleId = this.config.id || 'prism_light_puzzle';
+        const state = {};
+        this.prismSlots.forEach(slot => {
+            if (slot.hasItem) {
+                state[slot.id] = {
+                    rotation: slot.rotation,
+                    flipX: slot.flipX
+                };
+            }
+        });
+        localStorage.setItem(`prism_state_${puzzleId}`, JSON.stringify(state));
     }
 
     updateRay() {
