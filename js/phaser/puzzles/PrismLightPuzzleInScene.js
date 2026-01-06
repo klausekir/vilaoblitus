@@ -415,14 +415,20 @@ class PrismLightPuzzleInScene {
         if (!slot.transformedVertices || slot.transformedVertices.length < 3) return null;
 
         const vertices = slot.transformedVertices;
+        // Definir arestas: vertices[0] é o canto de 90°
+        // Edge 0: vertices[0] -> vertices[1] = face reta vertical
+        // Edge 1: vertices[1] -> vertices[2] = hipotenusa
+        // Edge 2: vertices[2] -> vertices[0] = face reta horizontal
         const edges = [
-            { start: vertices[0], end: vertices[1], isHypotenuse: false },
-            { start: vertices[1], end: vertices[2], isHypotenuse: true },
-            { start: vertices[2], end: vertices[0], isHypotenuse: false }
+            { start: vertices[0], end: vertices[1], isHypotenuse: false, index: 0 },
+            { start: vertices[1], end: vertices[2], isHypotenuse: true, index: 1 },
+            { start: vertices[2], end: vertices[0], isHypotenuse: false, index: 2 }
         ];
 
-        let closestHit = null;
-        let closestDist = Infinity;
+        // Encontrar primeira interseção (entrada no prisma)
+        let entryHit = null;
+        let entryDist = Infinity;
+        let entryEdge = null;
 
         edges.forEach(edge => {
             const intersection = this.lineIntersection(
@@ -432,18 +438,88 @@ class PrismLightPuzzleInScene {
 
             if (intersection) {
                 const dist = Math.hypot(intersection.x - rayStartX, intersection.y - rayStartY);
-
-                if (dist < closestDist && dist > 2) {
-                    closestDist = dist;
-                    const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
-                    let newDir = edge.isHypotenuse ? currentDir : this.calculateReflection(currentDir, slot.rotation, slot.flipX);
-
-                    closestHit = { point: intersection, distance: dist, newDirection: newDir };
+                if (dist < entryDist && dist > 2) {
+                    entryDist = dist;
+                    entryHit = intersection;
+                    entryEdge = edge;
                 }
             }
         });
 
-        return closestHit;
+        if (!entryHit) return null;
+
+        const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
+
+        // Se entrou pela HIPOTENUSA: passa direto
+        if (entryEdge.isHypotenuse) {
+            // Não refletir, apenas continuar na mesma direção
+            // Mas precisamos encontrar o ponto de saída
+            const rayLength = 200;
+            const dirRad = currentDir * Math.PI / 180;
+            const exitX = entryHit.x + Math.cos(dirRad) * rayLength;
+            const exitY = entryHit.y + Math.sin(dirRad) * rayLength;
+
+            // Encontrar saída pelas faces retas
+            let exitHit = null;
+            let exitDist = Infinity;
+
+            edges.forEach(edge => {
+                if (edge.isHypotenuse) return; // Não sair pela mesma face
+
+                const intersection = this.lineIntersection(
+                    entryHit.x, entryHit.y, exitX, exitY,
+                    edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                );
+
+                if (intersection) {
+                    const dist = Math.hypot(intersection.x - entryHit.x, intersection.y - entryHit.y);
+                    if (dist < exitDist && dist > 2) {
+                        exitDist = dist;
+                        exitHit = intersection;
+                    }
+                }
+            });
+
+            // Retornar ponto de saída com mesma direção
+            return {
+                point: exitHit || entryHit,
+                distance: entryDist + (exitDist < Infinity ? exitDist : 0),
+                newDirection: currentDir // Passa reto
+            };
+        }
+
+        // Se entrou por FACE RETA: refletir na hipotenusa interna (90°)
+        // Simular raio viajando internamente até a hipotenusa
+        const rayLength = 200;
+        const dirRad = currentDir * Math.PI / 180;
+        const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
+        const internalY = entryHit.y + Math.sin(dirRad) * rayLength;
+
+        // Encontrar interseção com a hipotenusa (interna)
+        const hypotenuse = edges.find(e => e.isHypotenuse);
+        const hypoHit = this.lineIntersection(
+            entryHit.x, entryHit.y, internalX, internalY,
+            hypotenuse.start.x, hypotenuse.start.y, hypotenuse.end.x, hypotenuse.end.y
+        );
+
+        if (hypoHit) {
+            // Reflexão interna na hipotenusa: gira 90°
+            // A direção de saída depende de como o raio entrou
+            const reflectedDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX);
+
+            return {
+                point: hypoHit,
+                distance: entryDist + Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y),
+                newDirection: reflectedDir
+            };
+        }
+
+        // Fallback: retornar entrada sem reflexão
+        return {
+            point: entryHit,
+            distance: entryDist,
+            newDirection: currentDir
+        };
     }
 
     calculateReflection(incomingDir, prismRotation, flipX) {
