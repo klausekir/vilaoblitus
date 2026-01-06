@@ -554,55 +554,32 @@ class PrismLightPuzzle {
     }
 
     calculateReflection(incomingDir, prismRotation, flipX, entryEdgeIndex = 0) {
-        // Para um prisma triangular retângulo, a reflexão na hipotenusa sempre gira 90°
-        // A direção do giro depende da orientação da hipotenusa
+        // Simplificação: para um prisma triangular retângulo (45-45-90),
+        // quando a luz entra por uma face reta e bate na hipotenusa, sempre reflete 90°
 
-        // Calcular o vetor normal da hipotenusa baseado na rotação e flip do prisma
-        // A hipotenusa liga os vértices 1 e 2 do triângulo
-        // Normal da hipotenusa em configuração base (rot=0, flip=false): aponta para fora do triângulo
+        // Determinar orientação da hipotenusa baseado na rotação e flip
+        // Hipotenusa base (rot=0, no flip) vai de (-20,-20) para (20,20) → diagonal \
 
-        // Em um triângulo reto com vértices em:
-        // v0 = (-size/2, size/2) - ângulo 90°
-        // v1 = (-size/2, -size/2)
-        // v2 = (size/2, size/2)
-        // A hipotenusa é v1->v2, sua normal aponta para (-1, 1) normalizada
+        // Calcular o ângulo da hipotenusa
+        let hypoAngle = 45 + prismRotation; // diagonal base a 45°
 
-        let baseNormalAngle = 135; // -45° ou 135° (aponta para noroeste)
-
-        // Aplicar flip
         if (flipX) {
-            baseNormalAngle = 180 - baseNormalAngle; // espelha horizontalmente
+            // Flip horizontal inverte o ângulo: 45° vira 135°, etc
+            hypoAngle = 180 - (45 + prismRotation);
         }
 
-        // Aplicar rotação do prisma
-        let normalAngle = baseNormalAngle + prismRotation;
-        normalAngle = ((normalAngle % 360) + 360) % 360;
+        hypoAngle = ((hypoAngle % 360) + 360) % 360;
 
-        // A reflexão em uma superfície sempre gira o raio baseado na normal
-        // Para um prisma de 90°, a saída sempre é perpendicular à entrada
-        // Isso significa girar ±90° dependendo de qual lado da normal você está
+        // Para reflexão em uma superfície a 45° (ou múltiplos), a regra é simples:
+        // Se a hipotenusa está em 45°: horizontal (0°) vira vertical para baixo (90°)
+        // Se a hipotenusa está em 135°: horizontal (0°) vira vertical para cima (270°)
+        // Se a hipotenusa está em 225°: vertical para baixo (90°) vira horizontal para direita (0°)
+        // Se a hipotenusa está em 315°: vertical para cima (270°) vira horizontal para direita (0°)
 
-        // Simplificando: em um prisma 45-45-90, luz entrando por face reta sempre gira 90°
-        // A direção do giro depende da orientação da hipotenusa
-
-        let incomingRad = incomingDir * Math.PI / 180;
-        let normalRad = normalAngle * Math.PI / 180;
-
-        // Calcular reflexão: reflected = incoming - 2 * (incoming · normal) * normal
-        // Mas para 90°, simplificamos: gira 90° na direção perpendicular à hipotenusa
-
-        // Determinar se gira horário ou anti-horário
-        let angleDiff = ((incomingDir - normalAngle + 360) % 360);
-
-        // Se a luz está vindo do lado direito da normal, gira para a esquerda e vice-versa
-        let outDir;
-        if (angleDiff < 180) {
-            outDir = incomingDir - 90; // gira -90° (anti-horário)
-        } else {
-            outDir = incomingDir + 90; // gira +90° (horário)
-        }
-
+        // Fórmula geral para espelho a 45°: outDir = 2 * hypoAngle - incomingDir
+        let outDir = 2 * hypoAngle - incomingDir;
         outDir = ((outDir % 360) + 360) % 360;
+
         return outDir;
     }
 
