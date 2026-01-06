@@ -6001,6 +6001,7 @@
 
             if (hypoHit) {
                 const reflectedDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX, entryEdge.index);
+                console.log(`  -> bateu hipotenusa! reflectedDir=${reflectedDir.toFixed(1)}°`);
 
                 // Calcular ponto de saída pela outra face reta
                 const reflectedRad = reflectedDir * Math.PI / 180;
