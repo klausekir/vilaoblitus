@@ -6046,31 +6046,33 @@
         }
 
         function calculateReflectionPreview(incomingDir, prismRotation, flipX, entryEdgeIndex = 0) {
-            // A reflexão na hipotenusa faz o raio sair pela outra face reta
-            // Isso significa um giro de 90° na direção correta
+            // Para um prisma triangular retângulo, a reflexão na hipotenusa sempre gira 90°
+            // A direção do giro depende da orientação da hipotenusa
 
-            let normalizedIn = Math.round(incomingDir / 90) * 90;
-            normalizedIn = ((normalizedIn % 360) + 360) % 360;
+            // Calcular o vetor normal da hipotenusa baseado na rotação e flip do prisma
+            let baseNormalAngle = 135; // -45° ou 135° (aponta para noroeste)
 
-            // Calcular a orientação efetiva do prisma
-            let effectiveRotation = prismRotation;
-            if (flipX) effectiveRotation = (360 - prismRotation) % 360;
-
-            // Determinar se gira +90 ou -90 baseado na face de entrada e orientação
-            // entryEdgeIndex 0 = face reta 1, entryEdgeIndex 2 = face reta 2
-            let turnDirection;
-
-            if (entryEdgeIndex === 0) {
-                // Entrou pela primeira face reta
-                turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? -90 : 90;
-            } else {
-                // Entrou pela segunda face reta
-                turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? 90 : -90;
+            // Aplicar flip
+            if (flipX) {
+                baseNormalAngle = 180 - baseNormalAngle; // espelha horizontalmente
             }
 
-            let outDir = normalizedIn + turnDirection;
-            outDir = ((outDir % 360) + 360) % 360;
+            // Aplicar rotação do prisma
+            let normalAngle = baseNormalAngle + prismRotation;
+            normalAngle = ((normalAngle % 360) + 360) % 360;
 
+            // Determinar se gira horário ou anti-horário baseado na normal
+            let angleDiff = ((incomingDir - normalAngle + 360) % 360);
+
+            // Se a luz está vindo do lado direito da normal, gira para a esquerda e vice-versa
+            let outDir;
+            if (angleDiff < 180) {
+                outDir = incomingDir - 90; // gira -90° (anti-horário)
+            } else {
+                outDir = incomingDir + 90; // gira +90° (horário)
+            }
+
+            outDir = ((outDir % 360) + 360) % 360;
             return outDir;
         }
 
