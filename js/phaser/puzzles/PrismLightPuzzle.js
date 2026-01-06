@@ -205,6 +205,9 @@ class PrismLightPuzzle {
 
             this.prismSlots.push(slot);
         });
+
+        // Salvar estado inicial (para garantir que prismas colocados agora sejam salvos)
+        this.savePrismState();
     }
 
     drawPrism(slot) {
