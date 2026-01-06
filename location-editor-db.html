@@ -5975,38 +5975,15 @@
 
             // Se entrou pela HIPOTENUSA: passa direto
             if (entryEdge.isHypotenuse) {
-                const rayLength = 200;
-                const dirRad = currentDir * Math.PI / 180;
-                const exitX = entryHit.x + Math.cos(dirRad) * rayLength;
-                const exitY = entryHit.y + Math.sin(dirRad) * rayLength;
-
-                let exitHit = null;
-                let exitDist = Infinity;
-
-                edges.forEach(edge => {
-                    if (edge.isHypotenuse) return;
-                    const intersection = lineIntersectionPreview(
-                        entryHit.x, entryHit.y, exitX, exitY,
-                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
-                    );
-                    if (intersection) {
-                        const dist = Math.hypot(intersection.x - entryHit.x, intersection.y - entryHit.y);
-                        if (dist < exitDist && dist > 1) {
-                            exitDist = dist;
-                            exitHit = intersection;
-                        }
-                    }
-                });
-
                 return {
-                    point: exitHit || entryHit,
-                    distance: entryDist + (exitDist < Infinity ? exitDist : 0),
+                    point: entryHit,
+                    distance: entryDist,
                     newDirection: currentDir,
                     hitHypotenuse: true
                 };
             }
 
-            // Se entrou por FACE RETA: refletir na hipotenusa interna (90°)
+            // Se entrou por FACE RETA: entra no prisma, bate na hipotenusa interna, reflete 90°
             const rayLength = 200;
             const dirRad = currentDir * Math.PI / 180;
             const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
