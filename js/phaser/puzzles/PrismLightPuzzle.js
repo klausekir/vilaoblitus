@@ -481,26 +481,33 @@ class PrismLightPuzzle {
         };
     }
 
-    calculateReflection(incomingDir, prismRotation, flipX) {
-        // Normalizar direção de entrada para 0, 90, 180, 270
-        const normalizedIn = Math.round(incomingDir / 90) * 90;
+    calculateReflection(incomingDir, prismRotation, flipX, entryEdgeIndex = 0) {
+        // A reflexão na hipotenusa faz o raio sair pela outra face reta (giro de 90°)
+        let normalizedIn = Math.round(incomingDir / 90) * 90;
+        normalizedIn = ((normalizedIn % 360) + 360) % 360;
 
-        // Mapear reflexão de 90° baseado na rotação do prisma
-        const reflectionMap = {
-            0: { 0: 90, 90: 0, 180: 180, 270: 270 },
-            90: { 0: 270, 90: 90, 180: 0, 270: 270 },
-            180: { 0: 0, 90: 180, 180: 270, 270: 90 },
-            270: { 0: 0, 90: 90, 180: 90, 270: 180 }
-        };
-
+        // Calcular a orientação efetiva do prisma
         let effectiveRotation = prismRotation;
         if (flipX) {
-            // Ajustar rotação se estiver espelhado
             effectiveRotation = (360 - prismRotation) % 360;
         }
 
-        const outDir = reflectionMap[effectiveRotation]?.[normalizedIn];
-        return outDir !== undefined ? outDir : normalizedIn;
+        // Determinar se gira +90 ou -90 baseado na face de entrada e orientação
+        // entryEdgeIndex 0 = face reta 1, entryEdgeIndex 2 = face reta 2
+        let turnDirection;
+
+        if (entryEdgeIndex === 0) {
+            // Entrou pela primeira face reta
+            turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? -90 : 90;
+        } else {
+            // Entrou pela segunda face reta
+            turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? 90 : -90;
+        }
+
+        let outDir = normalizedIn + turnDirection;
+        outDir = ((outDir % 360) + 360) % 360;
+
+        return outDir;
     }
 
     lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
