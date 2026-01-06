@@ -398,9 +398,13 @@ class PrismLightPuzzleInScene {
         // Flash de confirmação
         this.scene.cameras.main.flash(200, 0, 255, 255, false);
 
-        // Som de encaixe
-        if (this.scene.sound?.play) {
-            this.scene.sound.play('click', { volume: 0.5 });
+        // Som de encaixe (com try-catch para evitar erro se som não existir)
+        try {
+            if (this.scene.sound && this.scene.cache.audio.exists('click')) {
+                this.scene.sound.play('click', { volume: 0.5 });
+            }
+        } catch (e) {
+            console.log('[PrismInScene] Som não disponível:', e.message);
         }
 
         // Remover item do inventário
@@ -493,10 +497,12 @@ class PrismLightPuzzleInScene {
         const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
         this.updateRay(bgX, bgY, bgWidth, bgHeight);
 
-        // Som de clique
-        if (this.scene.sound?.play) {
-            this.scene.sound.play('click', { volume: 0.3 });
-        }
+        // Som de clique (silencioso se não existir)
+        try {
+            if (this.scene.sound && this.scene.cache.audio.exists('click')) {
+                this.scene.sound.play('click', { volume: 0.3 });
+            }
+        } catch (e) { }
     }
 
     flipPrism(slot, index) {
@@ -515,10 +521,12 @@ class PrismLightPuzzleInScene {
         const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
         this.updateRay(bgX, bgY, bgWidth, bgHeight);
 
-        // Som de clique
-        if (this.scene.sound?.play) {
-            this.scene.sound.play('click', { volume: 0.3 });
-        }
+        // Som de clique (silencioso se não existir)
+        try {
+            if (this.scene.sound && this.scene.cache.audio.exists('click')) {
+                this.scene.sound.play('click', { volume: 0.3 });
+            }
+        } catch (e) { }
     }
 
     updateRay(bgX, bgY, bgWidth, bgHeight) {
