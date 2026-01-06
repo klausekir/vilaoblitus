@@ -455,7 +455,7 @@ class PrismLightPuzzle {
 
         const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
 
-        // Se ENTROU pela HIPOTENUSA: passa direto através do prisma
+        // Se ENTROU pela HIPOTENUSA: passa direto através do prisma (sem bater na hipotenusa)
         if (entryEdge.isHypotenuse) {
             const rayLength = 200;
             const dirRad = currentDir * Math.PI / 180;
@@ -485,11 +485,11 @@ class PrismLightPuzzle {
                 point: exitHit || entryHit,
                 distance: entryDist + (exitDist < Infinity ? exitDist : 0),
                 newDirection: currentDir,
-                hitHypotenuse: true
+                hitHypotenuse: false  // NÃO bateu na hipotenusa, passou direto
             };
         }
 
-        // Se ENTROU por FACE RETA: viaja internamente até bater na hipotenusa, reflete 90°, e sai pela outra face
+        // Se ENTROU por FACE RETA: viaja internamente até BATER na hipotenusa, reflete 90°, e sai pela outra face
         const rayLength = 200;
         const dirRad = currentDir * Math.PI / 180;
         const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
@@ -539,7 +539,7 @@ class PrismLightPuzzle {
                     point: exitHit,
                     distance: totalDist,
                     newDirection: reflectedDir,
-                    hitHypotenuse: false,
+                    hitHypotenuse: true,  // SIM bateu na hipotenusa e refletiu!
                     internalPath: { entry: entryHit, reflection: hypoHit, exit: exitHit }
                 };
             }

@@ -5973,17 +5973,17 @@
 
             const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
 
-            // Se entrou pela HIPOTENUSA: passa direto
+            // Se entrou pela HIPOTENUSA: passa direto (não bate na hipotenusa)
             if (entryEdge.isHypotenuse) {
                 return {
                     point: entryHit,
                     distance: entryDist,
                     newDirection: currentDir,
-                    hitHypotenuse: true
+                    hitHypotenuse: false  // NÃO bateu na hipotenusa
                 };
             }
 
-            // Se entrou por FACE RETA: entra no prisma, bate na hipotenusa interna, reflete 90°, sai pela outra face
+            // Se entrou por FACE RETA: entra no prisma, BATE na hipotenusa interna, reflete 90°, sai pela outra face
             const rayLength = 200;
             const dirRad = currentDir * Math.PI / 180;
             const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
