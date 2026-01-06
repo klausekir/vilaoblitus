@@ -338,6 +338,7 @@ class PrismLightPuzzle {
             let closestDist = Infinity;
 
             this.prismSlots.forEach(slot => {
+                console.log(`Verificando slot ${slot.id}: hasItem=${slot.hasItem}`);
                 if (!slot.hasItem) return;
 
                 const hit = this.rayPrismIntersection(
@@ -396,6 +397,8 @@ class PrismLightPuzzle {
     }
 
     rayPrismIntersection(rayStartX, rayStartY, rayEndX, rayEndY, slot) {
+        console.log(`rayPrismIntersection chamado: slot=${slot.id}, rot=${slot.rotation}, flip=${slot.flipX}`);
+
         // Calcular vértices do triângulo com rotação e flip
         const size = 40;
         let vertices = [
