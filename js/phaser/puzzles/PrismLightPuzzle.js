@@ -455,6 +455,9 @@ class PrismLightPuzzle {
 
         const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
 
+        // Debug: verificar qual aresta foi atingida
+        console.log(`Prisma rot=${slot.rotation}, flip=${slot.flipX}, entrada: edge ${entryEdge.index}, isHypo=${entryEdge.isHypotenuse}, dir=${currentDir.toFixed(1)}°`);
+
         // Se ENTROU pela HIPOTENUSA: passa direto através do prisma (sem bater na hipotenusa)
         if (entryEdge.isHypotenuse) {
             const rayLength = 200;
