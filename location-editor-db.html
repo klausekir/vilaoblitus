@@ -5983,7 +5983,7 @@
                 };
             }
 
-            // Se entrou por FACE RETA: entra no prisma, bate na hipotenusa interna, reflete 90°
+            // Se entrou por FACE RETA: entra no prisma, bate na hipotenusa interna, reflete 90°, sai pela outra face
             const rayLength = 200;
             const dirRad = currentDir * Math.PI / 180;
             const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
@@ -5997,12 +5997,44 @@
 
             if (hypoHit) {
                 const reflectedDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX, entryEdge.index);
-                return {
-                    point: hypoHit,
-                    distance: entryDist + Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y),
-                    newDirection: reflectedDir,
-                    hitHypotenuse: false
-                };
+
+                // Calcular ponto de saída pela outra face reta
+                const reflectedRad = reflectedDir * Math.PI / 180;
+                const exitX = hypoHit.x + Math.cos(reflectedRad) * rayLength;
+                const exitY = hypoHit.y + Math.sin(reflectedRad) * rayLength;
+
+                // Encontrar ponto de saída
+                let exitHit = null;
+                let exitDist = Infinity;
+
+                edges.forEach(edge => {
+                    if (edge.isHypotenuse) return; // Não sai pela hipotenusa
+                    const intersection = lineIntersectionPreview(
+                        hypoHit.x, hypoHit.y, exitX, exitY,
+                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                    );
+                    if (intersection) {
+                        const dist = Math.hypot(intersection.x - hypoHit.x, intersection.y - hypoHit.y);
+                        if (dist < exitDist && dist > 1) {
+                            exitDist = dist;
+                            exitHit = intersection;
+                        }
+                    }
+                });
+
+                if (exitHit) {
+                    const totalDist = entryDist +
+                                    Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y) +
+                                    Math.hypot(exitHit.x - hypoHit.x, exitHit.y - hypoHit.y);
+
+                    return {
+                        point: exitHit,
+                        distance: totalDist,
+                        newDirection: reflectedDir,
+                        hitHypotenuse: false,
+                        internalPath: { entry: entryHit, reflection: hypoHit, exit: exitHit }
+                    };
+                }
             }
 
             return {

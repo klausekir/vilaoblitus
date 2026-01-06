@@ -143,8 +143,11 @@ class PrismLightPuzzle {
         const savedState = this.loadPrismState();
 
         slots.forEach(slotConfig => {
-            // Verificar se jogador tem o item necessário
-            const hasItem = this.checkInventoryForItem(slotConfig.requiredItem);
+            // Carregar estado salvo para este slot
+            const slotState = savedState[slotConfig.id] || null;
+
+            // Se tem estado salvo, o prisma já está instalado. Senão, verifica inventário
+            const hasItem = slotState ? true : this.checkInventoryForItem(slotConfig.requiredItem);
 
             // Círculo do slot
             const slotCircle = this.scene.add.circle(
@@ -157,9 +160,6 @@ class PrismLightPuzzle {
             slotCircle.setStrokeStyle(2, hasItem ? 0x00ff00 : 0xff0000);
             this.container.add(slotCircle);
 
-            // Carregar estado salvo para este slot
-            const slotState = savedState[slotConfig.id] || { rotation: 0, flipX: false };
-
             // Dados do slot
             const slot = {
                 id: slotConfig.id,
@@ -167,8 +167,8 @@ class PrismLightPuzzle {
                 y: slotConfig.y,
                 requiredItem: slotConfig.requiredItem,
                 hasItem: hasItem,
-                rotation: slotState.rotation,
-                flipX: slotState.flipX,
+                rotation: slotState ? slotState.rotation : 0,
+                flipX: slotState ? slotState.flipX : false,
                 graphics: null,
                 circle: slotCircle
             };
@@ -486,7 +486,7 @@ class PrismLightPuzzle {
             };
         }
 
-        // Se ENTROU por FACE RETA: viaja internamente até bater na hipotenusa e reflete 90°
+        // Se ENTROU por FACE RETA: viaja internamente até bater na hipotenusa, reflete 90°, e sai pela outra face
         const rayLength = 200;
         const dirRad = currentDir * Math.PI / 180;
         const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
@@ -502,12 +502,44 @@ class PrismLightPuzzle {
         if (hypoHit) {
             // Calcular reflexão de 90°
             const reflectedDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX, entryEdge.index);
-            return {
-                point: hypoHit,
-                distance: entryDist + Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y),
-                newDirection: reflectedDir,
-                hitHypotenuse: false
-            };
+
+            // Calcular ponto de saída pela outra face reta
+            const reflectedRad = reflectedDir * Math.PI / 180;
+            const exitX = hypoHit.x + Math.cos(reflectedRad) * rayLength;
+            const exitY = hypoHit.y + Math.sin(reflectedRad) * rayLength;
+
+            // Encontrar ponto de saída
+            let exitHit = null;
+            let exitDist = Infinity;
+
+            edges.forEach(edge => {
+                if (edge.isHypotenuse) return; // Não sai pela hipotenusa
+                const intersection = this.lineIntersection(
+                    hypoHit.x, hypoHit.y, exitX, exitY,
+                    edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                );
+                if (intersection) {
+                    const dist = Math.hypot(intersection.x - hypoHit.x, intersection.y - hypoHit.y);
+                    if (dist < exitDist && dist > 0.1) {
+                        exitDist = dist;
+                        exitHit = intersection;
+                    }
+                }
+            });
+
+            if (exitHit) {
+                const totalDist = entryDist +
+                                Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y) +
+                                Math.hypot(exitHit.x - hypoHit.x, exitHit.y - hypoHit.y);
+
+                return {
+                    point: exitHit,
+                    distance: totalDist,
+                    newDirection: reflectedDir,
+                    hitHypotenuse: false,
+                    internalPath: { entry: entryHit, reflection: hypoHit, exit: exitHit }
+                };
+            }
         }
 
         return {
