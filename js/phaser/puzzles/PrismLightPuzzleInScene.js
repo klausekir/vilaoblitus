@@ -373,48 +373,14 @@ class PrismLightPuzzleInScene {
     fillSlot(slot, itemId) {
         console.log('[PrismInScene] Preenchendo slot', slot.id, 'com item', itemId);
 
-        slot.filled = true;
-
-        // Remover ícones do slot vazio
-        if (slot.lockIcon) {
-            slot.lockIcon.destroy();
-            slot.lockIcon = null;
-        }
-        if (slot.slotCircle) {
-            slot.slotCircle.destroy();
-            slot.slotCircle = null;
-        }
-        if (slot.itemLabel) {
-            slot.itemLabel.destroy();
-            slot.itemLabel = null;
-        }
-
-        // Desenhar o prisma
-        this.drawPrism(slot);
-
-        // Tornar interativo
-        this.makePrismInteractive(slot, slot.index);
-
-        // Flash de confirmação
-        this.scene.cameras.main.flash(200, 0, 255, 255, false);
-
-        // Som de encaixe (com try-catch para evitar erro se som não existir)
-        try {
-            if (this.scene.sound && this.scene.cache.audio.exists('click')) {
-                this.scene.sound.play('click', { volume: 0.5 });
-            }
-        } catch (e) {
-            console.log('[PrismInScene] Som não disponível:', e.message);
-        }
-
-        // Remover item do inventário
+        // PRIMEIRO: Remover item do inventário (antes de qualquer efeito visual)
         if (window.gameStateManager) {
             console.log('[PrismInScene] Removendo item do inventário:', itemId);
-            console.log('[PrismInScene] Inventário antes:', JSON.stringify(gameStateManager.state.inventory));
 
             // Remover do inventário
             if (gameStateManager.state.inventory && gameStateManager.state.inventory[itemId]) {
                 delete gameStateManager.state.inventory[itemId];
+                console.log('[PrismInScene] Item removido do inventário');
             }
 
             // Marcar como consumido para não reaparecer
@@ -425,13 +391,8 @@ class PrismLightPuzzleInScene {
                 gameStateManager.state.consumedItems.push(itemId);
             }
 
-            // Salvar estado do slot
-            this.saveSlotState(slot);
-
-            // Salvar progresso
+            // Salvar progresso imediatamente
             gameStateManager.saveProgress();
-
-            console.log('[PrismInScene] Inventário depois:', JSON.stringify(gameStateManager.state.inventory));
 
             // Atualizar UI do inventário
             if (gameStateManager.trigger) {
@@ -444,430 +405,476 @@ class PrismLightPuzzleInScene {
             }
         }
 
+        slot.filled = true;
+
+        // Remover ícones do slot vazio
+        try {
+            if (slot.lockIcon) {
+                slot.lockIcon.destroy();
+                slot.lockIcon = null;
+            }
+            if (slot.slotCircle) {
+                slot.slotCircle.destroy();
+                slot.slotCircle = null;
+            }
+            if (slot.itemLabel) {
+                slot.itemLabel.destroy();
+                slot.itemLabel = null;
+            }
+        } catch (e) {
+            console.log('[PrismInScene] Erro ao remover ícones:', e);
+        }
+
+        // Desenhar o prisma
+        try {
+            this.drawPrism(slot);
+            this.makePrismInteractive(slot, slot.index);
+        } catch (e) {
+            console.log('[PrismInScene] Erro ao desenhar prisma:', e);
+        }
+
+        // Salvar estado do slot
+        try {
+            this.saveSlotState(slot);
+            if (window.gameStateManager) {
+                gameStateManager.saveProgress();
+            }
+        } catch (e) {
+            console.log('[PrismInScene] Erro ao salvar estado:', e);
+        }
+
+        // Efeitos visuais (podem falhar sem problema)
+        try {
+            this.scene.cameras.main.flash(200, 0, 255, 255, false);
+        } catch (e) { }
+
         // Atualizar raio
-        const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
-        this.updateRay(bgX, bgY, bgWidth, bgHeight);
+        try {
+            const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
+            this.updateRay(bgX, bgY, bgWidth, bgHeight);
+        } catch (e) {
+            console.log('[PrismInScene] Erro ao atualizar raio:', e);
+        }
 
         // Notificar
         if (window.uiManager?.showNotification) {
             uiManager.showNotification('✨ Prisma encaixado! Clique para rotacionar.');
         }
-    }
 
-    saveSlotState(slot) {
-        if (!window.gameStateManager) return;
+        saveSlotState(slot) {
+            if (!window.gameStateManager) return;
 
-        // Salvar estado do prisma neste slot
-        if (!gameStateManager.state.prismPuzzleSlots) {
-            gameStateManager.state.prismPuzzleSlots = {};
-        }
-
-        const puzzleId = this.config.id || 'prism_puzzle';
-        if (!gameStateManager.state.prismPuzzleSlots[puzzleId]) {
-            gameStateManager.state.prismPuzzleSlots[puzzleId] = {};
-        }
-
-        gameStateManager.state.prismPuzzleSlots[puzzleId][slot.id] = {
-            filled: slot.filled,
-            rotation: slot.rotation,
-            flipX: slot.flipX
-        };
-    }
-
-    getSavedSlotState(slotId) {
-        if (!window.gameStateManager) return null;
-
-        const puzzleId = this.config.id || 'prism_puzzle';
-        return gameStateManager.state.prismPuzzleSlots?.[puzzleId]?.[slotId] || null;
-    }
-
-    rotatePrism(slot, index) {
-        if (this.solved || !slot.filled) return;
-
-        slot.rotation = (slot.rotation + 90) % 360;
-        this.drawPrism(slot);
-
-        // Salvar estado
-        this.saveSlotState(slot);
-        if (window.gameStateManager) {
-            gameStateManager.saveProgress();
-        }
-
-        // Atualizar raio
-        const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
-        this.updateRay(bgX, bgY, bgWidth, bgHeight);
-
-        // Som de clique (silencioso se não existir)
-        try {
-            if (this.scene.sound && this.scene.cache.audio.exists('click')) {
-                this.scene.sound.play('click', { volume: 0.3 });
+            // Salvar estado do prisma neste slot
+            if (!gameStateManager.state.prismPuzzleSlots) {
+                gameStateManager.state.prismPuzzleSlots = {};
             }
-        } catch (e) { }
-    }
 
-    flipPrism(slot, index) {
-        if (this.solved || !slot.filled) return;
+            const puzzleId = this.config.id || 'prism_puzzle';
+            if (!gameStateManager.state.prismPuzzleSlots[puzzleId]) {
+                gameStateManager.state.prismPuzzleSlots[puzzleId] = {};
+            }
 
-        slot.flipX = !slot.flipX;
-        this.drawPrism(slot);
-
-        // Salvar estado
-        this.saveSlotState(slot);
-        if (window.gameStateManager) {
-            gameStateManager.saveProgress();
+            gameStateManager.state.prismPuzzleSlots[puzzleId][slot.id] = {
+                filled: slot.filled,
+                rotation: slot.rotation,
+                flipX: slot.flipX
+            };
         }
 
-        // Atualizar raio
-        const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
-        this.updateRay(bgX, bgY, bgWidth, bgHeight);
+        getSavedSlotState(slotId) {
+            if (!window.gameStateManager) return null;
 
-        // Som de clique (silencioso se não existir)
-        try {
-            if (this.scene.sound && this.scene.cache.audio.exists('click')) {
-                this.scene.sound.play('click', { volume: 0.3 });
+            const puzzleId = this.config.id || 'prism_puzzle';
+            return gameStateManager.state.prismPuzzleSlots?.[puzzleId]?.[slotId] || null;
+        }
+
+        rotatePrism(slot, index) {
+            if (this.solved || !slot.filled) return;
+
+            slot.rotation = (slot.rotation + 90) % 360;
+            this.drawPrism(slot);
+
+            // Salvar estado
+            this.saveSlotState(slot);
+            if (window.gameStateManager) {
+                gameStateManager.saveProgress();
             }
-        } catch (e) { }
-    }
 
-    updateRay(bgX, bgY, bgWidth, bgHeight) {
-        if (!this.rayGraphics) return;
+            // Atualizar raio
+            const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
+            this.updateRay(bgX, bgY, bgWidth, bgHeight);
 
-        this.rayGraphics.clear();
+            // Som de clique (silencioso se não existir)
+            try {
+                if (this.scene.sound && this.scene.cache.audio.exists('click')) {
+                    this.scene.sound.play('click', { volume: 0.3 });
+                }
+            } catch (e) { }
+        }
 
-        // Começar do emissor
-        let currentX = this.emitter.x;
-        let currentY = this.emitter.y;
-        let currentDir = this.emitter.direction;
-        const maxBounces = 20;
-        let reachedReceptor = false;
+        flipPrism(slot, index) {
+            if (this.solved || !slot.filled) return;
 
-        // Desenhar raio com glow
-        this.rayGraphics.lineStyle(5, this.emitter.color, 1);
-        this.rayGraphics.beginPath();
-        this.rayGraphics.moveTo(currentX, currentY);
+            slot.flipX = !slot.flipX;
+            this.drawPrism(slot);
 
-        for (let bounce = 0; bounce < maxBounces; bounce++) {
-            // Calcular próximo ponto na direção atual
-            const rayLength = 2000;
-            const dirRad = currentDir * Math.PI / 180;
-            const nextX = currentX + Math.cos(dirRad) * rayLength;
-            const nextY = currentY + Math.sin(dirRad) * rayLength;
+            // Salvar estado
+            this.saveSlotState(slot);
+            if (window.gameStateManager) {
+                gameStateManager.saveProgress();
+            }
 
-            // Verificar colisão com prismas PREENCHIDOS
+            // Atualizar raio
+            const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
+            this.updateRay(bgX, bgY, bgWidth, bgHeight);
+
+            // Som de clique (silencioso se não existir)
+            try {
+                if (this.scene.sound && this.scene.cache.audio.exists('click')) {
+                    this.scene.sound.play('click', { volume: 0.3 });
+                }
+            } catch (e) { }
+        }
+
+        updateRay(bgX, bgY, bgWidth, bgHeight) {
+            if (!this.rayGraphics) return;
+
+            this.rayGraphics.clear();
+
+            // Começar do emissor
+            let currentX = this.emitter.x;
+            let currentY = this.emitter.y;
+            let currentDir = this.emitter.direction;
+            const maxBounces = 20;
+            let reachedReceptor = false;
+
+            // Desenhar raio com glow
+            this.rayGraphics.lineStyle(5, this.emitter.color, 1);
+            this.rayGraphics.beginPath();
+            this.rayGraphics.moveTo(currentX, currentY);
+
+            for (let bounce = 0; bounce < maxBounces; bounce++) {
+                // Calcular próximo ponto na direção atual
+                const rayLength = 2000;
+                const dirRad = currentDir * Math.PI / 180;
+                const nextX = currentX + Math.cos(dirRad) * rayLength;
+                const nextY = currentY + Math.sin(dirRad) * rayLength;
+
+                // Verificar colisão com prismas PREENCHIDOS
+                let closestHit = null;
+                let closestDist = Infinity;
+
+                this.prisms.forEach(slot => {
+                    if (!slot.filled || !slot.transformedVertices) return;
+
+                    const hit = this.rayPrismIntersection(
+                        currentX, currentY, nextX, nextY,
+                        slot
+                    );
+
+                    if (hit && hit.distance < closestDist && hit.distance > 2) {
+                        closestHit = hit;
+                        closestDist = hit.distance;
+                    }
+                });
+
+                // Verificar colisão com receptor
+                const recHit = this.rayRectIntersection(
+                    currentX, currentY, nextX, nextY,
+                    this.receptor.x - this.receptor.width / 2,
+                    this.receptor.y - this.receptor.height / 2,
+                    this.receptor.width,
+                    this.receptor.height
+                );
+
+                if (recHit && recHit.distance < closestDist) {
+                    this.rayGraphics.lineTo(recHit.x, recHit.y);
+                    reachedReceptor = true;
+                    break;
+                }
+
+                if (closestHit) {
+                    this.rayGraphics.lineTo(closestHit.point.x, closestHit.point.y);
+                    currentX = closestHit.point.x;
+                    currentY = closestHit.point.y;
+                    currentDir = closestHit.newDirection;
+                } else {
+                    // Desenhar até a borda da cena
+                    const edgeX = Math.max(0, Math.min(this.scene.cameras.main.width, nextX));
+                    const edgeY = Math.max(0, Math.min(this.scene.cameras.main.height, nextY));
+                    this.rayGraphics.lineTo(edgeX, edgeY);
+                    break;
+                }
+            }
+
+            this.rayGraphics.strokePath();
+
+            // Efeito glow
+            this.rayGraphics.lineStyle(12, this.emitter.color, 0.2);
+
+            // Verificar solução
+            if (reachedReceptor && !this.solved) {
+                this.onSolved();
+            }
+        }
+
+        rayPrismIntersection(rayStartX, rayStartY, rayEndX, rayEndY, slot) {
+            if (!slot.transformedVertices || slot.transformedVertices.length < 3) return null;
+
+            const vertices = slot.transformedVertices;
+
+            // Definir arestas
+            const edges = [
+                { start: vertices[0], end: vertices[1], isHypotenuse: false },
+                { start: vertices[1], end: vertices[2], isHypotenuse: true },
+                { start: vertices[2], end: vertices[0], isHypotenuse: false }
+            ];
+
             let closestHit = null;
             let closestDist = Infinity;
 
-            this.prisms.forEach(slot => {
-                if (!slot.filled || !slot.transformedVertices) return;
-
-                const hit = this.rayPrismIntersection(
-                    currentX, currentY, nextX, nextY,
-                    slot
+            edges.forEach(edge => {
+                const intersection = this.lineIntersection(
+                    rayStartX, rayStartY, rayEndX, rayEndY,
+                    edge.start.x, edge.start.y, edge.end.x, edge.end.y
                 );
 
-                if (hit && hit.distance < closestDist && hit.distance > 2) {
-                    closestHit = hit;
-                    closestDist = hit.distance;
-                }
-            });
+                if (intersection) {
+                    const dist = Math.hypot(
+                        intersection.x - rayStartX,
+                        intersection.y - rayStartY
+                    );
 
-            // Verificar colisão com receptor
-            const recHit = this.rayRectIntersection(
-                currentX, currentY, nextX, nextY,
-                this.receptor.x - this.receptor.width / 2,
-                this.receptor.y - this.receptor.height / 2,
-                this.receptor.width,
-                this.receptor.height
-            );
+                    if (dist < closestDist && dist > 2) {
+                        closestDist = dist;
 
-            if (recHit && recHit.distance < closestDist) {
-                this.rayGraphics.lineTo(recHit.x, recHit.y);
-                reachedReceptor = true;
-                break;
-            }
+                        const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
+                        let newDir;
 
-            if (closestHit) {
-                this.rayGraphics.lineTo(closestHit.point.x, closestHit.point.y);
-                currentX = closestHit.point.x;
-                currentY = closestHit.point.y;
-                currentDir = closestHit.newDirection;
-            } else {
-                // Desenhar até a borda da cena
-                const edgeX = Math.max(0, Math.min(this.scene.cameras.main.width, nextX));
-                const edgeY = Math.max(0, Math.min(this.scene.cameras.main.height, nextY));
-                this.rayGraphics.lineTo(edgeX, edgeY);
-                break;
-            }
-        }
-
-        this.rayGraphics.strokePath();
-
-        // Efeito glow
-        this.rayGraphics.lineStyle(12, this.emitter.color, 0.2);
-
-        // Verificar solução
-        if (reachedReceptor && !this.solved) {
-            this.onSolved();
-        }
-    }
-
-    rayPrismIntersection(rayStartX, rayStartY, rayEndX, rayEndY, slot) {
-        if (!slot.transformedVertices || slot.transformedVertices.length < 3) return null;
-
-        const vertices = slot.transformedVertices;
-
-        // Definir arestas
-        const edges = [
-            { start: vertices[0], end: vertices[1], isHypotenuse: false },
-            { start: vertices[1], end: vertices[2], isHypotenuse: true },
-            { start: vertices[2], end: vertices[0], isHypotenuse: false }
-        ];
-
-        let closestHit = null;
-        let closestDist = Infinity;
-
-        edges.forEach(edge => {
-            const intersection = this.lineIntersection(
-                rayStartX, rayStartY, rayEndX, rayEndY,
-                edge.start.x, edge.start.y, edge.end.x, edge.end.y
-            );
-
-            if (intersection) {
-                const dist = Math.hypot(
-                    intersection.x - rayStartX,
-                    intersection.y - rayStartY
-                );
-
-                if (dist < closestDist && dist > 2) {
-                    closestDist = dist;
-
-                    const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
-                    let newDir;
-
-                    if (edge.isHypotenuse) {
-                        // Hipotenusa: passa reto
-                        newDir = currentDir;
-                    } else {
-                        // Face reta: reflete 90°
-                        newDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX);
-                    }
-
-                    closestHit = {
-                        point: intersection,
-                        distance: dist,
-                        newDirection: newDir,
-                        hitHypotenuse: edge.isHypotenuse
-                    };
-                }
-            }
-        });
-
-        return closestHit;
-    }
-
-    calculateReflection(incomingDir, prismRotation, flipX) {
-        let normalizedIn = Math.round(incomingDir / 90) * 90;
-        normalizedIn = ((normalizedIn % 360) + 360) % 360;
-
-        const reflectionMap = {
-            0: { 0: 270, 90: 180, 180: 90, 270: 0 },
-            90: { 0: 90, 90: 0, 180: 270, 270: 180 },
-            180: { 0: 90, 90: 0, 180: 270, 270: 180 },
-            270: { 0: 270, 90: 180, 180: 90, 270: 0 }
-        };
-
-        let effectiveRotation = prismRotation;
-        if (flipX) {
-            effectiveRotation = (360 - prismRotation) % 360;
-        }
-
-        const outDir = reflectionMap[effectiveRotation]?.[normalizedIn];
-        return outDir !== undefined ? outDir : normalizedIn + 90;
-    }
-
-    lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
-        const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-        if (Math.abs(denom) < 0.0001) return null;
-
-        const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
-        const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
-
-        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-            return {
-                x: x1 + t * (x2 - x1),
-                y: y1 + t * (y2 - y1)
-            };
-        }
-
-        return null;
-    }
-
-    rayRectIntersection(x1, y1, x2, y2, rx, ry, rw, rh) {
-        const edges = [
-            { x1: rx, y1: ry, x2: rx + rw, y2: ry },
-            { x1: rx + rw, y1: ry, x2: rx + rw, y2: ry + rh },
-            { x1: rx + rw, y1: ry + rh, x2: rx, y2: ry + rh },
-            { x1: rx, y1: ry + rh, x2: rx, y2: ry }
-        ];
-
-        let closest = null;
-        let minDist = Infinity;
-
-        edges.forEach(edge => {
-            const hit = this.lineIntersection(x1, y1, x2, y2, edge.x1, edge.y1, edge.x2, edge.y2);
-            if (hit) {
-                const dist = Math.hypot(hit.x - x1, hit.y - y1);
-                if (dist < minDist) {
-                    minDist = dist;
-                    closest = { x: hit.x, y: hit.y, distance: dist };
-                }
-            }
-        });
-
-        return closest;
-    }
-
-    onSolved() {
-        if (this.solved) return;
-        this.solved = true;
-
-        console.log('[PrismInScene] 🎉 Puzzle resolvido!');
-
-        // Efeito visual de sucesso
-        this.scene.cameras.main.flash(500, 0, 255, 0);
-
-        // Som de sucesso
-        if (this.scene.sound?.play) {
-            this.scene.sound.play('puzzle_solved', { volume: 0.5 });
-        }
-
-        // Notificação
-        if (window.uiManager?.showNotification) {
-            window.uiManager.showNotification('✅ Enigma de luz resolvido!');
-        }
-
-        // Salvar progresso
-        if (window.gameStateManager?.solvePuzzle) {
-            window.gameStateManager.solvePuzzle(this.config.id);
-        }
-
-        // Executar callback se existir
-        if (this.config.onSolved) {
-            this.config.onSolved();
-        }
-
-        // Executar ação de desbloqueio após delay
-        if (this.config.onUnlockedAction) {
-            this.scene.time.delayedCall(1500, () => {
-                this.executeUnlockAction(this.config.onUnlockedAction);
-            });
-        }
-
-        // Dropar recompensa se existir
-        if (this.config.reward) {
-            this.scene.time.delayedCall(2000, () => {
-                this.dropReward();
-            });
-        }
-    }
-
-    dropReward() {
-        const reward = this.config.reward;
-        if (!reward) return;
-
-        const dropPosition = { x: 50, y: 70 };
-
-        if (window.gameStateManager) {
-            gameStateManager.normalizeInventory();
-            gameStateManager.state.inventory[reward.id] = {
-                ...reward,
-                status: 'dropped',
-                dropLocation: this.scene.currentLocation,
-                dropPosition: dropPosition
-            };
-            gameStateManager.saveProgress();
-        }
-
-        if (window.uiManager?.showNotification) {
-            window.uiManager.showNotification(`🎁 ${reward.name} apareceu!`);
-        }
-
-        // Renderizar item dropado
-        if (this.scene.renderDroppedItems) {
-            this.scene.renderDroppedItems();
-        }
-    }
-
-    executeUnlockAction(action) {
-        if (!action) return;
-
-        switch (action.type) {
-            case 'navigate':
-                if (window.gameStateManager?.changeLocation) {
-                    window.gameStateManager.changeLocation(action.targetLocation);
-                }
-                break;
-            case 'changeBackground':
-                if (action.newBackground && this.scene.background) {
-                    const newKey = `bg_${this.scene.currentLocation}_after`;
-                    this.scene.load.image(newKey, action.newBackground);
-                    this.scene.load.once('complete', () => {
-                        if (this.scene.textures.exists(newKey)) {
-                            this.scene.background.setTexture(newKey);
+                        if (edge.isHypotenuse) {
+                            // Hipotenusa: passa reto
+                            newDir = currentDir;
+                        } else {
+                            // Face reta: reflete 90°
+                            newDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX);
                         }
-                    });
-                    this.scene.load.start();
+
+                        closestHit = {
+                            point: intersection,
+                            distance: dist,
+                            newDirection: newDir,
+                            hitHypotenuse: edge.isHypotenuse
+                        };
+                    }
                 }
-                if (action.message && window.uiManager?.showNotification) {
-                    window.uiManager.showNotification(action.message);
+            });
+
+            return closestHit;
+        }
+
+        calculateReflection(incomingDir, prismRotation, flipX) {
+            let normalizedIn = Math.round(incomingDir / 90) * 90;
+            normalizedIn = ((normalizedIn % 360) + 360) % 360;
+
+            const reflectionMap = {
+                0: { 0: 270, 90: 180, 180: 90, 270: 0 },
+                90: { 0: 90, 90: 0, 180: 270, 270: 180 },
+                180: { 0: 90, 90: 0, 180: 270, 270: 180 },
+                270: { 0: 270, 90: 180, 180: 90, 270: 0 }
+            };
+
+            let effectiveRotation = prismRotation;
+            if (flipX) {
+                effectiveRotation = (360 - prismRotation) % 360;
+            }
+
+            const outDir = reflectionMap[effectiveRotation]?.[normalizedIn];
+            return outDir !== undefined ? outDir : normalizedIn + 90;
+        }
+
+        lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (Math.abs(denom) < 0.0001) return null;
+
+            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                return {
+                    x: x1 + t * (x2 - x1),
+                    y: y1 + t * (y2 - y1)
+                };
+            }
+
+            return null;
+        }
+
+        rayRectIntersection(x1, y1, x2, y2, rx, ry, rw, rh) {
+            const edges = [
+                { x1: rx, y1: ry, x2: rx + rw, y2: ry },
+                { x1: rx + rw, y1: ry, x2: rx + rw, y2: ry + rh },
+                { x1: rx + rw, y1: ry + rh, x2: rx, y2: ry + rh },
+                { x1: rx, y1: ry + rh, x2: rx, y2: ry }
+            ];
+
+            let closest = null;
+            let minDist = Infinity;
+
+            edges.forEach(edge => {
+                const hit = this.lineIntersection(x1, y1, x2, y2, edge.x1, edge.y1, edge.x2, edge.y2);
+                if (hit) {
+                    const dist = Math.hypot(hit.x - x1, hit.y - y1);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = { x: hit.x, y: hit.y, distance: dist };
+                    }
                 }
-                break;
-            case 'unlock_item':
-                if (action.itemId && window.inventoryManager?.addItem) {
-                    window.inventoryManager.addItem(action.itemId);
-                }
-                break;
+            });
+
+            return closest;
+        }
+
+        onSolved() {
+            if (this.solved) return;
+            this.solved = true;
+
+            console.log('[PrismInScene] 🎉 Puzzle resolvido!');
+
+            // Efeito visual de sucesso
+            this.scene.cameras.main.flash(500, 0, 255, 0);
+
+            // Som de sucesso
+            if (this.scene.sound?.play) {
+                this.scene.sound.play('puzzle_solved', { volume: 0.5 });
+            }
+
+            // Notificação
+            if (window.uiManager?.showNotification) {
+                window.uiManager.showNotification('✅ Enigma de luz resolvido!');
+            }
+
+            // Salvar progresso
+            if (window.gameStateManager?.solvePuzzle) {
+                window.gameStateManager.solvePuzzle(this.config.id);
+            }
+
+            // Executar callback se existir
+            if (this.config.onSolved) {
+                this.config.onSolved();
+            }
+
+            // Executar ação de desbloqueio após delay
+            if (this.config.onUnlockedAction) {
+                this.scene.time.delayedCall(1500, () => {
+                    this.executeUnlockAction(this.config.onUnlockedAction);
+                });
+            }
+
+            // Dropar recompensa se existir
+            if (this.config.reward) {
+                this.scene.time.delayedCall(2000, () => {
+                    this.dropReward();
+                });
+            }
+        }
+
+        dropReward() {
+            const reward = this.config.reward;
+            if (!reward) return;
+
+            const dropPosition = { x: 50, y: 70 };
+
+            if (window.gameStateManager) {
+                gameStateManager.normalizeInventory();
+                gameStateManager.state.inventory[reward.id] = {
+                    ...reward,
+                    status: 'dropped',
+                    dropLocation: this.scene.currentLocation,
+                    dropPosition: dropPosition
+                };
+                gameStateManager.saveProgress();
+            }
+
+            if (window.uiManager?.showNotification) {
+                window.uiManager.showNotification(`🎁 ${reward.name} apareceu!`);
+            }
+
+            // Renderizar item dropado
+            if (this.scene.renderDroppedItems) {
+                this.scene.renderDroppedItems();
+            }
+        }
+
+        executeUnlockAction(action) {
+            if (!action) return;
+
+            switch (action.type) {
+                case 'navigate':
+                    if (window.gameStateManager?.changeLocation) {
+                        window.gameStateManager.changeLocation(action.targetLocation);
+                    }
+                    break;
+                case 'changeBackground':
+                    if (action.newBackground && this.scene.background) {
+                        const newKey = `bg_${this.scene.currentLocation}_after`;
+                        this.scene.load.image(newKey, action.newBackground);
+                        this.scene.load.once('complete', () => {
+                            if (this.scene.textures.exists(newKey)) {
+                                this.scene.background.setTexture(newKey);
+                            }
+                        });
+                        this.scene.load.start();
+                    }
+                    if (action.message && window.uiManager?.showNotification) {
+                        window.uiManager.showNotification(action.message);
+                    }
+                    break;
+                case 'unlock_item':
+                    if (action.itemId && window.inventoryManager?.addItem) {
+                        window.inventoryManager.addItem(action.itemId);
+                    }
+                    break;
+            }
+        }
+
+        destroy() {
+            // Limpar todos os elementos
+            if (this.instructionText) {
+                this.instructionText.destroy();
+            }
+
+            if (this.rayGraphics) {
+                this.rayGraphics.destroy();
+            }
+
+            if (this.emitter) {
+                this.emitter.circle?.destroy();
+                this.emitter.arrow?.destroy();
+            }
+
+            if (this.receptor) {
+                this.receptor.rect?.destroy();
+                this.receptor.target?.destroy();
+            }
+
+            this.prisms.forEach(slot => {
+                slot.graphics?.destroy();
+                slot.hitArea?.destroy();
+                slot.lockIcon?.destroy();
+                slot.slotCircle?.destroy();
+                slot.itemLabel?.destroy();
+            });
+
+            if (this.container) {
+                this.container.destroy();
+            }
+
+            this.prisms = [];
+            this.active = false;
         }
     }
 
-    destroy() {
-        // Limpar todos os elementos
-        if (this.instructionText) {
-            this.instructionText.destroy();
-        }
-
-        if (this.rayGraphics) {
-            this.rayGraphics.destroy();
-        }
-
-        if (this.emitter) {
-            this.emitter.circle?.destroy();
-            this.emitter.arrow?.destroy();
-        }
-
-        if (this.receptor) {
-            this.receptor.rect?.destroy();
-            this.receptor.target?.destroy();
-        }
-
-        this.prisms.forEach(slot => {
-            slot.graphics?.destroy();
-            slot.hitArea?.destroy();
-            slot.lockIcon?.destroy();
-            slot.slotCircle?.destroy();
-            slot.itemLabel?.destroy();
-        });
-
-        if (this.container) {
-            this.container.destroy();
-        }
-
-        this.prisms = [];
-        this.active = false;
-    }
-}
-
-// Exportar para uso global
-if (typeof window !== 'undefined') {
+    // Exportar para uso global
+    if(typeof window !== 'undefined') {
     window.PrismLightPuzzleInScene = PrismLightPuzzleInScene;
 }
