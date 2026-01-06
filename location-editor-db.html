@@ -5892,9 +5892,21 @@
                 }
 
                 if (closestHit) {
-                    ctx.lineTo(closestHit.point.x, closestHit.point.y);
-                    currentX = closestHit.point.x;
-                    currentY = closestHit.point.y;
+                    // Se tem caminho interno (reflexão no prisma), desenhar o caminho completo
+                    if (closestHit.internalPath) {
+                        const path = closestHit.internalPath;
+                        // Entrada → Hipotenusa (reflexão)
+                        ctx.lineTo(path.reflection.x, path.reflection.y);
+                        // Hipotenusa → Saída
+                        ctx.lineTo(path.exit.x, path.exit.y);
+                        currentX = path.exit.x;
+                        currentY = path.exit.y;
+                    } else {
+                        // Sem reflexão, linha reta
+                        ctx.lineTo(closestHit.point.x, closestHit.point.y);
+                        currentX = closestHit.point.x;
+                        currentY = closestHit.point.y;
+                    }
                     currentDir = closestHit.newDirection;
                 } else {
                     // Desenhar até a borda
