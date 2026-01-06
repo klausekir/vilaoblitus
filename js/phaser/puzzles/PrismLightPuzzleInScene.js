@@ -323,28 +323,42 @@ class PrismLightPuzzleInScene {
      * Retorna true se o drop foi processado, false caso contrário
      */
     onDropFromInventory(itemId, worldX, worldY) {
+        console.log('[PrismInScene] onDropFromInventory chamado:', { itemId, worldX, worldY });
+        console.log('[PrismInScene] Slots disponíveis:', this.prisms.map(s => ({ id: s.id, filled: s.filled, requiredItem: s.requiredItem, x: s.x, y: s.y })));
+
         // Verificar se o item foi solto em algum slot vazio
         for (let slot of this.prisms) {
             if (slot.filled) continue;  // Slot já preenchido
 
             const distance = Phaser.Math.Distance.Between(worldX, worldY, slot.x, slot.y);
+            console.log('[PrismInScene] Distância para slot', slot.id, ':', distance);
 
             // Se caiu dentro de 60px do centro do slot
             if (distance < 60) {
                 // Verificar se é o item correto para este slot
-                if (itemId === slot.requiredItem) {
+                // Aceitar se: item exato OU se não tem requiredItem definido e o item é um prisma
+                const isCorrectItem = (
+                    itemId === slot.requiredItem ||
+                    (!slot.requiredItem && itemId.startsWith('prisma')) ||
+                    (slot.requiredItem && itemId.toLowerCase() === slot.requiredItem.toLowerCase())
+                );
+
+                console.log('[PrismInScene] Item correto?', isCorrectItem, '- itemId:', itemId, 'requiredItem:', slot.requiredItem);
+
+                if (isCorrectItem) {
                     this.fillSlot(slot, itemId);
                     return true;
                 } else {
                     // Item incorreto
                     if (window.uiManager?.showNotification) {
-                        uiManager.showNotification(`Este slot precisa de: ${slot.requiredItem}`);
+                        uiManager.showNotification(`Este slot precisa de: ${slot.requiredItem || 'prisma'}`);
                     }
                     return true;  // Processado, mesmo que incorreto
                 }
             }
         }
 
+        console.log('[PrismInScene] Item não foi dropado em nenhum slot');
         return false;  // Não foi dropado em nenhum slot
     }
 

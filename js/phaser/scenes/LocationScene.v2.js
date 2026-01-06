@@ -3064,22 +3064,40 @@ class LocationScene extends Phaser.Scene {
         }
 
         // PRIORIDADE 1.5: Verificar se há um PrismLightPuzzleInScene ativo
-        if (this.puzzleManager && this.puzzleManager.activePuzzle &&
-            this.puzzleManager.activePuzzle.constructor.name === 'PrismLightPuzzleInScene') {
+        // Pode estar no activePuzzle OU pode verificar diretamente se o local tem puzzle de prisma
+        const hasPrismPuzzle = (
+            (this.puzzleManager && this.puzzleManager.activePuzzle &&
+                this.puzzleManager.activePuzzle.constructor.name === 'PrismLightPuzzleInScene') ||
+            (this.locationData && this.locationData.puzzle && this.locationData.puzzle.type === 'prism_light')
+        );
 
+        console.log('[InventoryDrop] hasPrismPuzzle:', hasPrismPuzzle);
+        console.log('[InventoryDrop] puzzleManager:', !!this.puzzleManager);
+        console.log('[InventoryDrop] activePuzzle:', this.puzzleManager?.activePuzzle?.constructor?.name);
+        console.log('[InventoryDrop] locationData.puzzle:', this.locationData?.puzzle?.type);
+
+        if (hasPrismPuzzle && this.puzzleManager && this.puzzleManager.activePuzzle) {
             const puzzle = this.puzzleManager.activePuzzle;
 
-            // Tentar processar o drop no puzzle de prisma
-            if (puzzle.onDropFromInventory && puzzle.onDropFromInventory(itemId, worldX, worldY)) {
-                return; // Item processado pelo puzzle
-            }
+            // Verificar se é PrismLightPuzzleInScene e tem o método
+            if (puzzle.onDropFromInventory) {
+                console.log('[InventoryDrop] Chamando puzzle.onDropFromInventory...');
+                // Tentar processar o drop no puzzle de prisma
+                if (puzzle.onDropFromInventory(itemId, worldX, worldY)) {
+                    return; // Item processado pelo puzzle
+                }
 
-            // Se não processou, verificar se há slots vazios
-            const hasEmptySlots = puzzle.prisms.some(slot => !slot.filled);
-            if (hasEmptySlots) {
-                uiManager.showNotification('Solte o prisma sobre um dos slots.', 2000);
-                return;
+                // Se não processou, verificar se há slots vazios
+                const hasEmptySlots = puzzle.prisms && puzzle.prisms.some(slot => !slot.filled);
+                if (hasEmptySlots) {
+                    uiManager.showNotification('Solte o prisma sobre um dos slots.', 2000);
+                    return;
+                }
+            } else {
+                console.log('[InventoryDrop] Puzzle não tem método onDropFromInventory');
             }
+        } else {
+            console.log('[InventoryDrop] Não entrou na verificação de prism puzzle');
         }
 
         // PRIORIDADE 2: Verificar se o item foi solto sobre uma parede
