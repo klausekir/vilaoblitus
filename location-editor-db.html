@@ -5994,10 +5994,15 @@
             const internalY = entryHit.y + Math.sin(dirRad) * rayLength;
 
             const hypotenuse = edges.find(e => e.isHypotenuse);
+            console.log(`  -> buscando hipotenusa: entry(${entryHit.x.toFixed(1)},${entryHit.y.toFixed(1)}) internal(${internalX.toFixed(1)},${internalY.toFixed(1)})`);
+            console.log(`  -> hipotenusa: (${hypotenuse.start.x.toFixed(1)},${hypotenuse.start.y.toFixed(1)}) → (${hypotenuse.end.x.toFixed(1)},${hypotenuse.end.y.toFixed(1)})`);
+
             const hypoHit = lineIntersectionPreview(
                 entryHit.x, entryHit.y, internalX, internalY,
                 hypotenuse.start.x, hypotenuse.start.y, hypotenuse.end.x, hypotenuse.end.y
             );
+
+            console.log(`  -> hypoHit = ${hypoHit ? `(${hypoHit.x.toFixed(1)},${hypoHit.y.toFixed(1)})` : 'NULL'}`);
 
             if (hypoHit) {
                 const reflectedDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX, entryEdge.index);
@@ -6070,6 +6075,8 @@
             // Fórmula geral para espelho a 45°: outDir = 2 * hypoAngle - incomingDir
             let outDir = 2 * hypoAngle - incomingDir;
             outDir = ((outDir % 360) + 360) % 360;
+
+            console.log(`    calculateReflection: hypoAngle=${hypoAngle.toFixed(1)}°, in=${incomingDir.toFixed(1)}°, out=${outDir.toFixed(1)}°`);
 
             return outDir;
         }
