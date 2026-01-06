@@ -338,7 +338,6 @@ class PrismLightPuzzle {
             let closestDist = Infinity;
 
             this.prismSlots.forEach(slot => {
-                console.log(`Verificando slot ${slot.id}: hasItem=${slot.hasItem}`);
                 if (!slot.hasItem) return;
 
                 const hit = this.rayPrismIntersection(
@@ -353,23 +352,24 @@ class PrismLightPuzzle {
             });
 
             if (closestHit) {
-                // Desenhar até o ponto de colisão
-                this.rayGraphics.lineTo(closestHit.point.x, closestHit.point.y);
-
-                // Atualizar posição e direção
-                currentX = closestHit.point.x;
-                currentY = closestHit.point.y;
-                currentDir = closestHit.newDirection;
-
-                // Se bateu na hipotenusa, passa reto (sem mudança de direção)
-                if (closestHit.hitHypotenuse) {
-                    // Continua na mesma direção
+                // Se tem caminho interno (reflexão no prisma), desenhar o caminho completo
+                if (closestHit.internalPath) {
+                    const path = closestHit.internalPath;
+                    // Entrada → Hipotenusa (reflexão)
+                    this.rayGraphics.lineTo(path.reflection.x, path.reflection.y);
+                    // Hipotenusa → Saída
+                    this.rayGraphics.lineTo(path.exit.x, path.exit.y);
+                    currentX = path.exit.x;
+                    currentY = path.exit.y;
                 } else {
-                    // Bateu em face reta, girou 90°
-                    this.rayGraphics.strokePath();
-                    this.rayGraphics.beginPath();
-                    this.rayGraphics.moveTo(currentX, currentY);
+                    // Sem reflexão, linha reta
+                    this.rayGraphics.lineTo(closestHit.point.x, closestHit.point.y);
+                    currentX = closestHit.point.x;
+                    currentY = closestHit.point.y;
                 }
+
+                // Atualizar direção
+                currentDir = closestHit.newDirection;
             } else {
                 // Sem colisão, desenhar até a borda
                 const edgePoint = this.rayToEdge(currentX, currentY, currentDir);
@@ -397,8 +397,6 @@ class PrismLightPuzzle {
     }
 
     rayPrismIntersection(rayStartX, rayStartY, rayEndX, rayEndY, slot) {
-        console.log(`rayPrismIntersection chamado: slot=${slot.id}, rot=${slot.rotation}, flip=${slot.flipX}`);
-
         // Calcular vértices do triângulo com rotação e flip
         const size = 40;
         let vertices = [
