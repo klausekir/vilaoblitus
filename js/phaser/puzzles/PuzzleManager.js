@@ -84,14 +84,16 @@ class PuzzleManager {
     }
 
     /**
-     * PUZZLE: Prisma de Luz
+     * PUZZLE: Prisma de Luz (in-scene, sem modal)
      */
     createPrismLightPuzzle(config) {
-        const puzzle = new PrismLightPuzzle(this.scene, config);
-        const centerX = this.scene.scale.width / 2;
-        const centerY = this.scene.scale.height / 2;
+        // Usar a nova classe que renderiza direto na cena, sem modal
+        const puzzle = new PrismLightPuzzleInScene(this.scene, {
+            ...config,
+            onSolved: () => this.onPuzzleSolved(config, puzzle)
+        });
 
-        puzzle.create(centerX, centerY);
+        puzzle.create();
         this.activePuzzle = puzzle;
         this.startHintTimer(config);
 

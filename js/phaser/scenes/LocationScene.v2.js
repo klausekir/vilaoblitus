@@ -612,6 +612,62 @@ class LocationScene extends Phaser.Scene {
             }
         }
 
+        // Prism Light puzzle - renderiza elementos diretamente na cena
+        if (puzzle && puzzle.type === 'prism_light') {
+            const isSolved = puzzle.id ? gameStateManager.isPuzzleSolved(puzzle.id) : false;
+
+            if (!isSolved) {
+                if (!this.puzzleManager) {
+                    this.puzzleManager = new PuzzleManager(this);
+                }
+
+                const puzzleConfig = {
+                    ...puzzle,
+                    solved: isSolved,
+                    onSolved: () => {
+                        gameStateManager.solvePuzzle(puzzle.id);
+                        uiManager.showNotification('✅ Enigma de luz resolvido!');
+
+                        // Atualizar visual do puzzle
+                        setTimeout(() => {
+                            this.updatePuzzleVisual();
+                        }, 1000);
+
+                        // Dropar recompensa se existir
+                        if (puzzle.reward) {
+                            setTimeout(() => {
+                                const dropPosition = { x: 50, y: 70 };
+
+                                gameStateManager.normalizeInventory();
+                                gameStateManager.state.inventory[puzzle.reward.id] = {
+                                    ...puzzle.reward,
+                                    status: 'dropped',
+                                    dropLocation: this.currentLocation,
+                                    dropPosition: dropPosition
+                                };
+                                gameStateManager.saveProgress();
+
+                                uiManager.showNotification(`🎁 ${puzzle.reward.name} apareceu!`);
+                                this.renderDroppedItems();
+                            }, 1500);
+                        }
+
+                        // Executar ação de desbloqueio
+                        if (puzzle.onUnlockedAction) {
+                            setTimeout(() => {
+                                this.handlePuzzleUnlockedAction(puzzle);
+                            }, 2000);
+                        }
+                    }
+                };
+
+                this.puzzleManager.createPuzzle(puzzleConfig);
+            }
+
+            // Prism puzzle não precisa de visual sprite separado - retorna aqui
+            return;
+        }
+
         if (!puzzle || !puzzle.visual) {
             return;
         }
@@ -2253,59 +2309,59 @@ class LocationScene extends Phaser.Scene {
             } else { // ✅ CÓDIGO ANTIGO - TB DESABILITADO
                 // Este bloco else está desabilitado - código acima já criou sprite
                 if (false) {
-                const textureKey = 'item_' + item.id;
-                const hasTexture = this.textures.exists(textureKey);
+                    const textureKey = 'item_' + item.id;
+                    const hasTexture = this.textures.exists(textureKey);
 
-                if (hasTexture) {
-                    element = this.add.image(x, y, textureKey);
+                    if (hasTexture) {
+                        element = this.add.image(x, y, textureKey);
 
-                    // Set size
-                    if (item.size) {
-                        element.setDisplaySize(item.size.width, item.size.height);
-                    } else {
-                        element.setDisplaySize(80, 80);
-                    }
+                        // Set size
+                        if (item.size) {
+                            element.setDisplaySize(item.size.width, item.size.height);
+                        } else {
+                            element.setDisplaySize(80, 80);
+                        }
 
-                    element.setOrigin(0.5);
-                    element.setDepth(50); // Prioridade sobre hotspots (depth 10)
-                    // this.applySpriteTransform removido
+                        element.setOrigin(0.5);
+                        element.setDepth(50); // Prioridade sobre hotspots (depth 10)
+                        // this.applySpriteTransform removido
 
-                    // Make it interactive
-                    element.setInteractive({ useHandCursor: true });
+                        // Make it interactive
+                        element.setInteractive({ useHandCursor: true });
 
-                    // Store original scale
-                    const originalScaleX = element.scaleX;
-                    const originalScaleY = element.scaleY;
+                        // Store original scale
+                        const originalScaleX = element.scaleX;
+                        const originalScaleY = element.scaleY;
 
-                    // Hover effect
-                    element.on('pointerover', () => {
-                        this.tweens.add({
-                            targets: element,
-                            scaleX: originalScaleX * 1.15,
-                            scaleY: originalScaleY * 1.15,
-                            duration: 200,
-                            ease: 'Power2'
+                        // Hover effect
+                        element.on('pointerover', () => {
+                            this.tweens.add({
+                                targets: element,
+                                scaleX: originalScaleX * 1.15,
+                                scaleY: originalScaleY * 1.15,
+                                duration: 200,
+                                ease: 'Power2'
+                            });
                         });
-                    });
 
-                    element.on('pointerout', () => {
-                        this.tweens.killTweensOf(element);
-                        element.setScale(originalScaleX, originalScaleY);
-                    });
+                        element.on('pointerout', () => {
+                            this.tweens.killTweensOf(element);
+                            element.setScale(originalScaleX, originalScaleY);
+                        });
 
-                    // Click handler
-                    element.on('pointerdown', () => {
-                        this.collectItem(item, element);
-                    });
-                } else {
-                    // Fallback: create rectangle with emoji
-                    console.warn('⚠️ Item image not found:', item.id, item.image);
-                    element = this.add.text(x, y, '📦', {
-                        fontSize: '48px'
-                    });
-                    element.setOrigin(0.5);
-                    element.setDepth(50); // Prioridade sobre hotspots (depth 10)
-                }
+                        // Click handler
+                        element.on('pointerdown', () => {
+                            this.collectItem(item, element);
+                        });
+                    } else {
+                        // Fallback: create rectangle with emoji
+                        console.warn('⚠️ Item image not found:', item.id, item.image);
+                        element = this.add.text(x, y, '📦', {
+                            fontSize: '48px'
+                        });
+                        element.setOrigin(0.5);
+                        element.setDepth(50); // Prioridade sobre hotspots (depth 10)
+                    }
                 } // Fecha if (false) da linha 1951
             }
 
