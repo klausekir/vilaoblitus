@@ -3063,6 +3063,25 @@ class LocationScene extends Phaser.Scene {
             return;
         }
 
+        // PRIORIDADE 1.5: Verificar se há um PrismLightPuzzleInScene ativo
+        if (this.puzzleManager && this.puzzleManager.activePuzzle &&
+            this.puzzleManager.activePuzzle.constructor.name === 'PrismLightPuzzleInScene') {
+
+            const puzzle = this.puzzleManager.activePuzzle;
+
+            // Tentar processar o drop no puzzle de prisma
+            if (puzzle.onDropFromInventory && puzzle.onDropFromInventory(itemId, worldX, worldY)) {
+                return; // Item processado pelo puzzle
+            }
+
+            // Se não processou, verificar se há slots vazios
+            const hasEmptySlots = puzzle.prisms.some(slot => !slot.filled);
+            if (hasEmptySlots) {
+                uiManager.showNotification('Solte o prisma sobre um dos slots.', 2000);
+                return;
+            }
+        }
+
         // PRIORIDADE 2: Verificar se o item foi solto sobre uma parede
         const wallData = this.checkWallInteraction(worldX, worldY);
 
