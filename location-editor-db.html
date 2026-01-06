@@ -5917,6 +5917,8 @@
         }
 
         function rayPrismIntersectionPreview(rayStartX, rayStartY, rayEndX, rayEndY, prism) {
+            console.log(`rayPrismIntersectionPreview: prism rot=${prism.rotation}, flip=${prism.flipX}`);
+
             const size = 30;
 
             // Vértices do triângulo base
@@ -5972,6 +5974,8 @@
             if (!entryHit) return null;
 
             const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
+
+            console.log(`  -> entrada: edge ${entryEdge.index}, isHypo=${entryEdge.isHypotenuse}, incomingDir=${currentDir.toFixed(1)}°`);
 
             // Se entrou pela HIPOTENUSA: passa direto (não bate na hipotenusa)
             if (entryEdge.isHypotenuse) {
