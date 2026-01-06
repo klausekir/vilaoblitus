@@ -6037,6 +6037,8 @@
                                     Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y) +
                                     Math.hypot(exitHit.x - hypoHit.x, exitHit.y - hypoHit.y);
 
+                    console.log(`  -> exitHit = (${exitHit.x.toFixed(1)},${exitHit.y.toFixed(1)})`);
+
                     return {
                         point: exitHit,
                         distance: totalDist,
@@ -6045,6 +6047,8 @@
                         internalPath: { entry: entryHit, reflection: hypoHit, exit: exitHit }
                     };
                 }
+
+                console.log(`  -> ERRO: exitHit não encontrado!`);
             }
 
             return {
