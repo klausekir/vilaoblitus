@@ -248,7 +248,8 @@ class PrismLightPuzzleInScene {
         console.log('[PrismInScene] Preenchendo slot', slot.id, 'com item', itemId);
 
         // PRIMEIRO: Remover item do inventário usando método oficial
-        if (window.gameStateManager) {
+        // gameStateManager pode não estar em window, verificar com typeof
+        if (typeof gameStateManager !== 'undefined' && gameStateManager) {
             console.log('[PrismInScene] Consumindo item:', itemId);
 
             // Usar o método consumeItem que já existe no GameStateManager
@@ -265,9 +266,11 @@ class PrismLightPuzzleInScene {
             console.log('[PrismInScene] Item consumido e progresso salvo');
 
             // Forçar atualização da UI
-            if (window.uiManager && uiManager.renderInventory) {
+            if (typeof uiManager !== 'undefined' && uiManager && uiManager.renderInventory) {
                 uiManager.renderInventory();
             }
+        } else {
+            console.log('[PrismInScene] ERRO: gameStateManager não disponível!');
         }
 
         slot.filled = true;
