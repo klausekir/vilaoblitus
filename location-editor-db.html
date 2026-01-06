@@ -5921,7 +5921,7 @@
 
             // Vértices do triângulo base
             let vertices = [
-                { x: -size, y: size },   // 90°
+                { x: -size, y: size },   // 90° corner
                 { x: -size, y: -size },
                 { x: size, y: size }
             ];
@@ -5948,8 +5948,10 @@
                 { start: vertices[2], end: vertices[0], isHypotenuse: false }
             ];
 
-            let closestHit = null;
-            let closestDist = Infinity;
+            // Encontrar primeira interseção (entrada no prisma)
+            let entryHit = null;
+            let entryDist = Infinity;
+            let entryEdge = null;
 
             edges.forEach(edge => {
                 const intersection = lineIntersectionPreview(
@@ -5959,32 +5961,79 @@
 
                 if (intersection) {
                     const dist = Math.hypot(intersection.x - rayStartX, intersection.y - rayStartY);
-
-                    if (dist < closestDist && dist > 1) {
-                        closestDist = dist;
-
-                        let newDir;
-                        const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
-
-                        if (edge.isHypotenuse) {
-                            // Passa reto
-                            newDir = currentDir;
-                        } else {
-                            // Gira 90°
-                            newDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX);
-                        }
-
-                        closestHit = {
-                            point: intersection,
-                            distance: dist,
-                            newDirection: newDir,
-                            hitHypotenuse: edge.isHypotenuse
-                        };
+                    if (dist < entryDist && dist > 1) {
+                        entryDist = dist;
+                        entryHit = intersection;
+                        entryEdge = edge;
                     }
                 }
             });
 
-            return closestHit;
+            if (!entryHit) return null;
+
+            const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
+
+            // Se entrou pela HIPOTENUSA: passa direto
+            if (entryEdge.isHypotenuse) {
+                const rayLength = 200;
+                const dirRad = currentDir * Math.PI / 180;
+                const exitX = entryHit.x + Math.cos(dirRad) * rayLength;
+                const exitY = entryHit.y + Math.sin(dirRad) * rayLength;
+
+                let exitHit = null;
+                let exitDist = Infinity;
+
+                edges.forEach(edge => {
+                    if (edge.isHypotenuse) return;
+                    const intersection = lineIntersectionPreview(
+                        entryHit.x, entryHit.y, exitX, exitY,
+                        edge.start.x, edge.start.y, edge.end.x, edge.end.y
+                    );
+                    if (intersection) {
+                        const dist = Math.hypot(intersection.x - entryHit.x, intersection.y - entryHit.y);
+                        if (dist < exitDist && dist > 1) {
+                            exitDist = dist;
+                            exitHit = intersection;
+                        }
+                    }
+                });
+
+                return {
+                    point: exitHit || entryHit,
+                    distance: entryDist + (exitDist < Infinity ? exitDist : 0),
+                    newDirection: currentDir,
+                    hitHypotenuse: true
+                };
+            }
+
+            // Se entrou por FACE RETA: refletir na hipotenusa interna (90°)
+            const rayLength = 200;
+            const dirRad = currentDir * Math.PI / 180;
+            const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
+            const internalY = entryHit.y + Math.sin(dirRad) * rayLength;
+
+            const hypotenuse = edges.find(e => e.isHypotenuse);
+            const hypoHit = lineIntersectionPreview(
+                entryHit.x, entryHit.y, internalX, internalY,
+                hypotenuse.start.x, hypotenuse.start.y, hypotenuse.end.x, hypotenuse.end.y
+            );
+
+            if (hypoHit) {
+                const reflectedDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX);
+                return {
+                    point: hypoHit,
+                    distance: entryDist + Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y),
+                    newDirection: reflectedDir,
+                    hitHypotenuse: false
+                };
+            }
+
+            return {
+                point: entryHit,
+                distance: entryDist,
+                newDirection: currentDir,
+                hitHypotenuse: false
+            };
         }
 
         function calculateReflectionPreview(incomingDir, prismRotation, flipX) {
@@ -6360,23 +6409,82 @@
                 { start: vertices[2], end: vertices[0], isHypotenuse: false }
             ];
 
-            let closestHit = null;
-            let closestDist = Infinity;
+            // Encontrar primeira interseção (entrada no prisma)
+            let entryHit = null;
+            let entryDist = Infinity;
+            let entryEdge = null;
 
             edges.forEach(edge => {
                 const hit = lineIntersectionSVG(x1, y1, x2, y2, edge.start.x, edge.start.y, edge.end.x, edge.end.y);
                 if (hit) {
                     const dist = Math.hypot(hit.x - x1, hit.y - y1);
-                    if (dist < closestDist && dist > 2) {
-                        closestDist = dist;
-                        const currentDir = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-                        let newDir = edge.isHypotenuse ? currentDir : calcReflectionSVG(currentDir, rotation, flipX);
-                        closestHit = { point: hit, distance: dist, newDirection: newDir };
+                    if (dist < entryDist && dist > 2) {
+                        entryDist = dist;
+                        entryHit = hit;
+                        entryEdge = edge;
                     }
                 }
             });
 
-            return closestHit;
+            if (!entryHit) return null;
+
+            const currentDir = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+            // Se entrou pela HIPOTENUSA: passa direto
+            if (entryEdge.isHypotenuse) {
+                const rayLength = 200;
+                const dirRad = currentDir * Math.PI / 180;
+                const exitX = entryHit.x + Math.cos(dirRad) * rayLength;
+                const exitY = entryHit.y + Math.sin(dirRad) * rayLength;
+
+                let exitHit = null;
+                let exitDist = Infinity;
+
+                edges.forEach(edge => {
+                    if (edge.isHypotenuse) return;
+                    const hit = lineIntersectionSVG(entryHit.x, entryHit.y, exitX, exitY, edge.start.x, edge.start.y, edge.end.x, edge.end.y);
+                    if (hit) {
+                        const dist = Math.hypot(hit.x - entryHit.x, hit.y - entryHit.y);
+                        if (dist < exitDist && dist > 2) {
+                            exitDist = dist;
+                            exitHit = hit;
+                        }
+                    }
+                });
+
+                return {
+                    point: exitHit || entryHit,
+                    distance: entryDist + (exitDist < Infinity ? exitDist : 0),
+                    newDirection: currentDir
+                };
+            }
+
+            // Se entrou por FACE RETA: refletir na hipotenusa interna (90°)
+            const rayLength = 200;
+            const dirRad = currentDir * Math.PI / 180;
+            const internalX = entryHit.x + Math.cos(dirRad) * rayLength;
+            const internalY = entryHit.y + Math.sin(dirRad) * rayLength;
+
+            const hypotenuse = edges.find(e => e.isHypotenuse);
+            const hypoHit = lineIntersectionSVG(
+                entryHit.x, entryHit.y, internalX, internalY,
+                hypotenuse.start.x, hypotenuse.start.y, hypotenuse.end.x, hypotenuse.end.y
+            );
+
+            if (hypoHit) {
+                const reflectedDir = calcReflectionSVG(currentDir, rotation, flipX);
+                return {
+                    point: hypoHit,
+                    distance: entryDist + Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y),
+                    newDirection: reflectedDir
+                };
+            }
+
+            return {
+                point: entryHit,
+                distance: entryDist,
+                newDirection: currentDir
+            };
         }
 
         function calcReflectionSVG(inDir, prismRotation, flipX) {
