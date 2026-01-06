@@ -247,42 +247,26 @@ class PrismLightPuzzleInScene {
     fillSlot(slot, itemId) {
         console.log('[PrismInScene] Preenchendo slot', slot.id, 'com item', itemId);
 
-        // PRIMEIRO: Remover item do inventário
-        console.log('[PrismInScene] gameStateManager existe?', !!window.gameStateManager);
-        console.log('[PrismInScene] inventory existe?', !!window.gameStateManager?.state?.inventory);
-        console.log('[PrismInScene] itemId no inventory?', !!window.gameStateManager?.state?.inventory?.[itemId]);
-
+        // PRIMEIRO: Remover item do inventário usando método oficial
         if (window.gameStateManager) {
-            console.log('[PrismInScene] Removendo item do inventário:', itemId);
+            console.log('[PrismInScene] Consumindo item:', itemId);
 
-            // Garantir que inventory existe
-            if (!gameStateManager.state.inventory) {
-                gameStateManager.state.inventory = {};
-            }
+            // Usar o método consumeItem que já existe no GameStateManager
+            gameStateManager.consumeItem(itemId);
 
-            // Deletar o item
-            if (gameStateManager.state.inventory[itemId]) {
-                delete gameStateManager.state.inventory[itemId];
-                console.log('[PrismInScene] Item deletado do inventory');
-            } else {
-                console.log('[PrismInScene] Item não encontrado no inventory');
-            }
-
-            // Marcar como consumido
+            // Também adicionar a consumedItems para redundância
             if (!gameStateManager.state.consumedItems) gameStateManager.state.consumedItems = [];
             if (!gameStateManager.state.consumedItems.includes(itemId)) {
                 gameStateManager.state.consumedItems.push(itemId);
             }
 
             // Salvar imediatamente
-            gameStateManager.saveProgress();
-            console.log('[PrismInScene] Progresso salvo');
+            gameStateManager.saveProgress(false);
+            console.log('[PrismInScene] Item consumido e progresso salvo');
 
-            // Atualizar UI
-            if (gameStateManager.trigger) gameStateManager.trigger('inventoryChanged');
+            // Forçar atualização da UI
             if (window.uiManager && uiManager.renderInventory) {
                 uiManager.renderInventory();
-                console.log('[PrismInScene] UI do inventário atualizada');
             }
         }
 
