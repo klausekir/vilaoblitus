@@ -405,9 +405,15 @@ class PrismLightPuzzleInScene {
 
         // Remover item do inventário
         if (window.gameStateManager) {
-            delete gameStateManager.state.inventory[itemId];
+            console.log('[PrismInScene] Removendo item do inventário:', itemId);
+            console.log('[PrismInScene] Inventário antes:', JSON.stringify(gameStateManager.state.inventory));
 
-            // Marcar como consumido
+            // Remover do inventário
+            if (gameStateManager.state.inventory && gameStateManager.state.inventory[itemId]) {
+                delete gameStateManager.state.inventory[itemId];
+            }
+
+            // Marcar como consumido para não reaparecer
             if (!gameStateManager.state.consumedItems) {
                 gameStateManager.state.consumedItems = [];
             }
@@ -418,8 +424,20 @@ class PrismLightPuzzleInScene {
             // Salvar estado do slot
             this.saveSlotState(slot);
 
+            // Salvar progresso
             gameStateManager.saveProgress();
-            gameStateManager.trigger('inventoryChanged');
+
+            console.log('[PrismInScene] Inventário depois:', JSON.stringify(gameStateManager.state.inventory));
+
+            // Atualizar UI do inventário
+            if (gameStateManager.trigger) {
+                gameStateManager.trigger('inventoryChanged');
+            }
+
+            // Forçar refresh do inventário na UI
+            if (window.uiManager && uiManager.renderInventory) {
+                uiManager.renderInventory();
+            }
         }
 
         // Atualizar raio
