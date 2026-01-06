@@ -300,7 +300,7 @@ class PrismLightPuzzleInScene {
     }
 
     saveSlotState(slot) {
-        if (!window.gameStateManager) return;
+        if (typeof gameStateManager === 'undefined' || !gameStateManager) return;
 
         if (!gameStateManager.state.prismPuzzleSlots) gameStateManager.state.prismPuzzleSlots = {};
 
@@ -312,12 +312,16 @@ class PrismLightPuzzleInScene {
         gameStateManager.state.prismPuzzleSlots[puzzleId][slot.id] = {
             filled: slot.filled, rotation: slot.rotation, flipX: slot.flipX
         };
+
+        console.log('[PrismInScene] Estado do slot salvo:', puzzleId, slot.id);
     }
 
     getSavedSlotState(slotId) {
-        if (!window.gameStateManager) return null;
+        if (typeof gameStateManager === 'undefined' || !gameStateManager) return null;
         const puzzleId = this.config.id || 'prism_puzzle';
-        return gameStateManager.state.prismPuzzleSlots?.[puzzleId]?.[slotId] || null;
+        const state = gameStateManager.state.prismPuzzleSlots?.[puzzleId]?.[slotId] || null;
+        console.log('[PrismInScene] Estado salvo para', slotId, ':', state);
+        return state;
     }
 
     rotatePrism(slot, index) {
@@ -326,7 +330,9 @@ class PrismLightPuzzleInScene {
         slot.rotation = (slot.rotation + 90) % 360;
         this.drawPrism(slot);
         this.saveSlotState(slot);
-        if (window.gameStateManager) gameStateManager.saveProgress();
+        if (typeof gameStateManager !== 'undefined' && gameStateManager) {
+            gameStateManager.saveProgress(false);
+        }
 
         const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
         this.updateRay(bgX, bgY, bgWidth, bgHeight);
@@ -338,7 +344,9 @@ class PrismLightPuzzleInScene {
         slot.flipX = !slot.flipX;
         this.drawPrism(slot);
         this.saveSlotState(slot);
-        if (window.gameStateManager) gameStateManager.saveProgress();
+        if (typeof gameStateManager !== 'undefined' && gameStateManager) {
+            gameStateManager.saveProgress(false);
+        }
 
         const { bgWidth, bgHeight, bgX, bgY } = this.scene.getBackgroundBounds();
         this.updateRay(bgX, bgY, bgWidth, bgHeight);
@@ -526,18 +534,19 @@ class PrismLightPuzzleInScene {
         let normalizedIn = Math.round(incomingDir / 90) * 90;
         normalizedIn = ((normalizedIn % 360) + 360) % 360;
 
+        // Mapa de reflexão invertido - gira para o lado da outra face reta
         const reflectionMap = {
-            0: { 0: 270, 90: 180, 180: 90, 270: 0 },
-            90: { 0: 90, 90: 0, 180: 270, 270: 180 },
-            180: { 0: 90, 90: 0, 180: 270, 270: 180 },
-            270: { 0: 270, 90: 180, 180: 90, 270: 0 }
+            0: { 0: 90, 90: 0, 180: 270, 270: 180 },
+            90: { 0: 270, 90: 180, 180: 90, 270: 0 },
+            180: { 0: 270, 90: 180, 180: 90, 270: 0 },
+            270: { 0: 90, 90: 0, 180: 270, 270: 180 }
         };
 
         let effectiveRotation = prismRotation;
         if (flipX) effectiveRotation = (360 - prismRotation) % 360;
 
         const outDir = reflectionMap[effectiveRotation]?.[normalizedIn];
-        return outDir !== undefined ? outDir : normalizedIn + 90;
+        return outDir !== undefined ? outDir : normalizedIn - 90;
     }
 
     lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
