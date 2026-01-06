@@ -5216,6 +5216,49 @@
                         currentMolds = puzzle.molds.map(m => ({ ...m }));
                         renderShapeMatchMolds();
                     }
+                } else if (puzzle.type === 'prism_light') {
+                    const titleEl = document.getElementById('puzzle-title');
+                    if (titleEl && puzzle.title) titleEl.value = puzzle.title;
+
+                    // Carregar emissor
+                    if (puzzle.emitter) {
+                        const emitterXEl = document.getElementById('emitter-x');
+                        const emitterYEl = document.getElementById('emitter-y');
+                        const emitterDirEl = document.getElementById('emitter-direction');
+                        const emitterColorEl = document.getElementById('emitter-color');
+
+                        if (emitterXEl) emitterXEl.value = puzzle.emitter.x;
+                        if (emitterYEl) emitterYEl.value = puzzle.emitter.y;
+                        if (emitterDirEl) emitterDirEl.value = puzzle.emitter.direction;
+                        if (emitterColorEl) emitterColorEl.value = puzzle.emitter.color;
+                    }
+
+                    // Carregar receptor
+                    if (puzzle.receptor) {
+                        const receptorXEl = document.getElementById('receptor-x');
+                        const receptorYEl = document.getElementById('receptor-y');
+                        const receptorWidthEl = document.getElementById('receptor-width');
+                        const receptorHeightEl = document.getElementById('receptor-height');
+
+                        if (receptorXEl) receptorXEl.value = puzzle.receptor.x;
+                        if (receptorYEl) receptorYEl.value = puzzle.receptor.y;
+                        if (receptorWidthEl) receptorWidthEl.value = puzzle.receptor.width;
+                        if (receptorHeightEl) receptorHeightEl.value = puzzle.receptor.height;
+                    }
+
+                    // Carregar slots de prismas
+                    if (puzzle.prismSlots && Array.isArray(puzzle.prismSlots)) {
+                        puzzle.prismSlots.forEach((slot, index) => {
+                            const slotNum = index + 1;
+                            const xEl = document.getElementById(`slot${slotNum}-x`);
+                            const yEl = document.getElementById(`slot${slotNum}-y`);
+                            const itemEl = document.getElementById(`slot${slotNum}-item`);
+
+                            if (xEl) xEl.value = slot.x;
+                            if (yEl) yEl.value = slot.y;
+                            if (itemEl) itemEl.value = slot.requiredItem;
+                        });
+                    }
                 }
 
                 // ✅ Carregar unlock action para TODOS os tipos de puzzle
