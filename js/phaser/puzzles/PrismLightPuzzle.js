@@ -554,31 +554,55 @@ class PrismLightPuzzle {
     }
 
     calculateReflection(incomingDir, prismRotation, flipX, entryEdgeIndex = 0) {
-        // A reflexão na hipotenusa faz o raio sair pela outra face reta (giro de 90°)
-        let normalizedIn = Math.round(incomingDir / 90) * 90;
-        normalizedIn = ((normalizedIn % 360) + 360) % 360;
+        // Para um prisma triangular retângulo, a reflexão na hipotenusa sempre gira 90°
+        // A direção do giro depende da orientação da hipotenusa
 
-        // Calcular a orientação efetiva do prisma
-        let effectiveRotation = prismRotation;
+        // Calcular o vetor normal da hipotenusa baseado na rotação e flip do prisma
+        // A hipotenusa liga os vértices 1 e 2 do triângulo
+        // Normal da hipotenusa em configuração base (rot=0, flip=false): aponta para fora do triângulo
+
+        // Em um triângulo reto com vértices em:
+        // v0 = (-size/2, size/2) - ângulo 90°
+        // v1 = (-size/2, -size/2)
+        // v2 = (size/2, size/2)
+        // A hipotenusa é v1->v2, sua normal aponta para (-1, 1) normalizada
+
+        let baseNormalAngle = 135; // -45° ou 135° (aponta para noroeste)
+
+        // Aplicar flip
         if (flipX) {
-            effectiveRotation = (360 - prismRotation) % 360;
+            baseNormalAngle = 180 - baseNormalAngle; // espelha horizontalmente
         }
 
-        // Determinar se gira +90 ou -90 baseado na face de entrada e orientação
-        // entryEdgeIndex 0 = face reta 1, entryEdgeIndex 2 = face reta 2
-        let turnDirection;
+        // Aplicar rotação do prisma
+        let normalAngle = baseNormalAngle + prismRotation;
+        normalAngle = ((normalAngle % 360) + 360) % 360;
 
-        if (entryEdgeIndex === 0) {
-            // Entrou pela primeira face reta
-            turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? -90 : 90;
+        // A reflexão em uma superfície sempre gira o raio baseado na normal
+        // Para um prisma de 90°, a saída sempre é perpendicular à entrada
+        // Isso significa girar ±90° dependendo de qual lado da normal você está
+
+        // Simplificando: em um prisma 45-45-90, luz entrando por face reta sempre gira 90°
+        // A direção do giro depende da orientação da hipotenusa
+
+        let incomingRad = incomingDir * Math.PI / 180;
+        let normalRad = normalAngle * Math.PI / 180;
+
+        // Calcular reflexão: reflected = incoming - 2 * (incoming · normal) * normal
+        // Mas para 90°, simplificamos: gira 90° na direção perpendicular à hipotenusa
+
+        // Determinar se gira horário ou anti-horário
+        let angleDiff = ((incomingDir - normalAngle + 360) % 360);
+
+        // Se a luz está vindo do lado direito da normal, gira para a esquerda e vice-versa
+        let outDir;
+        if (angleDiff < 180) {
+            outDir = incomingDir - 90; // gira -90° (anti-horário)
         } else {
-            // Entrou pela segunda face reta
-            turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? 90 : -90;
+            outDir = incomingDir + 90; // gira +90° (horário)
         }
 
-        let outDir = normalizedIn + turnDirection;
         outDir = ((outDir % 360) + 360) % 360;
-
         return outDir;
     }
 
