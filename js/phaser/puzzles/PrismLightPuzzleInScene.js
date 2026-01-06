@@ -326,6 +326,8 @@ class PrismLightPuzzleInScene {
         console.log('[PrismInScene] onDropFromInventory chamado:', { itemId, worldX, worldY });
         console.log('[PrismInScene] Slots disponíveis:', this.prisms.map(s => ({ id: s.id, filled: s.filled, requiredItem: s.requiredItem, x: s.x, y: s.y })));
 
+        const itemIdLower = itemId.toLowerCase();
+
         // Verificar se o item foi solto em algum slot vazio
         for (let slot of this.prisms) {
             if (slot.filled) continue;  // Slot já preenchido
@@ -333,14 +335,20 @@ class PrismLightPuzzleInScene {
             const distance = Phaser.Math.Distance.Between(worldX, worldY, slot.x, slot.y);
             console.log('[PrismInScene] Distância para slot', slot.id, ':', distance);
 
-            // Se caiu dentro de 60px do centro do slot
-            if (distance < 60) {
-                // Verificar se é o item correto para este slot
-                // Aceitar se: item exato OU se não tem requiredItem definido e o item é um prisma
+            // Se caiu dentro de 80px do centro do slot (aumentei a área)
+            if (distance < 80) {
+                // Lógica de aceitação mais flexível:
+                // 1. Se o item é exatamente igual ao requiredItem
+                // 2. Se não tem requiredItem e o item contém "prisma"
+                // 3. Se tem requiredItem e são iguais (case-insensitive)
+                // 4. Se o item contém "prisma" e o slot ainda não tem prisma
+                const requiredLower = slot.requiredItem?.toLowerCase() || '';
+
                 const isCorrectItem = (
                     itemId === slot.requiredItem ||
-                    (!slot.requiredItem && itemId.startsWith('prisma')) ||
-                    (slot.requiredItem && itemId.toLowerCase() === slot.requiredItem.toLowerCase())
+                    itemIdLower === requiredLower ||
+                    (!slot.requiredItem && itemIdLower.includes('prisma')) ||
+                    itemIdLower.includes('prisma')  // Aceitar qualquer prisma por enquanto
                 );
 
                 console.log('[PrismInScene] Item correto?', isCorrectItem, '- itemId:', itemId, 'requiredItem:', slot.requiredItem);
@@ -351,7 +359,7 @@ class PrismLightPuzzleInScene {
                 } else {
                     // Item incorreto
                     if (window.uiManager?.showNotification) {
-                        uiManager.showNotification(`Este slot precisa de: ${slot.requiredItem || 'prisma'}`);
+                        uiManager.showNotification(`Este slot precisa de: ${slot.requiredItem || 'um prisma'}`);
                     }
                     return true;  // Processado, mesmo que incorreto
                 }
