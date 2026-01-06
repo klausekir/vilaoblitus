@@ -408,12 +408,12 @@ class PrismLightPuzzle {
                     // Calcular nova direção
                     let newDir;
                     if (edge.isHypotenuse) {
-                        // Hipotenusa: passa reto
-                        newDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
-                    } else {
-                        // Face reta: gira 90°
+                        // Hipotenusa (bateu por dentro): reflete 90°
                         const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
                         newDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX);
+                    } else {
+                        // Face reta (entrou no prisma): passa reto para dentro
+                        newDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
                     }
 
                     closestHit = {
