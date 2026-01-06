@@ -248,19 +248,42 @@ class PrismLightPuzzleInScene {
         console.log('[PrismInScene] Preenchendo slot', slot.id, 'com item', itemId);
 
         // PRIMEIRO: Remover item do inventário
-        if (window.gameStateManager && gameStateManager.state.inventory) {
-            console.log('[PrismInScene] Removendo item do inventário:', itemId);
-            delete gameStateManager.state.inventory[itemId];
+        console.log('[PrismInScene] gameStateManager existe?', !!window.gameStateManager);
+        console.log('[PrismInScene] inventory existe?', !!window.gameStateManager?.state?.inventory);
+        console.log('[PrismInScene] itemId no inventory?', !!window.gameStateManager?.state?.inventory?.[itemId]);
 
+        if (window.gameStateManager) {
+            console.log('[PrismInScene] Removendo item do inventário:', itemId);
+
+            // Garantir que inventory existe
+            if (!gameStateManager.state.inventory) {
+                gameStateManager.state.inventory = {};
+            }
+
+            // Deletar o item
+            if (gameStateManager.state.inventory[itemId]) {
+                delete gameStateManager.state.inventory[itemId];
+                console.log('[PrismInScene] Item deletado do inventory');
+            } else {
+                console.log('[PrismInScene] Item não encontrado no inventory');
+            }
+
+            // Marcar como consumido
             if (!gameStateManager.state.consumedItems) gameStateManager.state.consumedItems = [];
             if (!gameStateManager.state.consumedItems.includes(itemId)) {
                 gameStateManager.state.consumedItems.push(itemId);
             }
 
+            // Salvar imediatamente
             gameStateManager.saveProgress();
+            console.log('[PrismInScene] Progresso salvo');
 
+            // Atualizar UI
             if (gameStateManager.trigger) gameStateManager.trigger('inventoryChanged');
-            if (window.uiManager && uiManager.renderInventory) uiManager.renderInventory();
+            if (window.uiManager && uiManager.renderInventory) {
+                uiManager.renderInventory();
+                console.log('[PrismInScene] UI do inventário atualizada');
+            }
         }
 
         slot.filled = true;
