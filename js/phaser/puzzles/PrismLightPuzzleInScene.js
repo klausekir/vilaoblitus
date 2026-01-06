@@ -512,8 +512,9 @@ class PrismLightPuzzleInScene {
 
         if (hypoHit) {
             // Reflexão interna na hipotenusa: gira 90°
-            // A direção de saída depende de como o raio entrou
-            const reflectedDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX);
+            // A direção de saída depende de qual face reta o raio entrou
+            // entryEdge.index: 0 = face reta vertical, 2 = face reta horizontal
+            const reflectedDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX, entryEdge.index);
 
             return {
                 point: hypoHit,
@@ -530,23 +531,33 @@ class PrismLightPuzzleInScene {
         };
     }
 
-    calculateReflection(incomingDir, prismRotation, flipX) {
+    calculateReflection(incomingDir, prismRotation, flipX, entryEdgeIndex = 0) {
+        // A reflexão na hipotenusa faz o raio sair pela outra face reta
+        // Isso significa um giro de 90° na direção correta
+
         let normalizedIn = Math.round(incomingDir / 90) * 90;
         normalizedIn = ((normalizedIn % 360) + 360) % 360;
 
-        // Mapa de reflexão invertido - gira para o lado da outra face reta
-        const reflectionMap = {
-            0: { 0: 90, 90: 0, 180: 270, 270: 180 },
-            90: { 0: 270, 90: 180, 180: 90, 270: 0 },
-            180: { 0: 270, 90: 180, 180: 90, 270: 0 },
-            270: { 0: 90, 90: 0, 180: 270, 270: 180 }
-        };
-
+        // Calcular a orientação efetiva do prisma
         let effectiveRotation = prismRotation;
         if (flipX) effectiveRotation = (360 - prismRotation) % 360;
 
-        const outDir = reflectionMap[effectiveRotation]?.[normalizedIn];
-        return outDir !== undefined ? outDir : normalizedIn - 90;
+        // Determinar se gira +90 ou -90 baseado na face de entrada e orientação
+        // entryEdgeIndex 0 = face reta 1, entryEdgeIndex 2 = face reta 2
+        let turnDirection;
+
+        if (entryEdgeIndex === 0) {
+            // Entrou pela primeira face reta
+            turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? -90 : 90;
+        } else {
+            // Entrou pela segunda face reta
+            turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? 90 : -90;
+        }
+
+        let outDir = normalizedIn + turnDirection;
+        outDir = ((outDir % 360) + 360) % 360;
+
+        return outDir;
     }
 
     lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
