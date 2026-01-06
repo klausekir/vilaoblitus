@@ -355,6 +355,8 @@ class PrismLightPuzzle {
                 // Se tem caminho interno (reflexão no prisma), desenhar o caminho completo
                 if (closestHit.internalPath) {
                     const path = closestHit.internalPath;
+                    // Até a entrada no prisma
+                    this.rayGraphics.lineTo(path.entry.x, path.entry.y);
                     // Entrada → Hipotenusa (reflexão)
                     this.rayGraphics.lineTo(path.reflection.x, path.reflection.y);
                     // Hipotenusa → Saída
@@ -455,9 +457,6 @@ class PrismLightPuzzle {
         if (!entryHit) return null;
 
         const currentDir = Math.atan2(rayEndY - rayStartY, rayEndX - rayStartX) * 180 / Math.PI;
-
-        // Debug: verificar qual aresta foi atingida
-        console.log(`Prisma rot=${slot.rotation}, flip=${slot.flipX}, entrada: edge ${entryEdge.index}, isHypo=${entryEdge.isHypotenuse}, dir=${currentDir.toFixed(1)}°`);
 
         // Se ENTROU pela HIPOTENUSA: passa direto através do prisma (sem bater na hipotenusa)
         if (entryEdge.isHypotenuse) {

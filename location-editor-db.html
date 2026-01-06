@@ -5895,6 +5895,8 @@
                     // Se tem caminho interno (reflexão no prisma), desenhar o caminho completo
                     if (closestHit.internalPath) {
                         const path = closestHit.internalPath;
+                        // Até a entrada no prisma
+                        ctx.lineTo(path.entry.x, path.entry.y);
                         // Entrada → Hipotenusa (reflexão)
                         ctx.lineTo(path.reflection.x, path.reflection.y);
                         // Hipotenusa → Saída
