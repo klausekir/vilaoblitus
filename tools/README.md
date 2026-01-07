@@ -314,3 +314,49 @@ Para criar um script único que faz tudo:
 ```
 
 Isso executaria os 4 passos automaticamente.
+
+---
+
+## 🎬 MP4 para Atlas (Novo!)
+
+### Converter vídeo MP4 para sprite atlas:
+
+```bash
+python tools/mp4-to-atlas.py video.mp4 nome_saida [tolerancia] [max_frames] [--mask x1,y1,x2,y2]
+```
+
+**Exemplos:**
+```bash
+# Básico
+python tools/mp4-to-atlas.py fogo.mp4 fogo
+
+# Com parâmetros personalizados
+python tools/mp4-to-atlas.py efeito.mp4 efeito 30 20
+
+# Com máscara para remover logo/marca d'água
+python tools/mp4-to-atlas.py ghost.mp4 ghost 30 20 --mask 700,400,864,480
+```
+
+### Selecionar região de logo interativamente:
+
+```bash
+python tools/select-mask-region.py video.mp4
+```
+
+Abre uma janela onde você pode desenhar um retângulo sobre a logo. As coordenadas são copiadas para a área de transferência.
+
+---
+
+## 🌐 Recursos Online Recomendados
+
+### Geração de GIFs/Vídeos Animados com IA
+
+| Recurso | Descrição | Link |
+|---------|-----------|------|
+| **Fotor AI Video Generator** | Excelente para criar GIFs animados a partir de texto. Ótima qualidade de imagens animadas para uso em jogos. | [fotor.com/apps/ai-video-generator](https://www.fotor.com/apps/ai-video-generator/#from-text) |
+
+**Dica:** Após gerar o vídeo/GIF no Fotor, use as ferramentas deste repositório para:
+1. Remover fundo com `remove-gif-background.py` ou `mp4-to-atlas.py`
+2. Converter para sprite atlas otimizado
+3. Usar no Phaser com animação suave
+

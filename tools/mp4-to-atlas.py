@@ -110,9 +110,14 @@ def extract_frames_from_mp4(video_path, output_dir, max_frames=20):
     return output_dir
 
 
-def remove_background_from_frames(frames_dir, threshold=30):
+def remove_background_from_frames(frames_dir, threshold=30, mask_region=None):
     """
     Remove o fundo de cada frame usando detecção de cor.
+    
+    Args:
+        frames_dir: Diretório com os frames
+        threshold: Tolerância de cor para remoção de fundo
+        mask_region: Tupla (x1, y1, x2, y2) da região a mascarar (logo/marca d'água)
     """
     frames = sorted([f for f in os.listdir(frames_dir) if f.endswith('.png')])
     
@@ -128,6 +133,10 @@ def remove_background_from_frames(frames_dir, threshold=30):
     bg_color = first_frame.getpixel((0, 0))[:3]
     print(f"\nCor de fundo detectada (R,G,B): {bg_color}")
     print(f"Tolerância: {threshold}")
+    
+    if mask_region:
+        print(f"Região da logo/máscara: {mask_region}")
+    
     print("Removendo fundo dos frames...")
     
     # Processar cada frame
@@ -140,6 +149,13 @@ def remove_background_from_frames(frames_dir, threshold=30):
         for y in range(height):
             for x in range(width):
                 r, g, b, a = pixels[x, y]
+                
+                # Verificar se está na região da máscara (logo)
+                if mask_region:
+                    mx1, my1, mx2, my2 = mask_region
+                    if mx1 <= x <= mx2 and my1 <= y <= my2:
+                        pixels[x, y] = (r, g, b, 0)  # Tornar transparente
+                        continue
                 
                 # Verificar se pixel é similar ao fundo
                 diff_r = abs(r - bg_color[0])
@@ -240,9 +256,12 @@ def create_atlas_from_frames(frames_dir, output_name, output_dir='images/objects
     }
 
 
-def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_dir='images/objects'):
+def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_dir='images/objects', mask_region=None):
     """
     Pipeline completo: MP4 -> Frames -> Remove fundo -> Atlas PNG + JSON
+    
+    Args:
+        mask_region: Tupla (x1, y1, x2, y2) da região a mascarar (logo/marca d'água)
     """
     print("=" * 70)
     print("MP4 TO ATLAS - Converte vídeo para sprite atlas com transparência")
@@ -251,6 +270,8 @@ def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_di
     print(f"Saída: {output_name}_atlas.png/json")
     print(f"Tolerância de fundo: {threshold}")
     print(f"Máximo de frames: {max_frames}")
+    if mask_region:
+        print(f"Máscara (logo): {mask_region}")
     print("=" * 70)
     
     # Verificar se ffmpeg está disponível
@@ -269,8 +290,8 @@ def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_di
     if not frames_dir:
         return None
     
-    # Step 2: Remover fundo
-    remove_background_from_frames(frames_dir, threshold)
+    # Step 2: Remover fundo (e máscara se especificada)
+    remove_background_from_frames(frames_dir, threshold, mask_region)
     
     # Step 3: Criar atlas
     result = create_atlas_from_frames(frames_dir, output_name, output_dir)
@@ -296,15 +317,19 @@ if __name__ == "__main__":
         print("=" * 70)
         print("MP4 TO ATLAS - Converte vídeo para sprite atlas com transparência")
         print("=" * 70)
-        print("\nUso: python mp4-to-atlas.py <video.mp4> <output_name> [tolerancia] [max_frames]")
+        print("\nUso: python mp4-to-atlas.py <video.mp4> <output_name> [tolerancia] [max_frames] [--mask x1,y1,x2,y2]")
         print("\nExemplos:")
         print("  python mp4-to-atlas.py fogo.mp4 fogo")
         print("  python mp4-to-atlas.py efeito.mp4 efeito 30 20")
+        print("  python mp4-to-atlas.py ghost.mp4 ghost 30 20 --mask 700,400,864,480")
         print("\nParâmetros:")
         print("  video.mp4   : Vídeo de entrada")
         print("  output_name : Nome base para os arquivos de saída")
         print("  tolerancia  : Tolerância de cor para remoção de fundo (padrão: 30)")
         print("  max_frames  : Número máximo de frames no atlas (padrão: 20)")
+        print("  --mask x1,y1,x2,y2 : Região retangular a mascarar (logo/marca d'água)")
+        print("\nPara selecionar a região da logo interativamente:")
+        print("  python select-mask-region.py video.mp4")
         print("\nRequisitos:")
         print("  - ffmpeg instalado e no PATH")
         print("  - Pillow (pip install Pillow)")
@@ -314,17 +339,34 @@ if __name__ == "__main__":
         output_name = sys.argv[2]
         
         threshold = 30
-        if len(sys.argv) > 3:
-            try:
-                threshold = int(sys.argv[3])
-            except ValueError:
-                print(f"Aviso: Tolerância '{sys.argv[3]}' inválida. Usando padrão 30.")
-        
         max_frames = 20
-        if len(sys.argv) > 4:
-            try:
-                max_frames = int(sys.argv[4])
-            except ValueError:
-                print(f"Aviso: Max frames '{sys.argv[4]}' inválido. Usando padrão 20.")
+        mask_region = None
         
-        mp4_to_atlas(video_path, output_name, threshold, max_frames)
+        # Parse argumentos posicionais e opcionais
+        args = sys.argv[3:]
+        i = 0
+        while i < len(args):
+            if args[i] == '--mask' and i + 1 < len(args):
+                try:
+                    coords = args[i + 1].split(',')
+                    mask_region = (int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3]))
+                    print(f"Máscara configurada: {mask_region}")
+                except (ValueError, IndexError):
+                    print(f"Aviso: Formato de máscara inválido '{args[i + 1]}'. Use: x1,y1,x2,y2")
+                i += 2
+            else:
+                # Argumentos posicionais: threshold e max_frames
+                if i == 0:
+                    try:
+                        threshold = int(args[i])
+                    except ValueError:
+                        print(f"Aviso: Tolerância '{args[i]}' inválida. Usando padrão 30.")
+                elif i == 1:
+                    try:
+                        max_frames = int(args[i])
+                    except ValueError:
+                        print(f"Aviso: Max frames '{args[i]}' inválido. Usando padrão 20.")
+                i += 1
+        
+        mp4_to_atlas(video_path, output_name, threshold, max_frames, mask_region=mask_region)
+
