@@ -6019,7 +6019,7 @@
             console.log(`  -> hypoHit = ${hypoHit ? `(${hypoHit.x.toFixed(1)},${hypoHit.y.toFixed(1)})` : 'NULL'}`);
 
             if (hypoHit) {
-                const reflectedDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX, entryEdge.index);
+                const reflectedDir = calculateReflectionPreview(currentDir, prism.rotation, prism.flipX, entryEdge.index, vertices);
                 console.log(`  -> bateu hipotenusa! reflectedDir=${reflectedDir.toFixed(1)}°`);
 
                 // Calcular ponto de saída pela outra face reta
@@ -6048,8 +6048,8 @@
 
                 if (exitHit) {
                     const totalDist = entryDist +
-                                    Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y) +
-                                    Math.hypot(exitHit.x - hypoHit.x, exitHit.y - hypoHit.y);
+                        Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y) +
+                        Math.hypot(exitHit.x - hypoHit.x, exitHit.y - hypoHit.y);
 
                     console.log(`  -> exitHit = (${exitHit.x.toFixed(1)},${exitHit.y.toFixed(1)})`);
 
@@ -6073,24 +6073,69 @@
             };
         }
 
-        function calculateReflectionPreview(incomingDir, prismRotation, flipX, entryEdgeIndex = 0) {
-            // Simplificação: para um prisma triangular retângulo (45-45-90),
-            // quando a luz entra por uma face reta e bate na hipotenusa, sempre reflete 90°
+        function calculateReflectionPreview(incomingDir, prismRotation, flipX, entryEdgeIndex = 0, vertices = null) {
+            // Usar a geometria real do prisma para calcular a reflexão correta
+            if (vertices && vertices.length >= 3) {
+                // Hipotenusa: de vertices[1] para vertices[2]
+                const hypoStart = vertices[1];
+                const hypoEnd = vertices[2];
 
-            // Determinar orientação da hipotenusa baseado na rotação e flip
-            // Hipotenusa base (rot=0, no flip) vai de (-30,-30) para (30,30) → diagonal \
+                // Vetor da hipotenusa
+                const hypoVecX = hypoEnd.x - hypoStart.x;
+                const hypoVecY = hypoEnd.y - hypoStart.y;
 
-            // Calcular o ângulo da hipotenusa
-            let hypoAngle = 45 + prismRotation; // diagonal base a 45°
+                // Normal da hipotenusa (perpendicular, apontando para dentro do prisma)
+                const centerX = (vertices[0].x + vertices[1].x + vertices[2].x) / 3;
+                const centerY = (vertices[0].y + vertices[1].y + vertices[2].y) / 3;
+                const midHypoX = (hypoStart.x + hypoEnd.x) / 2;
+                const midHypoY = (hypoStart.y + hypoEnd.y) / 2;
 
-            if (flipX) {
-                // Flip horizontal inverte o ângulo: 45° vira 135°, etc
-                hypoAngle = 180 - (45 + prismRotation);
+                // Normal perpendicular ao vetor da hipotenusa
+                let normalX = -hypoVecY;
+                let normalY = hypoVecX;
+
+                // Verificar se a normal aponta para o centro do prisma (para dentro)
+                const toCenterX = centerX - midHypoX;
+                const toCenterY = centerY - midHypoY;
+                const dotToCenter = normalX * toCenterX + normalY * toCenterY;
+
+                // Se não aponta para o centro, inverter
+                if (dotToCenter < 0) {
+                    normalX = -normalX;
+                    normalY = -normalY;
+                }
+
+                // Normalizar
+                const normalLen = Math.sqrt(normalX * normalX + normalY * normalY);
+                normalX /= normalLen;
+                normalY /= normalLen;
+
+                // Vetor de direção do raio incidente
+                const incidentRad = incomingDir * Math.PI / 180;
+                const incidentX = Math.cos(incidentRad);
+                const incidentY = Math.sin(incidentRad);
+
+                // Fórmula de reflexão: R = I - 2*(I·N)*N
+                const dotIN = incidentX * normalX + incidentY * normalY;
+                const reflectedX = incidentX - 2 * dotIN * normalX;
+                const reflectedY = incidentY - 2 * dotIN * normalY;
+
+                // Calcular ângulo de saída
+                let outDir = Math.atan2(reflectedY, reflectedX) * 180 / Math.PI;
+                outDir = ((outDir % 360) + 360) % 360;
+
+                console.log(`    calculateReflection (vetorial): in=${incomingDir.toFixed(1)}°, out=${outDir.toFixed(1)}°`);
+
+                return outDir;
             }
 
+            // Fallback: usar fórmula de espelho
+            let hypoAngle = 45 + prismRotation;
+            if (flipX) {
+                hypoAngle = 180 - (45 + prismRotation);
+            }
             hypoAngle = ((hypoAngle % 360) + 360) % 360;
 
-            // Fórmula geral para espelho a 45°: outDir = 2 * hypoAngle - incomingDir
             let outDir = 2 * hypoAngle - incomingDir;
             outDir = ((outDir % 360) + 360) % 360;
 
@@ -6513,7 +6558,7 @@
             );
 
             if (hypoHit) {
-                const reflectedDir = calcReflectionSVG(currentDir, rotation, flipX, entryEdge.index);
+                const reflectedDir = calcReflectionSVG(currentDir, rotation, flipX, entryEdge.index, vertices);
                 return {
                     point: hypoHit,
                     distance: entryDist + Math.hypot(hypoHit.x - entryHit.x, hypoHit.y - entryHit.y),
@@ -6528,14 +6573,58 @@
             };
         }
 
-        function calcReflectionSVG(inDir, prismRotation, flipX, entryEdgeIndex = 0) {
-            // A reflexão na hipotenusa faz o raio sair pela outra face reta
+        function calcReflectionSVG(inDir, prismRotation, flipX, entryEdgeIndex = 0, vertices = null) {
+            // Usar a geometria real do prisma para calcular a reflexão correta
+            if (vertices && vertices.length >= 3) {
+                // Hipotenusa: de vertices[1] para vertices[2]
+                const hypoStart = vertices[1];
+                const hypoEnd = vertices[2];
+
+                // Vetor da hipotenusa
+                const hypoVecX = hypoEnd.x - hypoStart.x;
+                const hypoVecY = hypoEnd.y - hypoStart.y;
+
+                // Normal da hipotenusa (perpendicular, apontando para dentro do prisma)
+                const centerX = (vertices[0].x + vertices[1].x + vertices[2].x) / 3;
+                const centerY = (vertices[0].y + vertices[1].y + vertices[2].y) / 3;
+                const midHypoX = (hypoStart.x + hypoEnd.x) / 2;
+                const midHypoY = (hypoStart.y + hypoEnd.y) / 2;
+
+                let normalX = -hypoVecY;
+                let normalY = hypoVecX;
+
+                const toCenterX = centerX - midHypoX;
+                const toCenterY = centerY - midHypoY;
+                const dotToCenter = normalX * toCenterX + normalY * toCenterY;
+
+                if (dotToCenter < 0) {
+                    normalX = -normalX;
+                    normalY = -normalY;
+                }
+
+                const normalLen = Math.sqrt(normalX * normalX + normalY * normalY);
+                normalX /= normalLen;
+                normalY /= normalLen;
+
+                const incidentRad = inDir * Math.PI / 180;
+                const incidentX = Math.cos(incidentRad);
+                const incidentY = Math.sin(incidentRad);
+
+                // Fórmula de reflexão: R = I - 2*(I·N)*N
+                const dotIN = incidentX * normalX + incidentY * normalY;
+                const reflectedX = incidentX - 2 * dotIN * normalX;
+                const reflectedY = incidentY - 2 * dotIN * normalY;
+
+                let outDir = Math.atan2(reflectedY, reflectedX) * 180 / Math.PI;
+                return ((outDir % 360) + 360) % 360;
+            }
+
+            // Fallback
             let normalizedIn = Math.round(inDir / 90) * 90;
             normalizedIn = ((normalizedIn % 360) + 360) % 360;
 
             let effectiveRotation = flipX ? (360 - prismRotation) % 360 : prismRotation;
 
-            // Determinar se gira +90 ou -90 baseado na face de entrada
             let turnDirection;
             if (entryEdgeIndex === 0) {
                 turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? -90 : 90;
