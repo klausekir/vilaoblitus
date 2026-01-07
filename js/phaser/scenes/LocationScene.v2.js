@@ -2454,6 +2454,8 @@ class LocationScene extends Phaser.Scene {
         const { points, speed = 50, mode = 'loop' } = waypointConfig;
         const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
 
+        console.log(`[Waypoints] Config: speed=${speed}, mode=${mode}, bg=[${bgWidth}x${bgHeight} at ${bgX},${bgY}]`);
+
         let currentIndex = 0;
         let direction = 1; // 1 = forward, -1 = backward (for pingpong)
 
@@ -2462,6 +2464,8 @@ class LocationScene extends Phaser.Scene {
             x: bgX + (p.x / 100) * bgWidth,
             y: bgY + (p.y / 100) * bgHeight
         }));
+
+        console.log(`[Waypoints] World Points:`, worldPoints);
 
         const moveToNextWaypoint = () => {
             // Verificar se sprite ainda existe
