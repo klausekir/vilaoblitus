@@ -108,7 +108,8 @@ class DatabaseLoader {
                             shadowBlur: parseFloat(h.shadow_blur) || 0,
                             shadowOffsetX: parseFloat(h.shadow_offset_x) || 0,
                             shadowOffsetY: parseFloat(h.shadow_offset_y) || 0
-                        }
+                        },
+                        waypoints: h.waypoints || null  // ✅ Waypoints para animação de caminho
                     });
                 } else {
                     // Este é um hotspot de navegação/interação

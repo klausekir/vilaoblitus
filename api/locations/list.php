@@ -125,6 +125,7 @@ try {
                 h.arrow_direction,
                 h.zoom_direction,
                 h.corners,
+                h.waypoints,
                 i.image as item_image
             FROM hotspots h
             LEFT JOIN items i ON h.item_id = i.id AND h.type = 'item'
@@ -145,6 +146,11 @@ try {
             // Parse interaction_data if present
             if ($hotspot['interaction_data']) {
                 $hotspot['interaction_data'] = json_decode($hotspot['interaction_data'], true);
+            }
+            
+            // Parse waypoints JSON if present
+            if (!empty($hotspot['waypoints'])) {
+                $hotspot['waypoints'] = json_decode($hotspot['waypoints'], true);
             }
         }
 
