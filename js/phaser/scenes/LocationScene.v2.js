@@ -652,20 +652,19 @@ class LocationScene extends Phaser.Scene {
                             }, 1500);
                         }
 
-                        // Executar ação de desbloqueio
-                        if (puzzle.onUnlockedAction) {
-                            setTimeout(() => {
-                                this.handlePuzzleUnlockedAction(puzzle);
-                            }, 2000);
-                        }
+                        // NÃO executar ação de desbloqueio automaticamente
+                        // O jogador deve clicar na imagem resolvida para navegar
                     }
                 };
 
                 this.puzzleManager.createPuzzle(puzzleConfig);
             }
 
-            // Prism puzzle não precisa de visual sprite separado - retorna aqui
-            return;
+            // Prism puzzle: se não tem visual configurado, retorna aqui
+            // Se tem visual, continua para renderizar (ex: porta/imagem que muda)
+            if (!puzzle.visual) {
+                return;
+            }
         }
 
         if (!puzzle || !puzzle.visual) {

@@ -678,11 +678,23 @@ class PrismLightPuzzleInScene {
             gameStateManager.solvePuzzle(this.config.id);
         }
 
+        // Chamar callback onSolved da LocationScene (que atualiza o visual)
         if (this.config.onSolved) this.config.onSolved();
 
+        // Dropar recompensa se houver
         if (this.config.reward) {
             this.scene.time.delayedCall(2000, () => this.dropReward());
         }
+
+        // Destruir elementos do puzzle após um delay para dar tempo de ver o sucesso
+        this.scene.time.delayedCall(1500, () => {
+            this.destroy();
+
+            // Forçar re-render do puzzle visual (afterImage)
+            if (this.scene.renderPuzzle) {
+                this.scene.renderPuzzle();
+            }
+        });
     }
 
     dropReward() {
