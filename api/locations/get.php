@@ -71,7 +71,8 @@ try {
             display_image,
             interaction_data,
             arrow_direction,
-            zoom_direction
+            zoom_direction,
+            waypoints
         FROM hotspots
         WHERE location_id = ?
         ORDER BY type, id
@@ -89,6 +90,11 @@ try {
         // Parse interaction_data if present
         if ($hotspot['interaction_data']) {
             $hotspot['interaction_data'] = json_decode($hotspot['interaction_data'], true);
+        }
+
+        // Parse waypoints JSON if present
+        if (!empty($hotspot['waypoints'])) {
+            $hotspot['waypoints'] = json_decode($hotspot['waypoints'], true);
         }
     }
 

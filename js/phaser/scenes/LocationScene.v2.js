@@ -2411,6 +2411,16 @@ class LocationScene extends Phaser.Scene {
 
             this.items.push({ sprite: element, data: item });
 
+            // [DEBUG] Log para verificar dados
+            if (item.id && item.id.includes('ghost')) {
+                console.log(`[Waypoints DEBUG] Item ${item.id}`, {
+                    hasWaypoints: !!item.waypoints,
+                    enabled: item.waypoints?.enabled,
+                    pointsLen: item.waypoints?.points?.length,
+                    data: item.waypoints
+                });
+            }
+
             // ✅ Iniciar animação de waypoints se configurada
             if (element && item.waypoints && item.waypoints.enabled && item.waypoints.points?.length > 0) {
                 console.log(`[Waypoints] Starting for ${item.id} with ${item.waypoints.points.length} points`);
