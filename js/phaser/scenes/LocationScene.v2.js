@@ -754,28 +754,28 @@ class LocationScene extends Phaser.Scene {
             height: displayHeight
         };
 
-        if (puzzle.type && puzzle.type !== 'item_combination' && puzzle.type !== 'prism_light') {
-            // ✅ Prisma visual não deve ter cursor de "clicável" (mãozinha), pois o jogador interage arrastando coisas ou clicando especificamente
-            const useHandCursor = puzzle.type !== 'prism_light';
-            this.puzzleSprite.setInteractive({ useHandCursor: useHandCursor });
+        if (puzzle.type && puzzle.type !== 'item_combination') {
 
-            // Forçar default cursor se necessário
-            if (!useHandCursor && this.puzzleSprite.input) {
-                this.puzzleSprite.input.cursor = 'default';
-            }
+            if (puzzle.type === 'prism_light') {
+                // ✅ Prisma: Interativo (bloqueia clique no background) mas SEM Hand Cursor e SEM ação
+                this.puzzleSprite.setInteractive({ useHandCursor: false });
+                if (this.puzzleSprite.input) this.puzzleSprite.input.cursor = 'default';
+            } else {
+                // Outros puzzles: Interativos com Hand Cursor e Ação
+                this.puzzleSprite.setInteractive({ useHandCursor: true });
 
-            this.puzzleSprite.on('pointerdown', () => {
-                if (gameStateManager.isPuzzleSolved(puzzle.id)) {
-                    // ✅ TODOS os puzzles podem ter ação ao clicar quando resolvidos
-                    if (puzzle.onUnlockedAction) {
-                        this.handlePuzzleUnlockedAction(puzzle);
-                    } else {
-                        uiManager.showNotification('Este enigma já foi resolvido.');
+                this.puzzleSprite.on('pointerdown', () => {
+                    if (gameStateManager.isPuzzleSolved(puzzle.id)) {
+                        if (puzzle.onUnlockedAction) {
+                            this.handlePuzzleUnlockedAction(puzzle);
+                        } else {
+                            uiManager.showNotification('Este enigma já foi resolvido.');
+                        }
+                        return;
                     }
-                    return;
-                }
-                this.promptPuzzleInteraction(puzzle.id);
-            });
+                    this.promptPuzzleInteraction(puzzle.id);
+                });
+            }
         }
 
         // 🔍 DEBUG: Sempre logar info do puzzle
