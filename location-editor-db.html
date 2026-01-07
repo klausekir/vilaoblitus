@@ -2645,7 +2645,82 @@
                 itemEl.appendChild(label);
                 itemEl.addEventListener('mousedown', startDragItem);
 
-                // ✅ Adicionar resize handles (vértices) quando item está selecionado
+
+                // ✅ Adicionar visualização de Waypoints (se habilitado e selecionado)
+                if (isSelected && item.waypoints && item.waypoints.enabled && item.waypoints.points && item.waypoints.points.length > 0) {
+                    const points = item.waypoints.points;
+
+                    // Desenhar linhas conectando os pontos
+                    const svgContainer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svgContainer.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        pointer-events: none;
+                        z-index: 90;
+                    `;
+
+                    // Adicionar posição atual do item como ponto inicial se não houver pontos
+                    const allPoints = [item.position, ...points];
+
+                    let pathD = `M ${allPoints[0].x} ${allPoints[0].y}`;
+                    allPoints.slice(1).forEach(p => {
+                        pathD += ` L ${p.x} ${p.y}`;
+                    });
+
+                    if (item.waypoints.mode === 'loop') {
+                        pathD += ` Z`; // Fechar loop
+                    }
+
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute("d", pathD);
+                    path.setAttribute("stroke", "#ff9800");
+                    path.setAttribute("stroke-width", "2");
+                    path.setAttribute("fill", "none");
+                    path.setAttribute("stroke-dasharray", "5,5");
+                    path.setAttribute("vector-effect", "non-scaling-stroke"); // Manter espessura constante
+                    svgContainer.appendChild(path);
+
+                    // Ajustar viewBox para usar porcentagens (0-100)
+                    svgContainer.setAttribute("viewBox", "0 0 100 100");
+                    svgContainer.setAttribute("preserveAspectRatio", "none");
+
+                    container.appendChild(svgContainer);
+
+                    // Desenhar marcadores para cada ponto
+                    points.forEach((p, i) => {
+                        const marker = document.createElement('div');
+                        marker.textContent = i + 1;
+                        marker.style.cssText = `
+                            position: absolute;
+                            left: ${p.x}%;
+                            top: ${p.y}%;
+                            width: 20px;
+                            height: 20px;
+                            background: #ff9800;
+                            color: white;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 10px;
+                            font-weight: bold;
+                            transform: translate(-50%, -50%);
+                            z-index: 95;
+                            cursor: pointer;
+                            border: 2px solid white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                        `;
+                        marker.title = `Waypoint ${i + 1}`;
+
+                        // Permitir arrastar waypoint (futura melhoria, por enquanto visualizacao)
+
+                        container.appendChild(marker);
+                    });
+                }
+
                 if (isSelected) {
                     const handles = ['nw', 'ne', 'sw', 'se'];
                     handles.forEach(handle => {

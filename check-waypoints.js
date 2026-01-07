@@ -36,11 +36,9 @@ async function checkWaypoints() {
         } else {
             console.log(`✅ Encontrados ${rows.length} hotspots com waypoints:\n`);
             rows.forEach(row => {
-                console.log(`ID: ${row.id}`);
-                console.log(`  Location: ${row.location_id}`);
-                console.log(`  Item: ${row.item_id}`);
-                console.log(`  Waypoints: ${row.waypoints}`);
-                console.log('');
+                console.log(`[ID: ${row.id}] Location: ${row.location_id} | Item: ${row.item_id}`);
+                console.log('Waypoints:', JSON.stringify(JSON.parse(row.waypoints), null, 2));
+                console.log('-------------------');
             });
         }
 
