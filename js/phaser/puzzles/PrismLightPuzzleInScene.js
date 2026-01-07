@@ -514,7 +514,7 @@ class PrismLightPuzzleInScene {
             // Reflexão interna na hipotenusa: gira 90°
             // A direção de saída depende de qual face reta o raio entrou
             // entryEdge.index: 0 = face reta vertical, 2 = face reta horizontal
-            const reflectedDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX, entryEdge.index);
+            const reflectedDir = this.calculateReflection(currentDir, slot.rotation, slot.flipX, entryEdge.index, slot);
 
             return {
                 point: hypoHit,
@@ -531,26 +531,82 @@ class PrismLightPuzzleInScene {
         };
     }
 
-    calculateReflection(incomingDir, prismRotation, flipX, entryEdgeIndex = 0) {
-        // A reflexão na hipotenusa faz o raio sair pela outra face reta
-        // Isso significa um giro de 90° na direção correta
+    calculateReflection(incomingDir, prismRotation, flipX, entryEdgeIndex = 0, slot = null) {
+        // Usar a geometria real do prisma para calcular a reflexão correta
+        // A hipotenusa conecta vertices[1] a vertices[2]
 
+        if (slot && slot.transformedVertices && slot.transformedVertices.length >= 3) {
+            const vertices = slot.transformedVertices;
+            // Hipotenusa: de vertices[1] para vertices[2]
+            const hypoStart = vertices[1];
+            const hypoEnd = vertices[2];
+
+            // Vetor da hipotenusa
+            const hypoVecX = hypoEnd.x - hypoStart.x;
+            const hypoVecY = hypoEnd.y - hypoStart.y;
+
+            // Normal da hipotenusa (perpendicular, apontando para dentro do prisma)
+            // Para um triângulo com vértice 90° em vertices[0], a normal aponta "para fora" do triângulo
+            // Precisamos a normal que aponta para o centro do triângulo (reflexão interna)
+            const centerX = (vertices[0].x + vertices[1].x + vertices[2].x) / 3;
+            const centerY = (vertices[0].y + vertices[1].y + vertices[2].y) / 3;
+            const midHypoX = (hypoStart.x + hypoEnd.x) / 2;
+            const midHypoY = (hypoStart.y + hypoEnd.y) / 2;
+
+            // Normal perpendicular ao vetor da hipotenusa
+            let normalX = -hypoVecY;
+            let normalY = hypoVecX;
+
+            // Verificar se a normal aponta para o centro do prisma (para dentro)
+            const toCenterX = centerX - midHypoX;
+            const toCenterY = centerY - midHypoY;
+            const dotToCenter = normalX * toCenterX + normalY * toCenterY;
+
+            // Se não aponta para o centro, inverter
+            if (dotToCenter < 0) {
+                normalX = -normalX;
+                normalY = -normalY;
+            }
+
+            // Normalizar
+            const normalLen = Math.sqrt(normalX * normalX + normalY * normalY);
+            normalX /= normalLen;
+            normalY /= normalLen;
+
+            // Vetor de direção do raio incidente
+            const incidentRad = incomingDir * Math.PI / 180;
+            const incidentX = Math.cos(incidentRad);
+            const incidentY = Math.sin(incidentRad);
+
+            // Fórmula de reflexão: R = I - 2*(I·N)*N
+            const dotIN = incidentX * normalX + incidentY * normalY;
+            const reflectedX = incidentX - 2 * dotIN * normalX;
+            const reflectedY = incidentY - 2 * dotIN * normalY;
+
+            // Calcular ângulo de saída
+            let outDir = Math.atan2(reflectedY, reflectedX) * 180 / Math.PI;
+            outDir = ((outDir % 360) + 360) % 360;
+
+            console.log('[PrismInScene] Reflexão calculada:', {
+                incomingDir: incomingDir.toFixed(1),
+                normal: { x: normalX.toFixed(2), y: normalY.toFixed(2) },
+                outDir: outDir.toFixed(1)
+            });
+
+            return outDir;
+        }
+
+        // Fallback: usar método antigo se não tiver geometria
         let normalizedIn = Math.round(incomingDir / 90) * 90;
         normalizedIn = ((normalizedIn % 360) + 360) % 360;
 
-        // Calcular a orientação efetiva do prisma
         let effectiveRotation = prismRotation;
         if (flipX) effectiveRotation = (360 - prismRotation) % 360;
 
-        // Determinar se gira +90 ou -90 baseado na face de entrada e orientação
-        // entryEdgeIndex 0 = face reta 1, entryEdgeIndex 2 = face reta 2
         let turnDirection;
-
         if (entryEdgeIndex === 0) {
-            // Entrou pela primeira face reta
             turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? -90 : 90;
         } else {
-            // Entrou pela segunda face reta
             turnDirection = (effectiveRotation === 0 || effectiveRotation === 180) ? 90 : -90;
         }
 
