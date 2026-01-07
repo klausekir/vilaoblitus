@@ -1,0 +1,412 @@
+{
+  "frames": {
+    ".\\ghost_atlas.png_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_1": {
+      "frame": {
+        "x": 864,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_2": {
+      "frame": {
+        "x": 1728,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_3": {
+      "frame": {
+        "x": 2592,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_4": {
+      "frame": {
+        "x": 3456,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_5": {
+      "frame": {
+        "x": 0,
+        "y": 480,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_6": {
+      "frame": {
+        "x": 864,
+        "y": 480,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_7": {
+      "frame": {
+        "x": 1728,
+        "y": 480,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_8": {
+      "frame": {
+        "x": 2592,
+        "y": 480,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_9": {
+      "frame": {
+        "x": 3456,
+        "y": 480,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_10": {
+      "frame": {
+        "x": 0,
+        "y": 960,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_11": {
+      "frame": {
+        "x": 864,
+        "y": 960,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_12": {
+      "frame": {
+        "x": 1728,
+        "y": 960,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_13": {
+      "frame": {
+        "x": 2592,
+        "y": 960,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_14": {
+      "frame": {
+        "x": 3456,
+        "y": 960,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_15": {
+      "frame": {
+        "x": 0,
+        "y": 1440,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_16": {
+      "frame": {
+        "x": 864,
+        "y": 1440,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_17": {
+      "frame": {
+        "x": 1728,
+        "y": 1440,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_18": {
+      "frame": {
+        "x": 2592,
+        "y": 1440,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    },
+    ".\\ghost_atlas.png_19": {
+      "frame": {
+        "x": 3456,
+        "y": 1440,
+        "w": 864,
+        "h": 480
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 864,
+        "h": 480
+      },
+      "sourceSize": {
+        "w": 864,
+        "h": 480
+      }
+    }
+  },
+  "meta": {
+    "image": ".\\ghost_atlas.png_atlas.png",
+    "size": {
+      "w": 4320,
+      "h": 1920
+    },
+    "scale": "1"
+  }
+}
