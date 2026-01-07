@@ -172,6 +172,72 @@ def remove_background_from_frames(frames_dir, threshold=30, mask_region=None):
             print(f"  Processados {i + 1}/{len(frames)} frames...")
 
 
+def apply_pingpong(frames_dir):
+    """
+    Duplica os frames em ordem reversa para criar efeito vai-e-volta (ping-pong).
+    Ex: frames 0,1,2,3 viram 0,1,2,3,2,1 (sem repetir primeiro e último)
+    """
+    frames = sorted([f for f in os.listdir(frames_dir) if f.endswith('.png')])
+    
+    if len(frames) < 2:
+        print("Poucos frames para aplicar pingpong")
+        return
+    
+    print(f"\nAplicando efeito ping-pong (vai e volta)...")
+    print(f"  Frames originais: {len(frames)}")
+    
+    # Copiar frames do meio em ordem reversa (excluindo primeiro e último para evitar "pause")
+    frames_to_copy = frames[1:-1][::-1]  # Reverso, sem primeiro e último
+    
+    original_count = len(frames)
+    
+    for i, frame_file in enumerate(frames_to_copy):
+        src_path = os.path.join(frames_dir, frame_file)
+        new_index = original_count + i
+        dst_path = os.path.join(frames_dir, f'frame_{new_index:04d}.png')
+        
+        # Copiar frame
+        img = Image.open(src_path)
+        img.save(dst_path)
+    
+    total = original_count + len(frames_to_copy)
+    print(f"  Frames adicionados: {len(frames_to_copy)}")
+    print(f"  Total final: {total} frames")
+
+
+def apply_mirror(frames_dir):
+    """
+    Duplica os frames espelhados horizontalmente para animações de ida e volta.
+    Ex: personagem andando para direita, depois andando para esquerda (espelhado).
+    """
+    from PIL import ImageOps
+    
+    frames = sorted([f for f in os.listdir(frames_dir) if f.endswith('.png')])
+    
+    if not frames:
+        print("Nenhum frame para espelhar")
+        return
+    
+    print(f"\nAplicando espelhamento horizontal...")
+    print(f"  Frames originais: {len(frames)}")
+    
+    original_count = len(frames)
+    
+    for i, frame_file in enumerate(frames):
+        src_path = os.path.join(frames_dir, frame_file)
+        new_index = original_count + i
+        dst_path = os.path.join(frames_dir, f'frame_{new_index:04d}.png')
+        
+        # Carregar e espelhar horizontalmente
+        img = Image.open(src_path)
+        mirrored = ImageOps.mirror(img)
+        mirrored.save(dst_path)
+    
+    total = original_count * 2
+    print(f"  Frames espelhados: {original_count}")
+    print(f"  Total final: {total} frames")
+
+
 def create_atlas_from_frames(frames_dir, output_name, output_dir='images/objects'):
     """
     Cria um atlas PNG + JSON a partir dos frames processados.
@@ -256,12 +322,14 @@ def create_atlas_from_frames(frames_dir, output_name, output_dir='images/objects
     }
 
 
-def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_dir='images/objects', mask_region=None):
+def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_dir='images/objects', mask_region=None, pingpong=False, mirror=False):
     """
     Pipeline completo: MP4 -> Frames -> Remove fundo -> Atlas PNG + JSON
     
     Args:
         mask_region: Tupla (x1, y1, x2, y2) da região a mascarar (logo/marca d'água)
+        pingpong: Se True, duplica frames em ordem reversa (vai e volta)
+        mirror: Se True, duplica frames espelhados horizontalmente
     """
     print("=" * 70)
     print("MP4 TO ATLAS - Converte vídeo para sprite atlas com transparência")
@@ -272,6 +340,10 @@ def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_di
     print(f"Máximo de frames: {max_frames}")
     if mask_region:
         print(f"Máscara (logo): {mask_region}")
+    if pingpong:
+        print("Modo: Ping-pong (vai e volta)")
+    if mirror:
+        print("Modo: Mirror (espelhado)")
     print("=" * 70)
     
     # Verificar se ffmpeg está disponível
@@ -293,7 +365,13 @@ def mp4_to_atlas(video_path, output_name, threshold=30, max_frames=20, output_di
     # Step 2: Remover fundo (e máscara se especificada)
     remove_background_from_frames(frames_dir, threshold, mask_region)
     
-    # Step 3: Criar atlas
+    # Step 3: Aplicar efeito pingpong ou mirror se solicitado
+    if pingpong:
+        apply_pingpong(frames_dir)
+    elif mirror:
+        apply_mirror(frames_dir)
+    
+    # Step 4: Criar atlas
     result = create_atlas_from_frames(frames_dir, output_name, output_dir)
     
     # Limpar arquivos temporários
@@ -317,17 +395,22 @@ if __name__ == "__main__":
         print("=" * 70)
         print("MP4 TO ATLAS - Converte vídeo para sprite atlas com transparência")
         print("=" * 70)
-        print("\nUso: python mp4-to-atlas.py <video.mp4> <output_name> [tolerancia] [max_frames] [--mask x1,y1,x2,y2]")
+        print("\nUso: python mp4-to-atlas.py <video.mp4> <output_name> [tolerancia] [max_frames] [opções]")
         print("\nExemplos:")
         print("  python mp4-to-atlas.py fogo.mp4 fogo")
         print("  python mp4-to-atlas.py efeito.mp4 efeito 30 20")
         print("  python mp4-to-atlas.py ghost.mp4 ghost 30 20 --mask 700,400,864,480")
+        print("  python mp4-to-atlas.py ghost.mp4 ghost 30 20 --pingpong")
+        print("  python mp4-to-atlas.py ghost.mp4 ghost 30 20 --mirror")
         print("\nParâmetros:")
         print("  video.mp4   : Vídeo de entrada")
         print("  output_name : Nome base para os arquivos de saída")
         print("  tolerancia  : Tolerância de cor para remoção de fundo (padrão: 30)")
         print("  max_frames  : Número máximo de frames no atlas (padrão: 20)")
+        print("\nOpções:")
         print("  --mask x1,y1,x2,y2 : Região retangular a mascarar (logo/marca d'água)")
+        print("  --pingpong         : Duplica frames em ordem reversa (vai e volta)")
+        print("  --mirror           : Duplica frames espelhados (ida e volta com flip)")
         print("\nPara selecionar a região da logo interativamente:")
         print("  python select-mask-region.py video.mp4")
         print("\nRequisitos:")
@@ -341,10 +424,13 @@ if __name__ == "__main__":
         threshold = 30
         max_frames = 20
         mask_region = None
+        pingpong = False
+        mirror = False
         
         # Parse argumentos posicionais e opcionais
         args = sys.argv[3:]
         i = 0
+        pos_idx = 0  # Índice para argumentos posicionais
         while i < len(args):
             if args[i] == '--mask' and i + 1 < len(args):
                 try:
@@ -354,19 +440,27 @@ if __name__ == "__main__":
                 except (ValueError, IndexError):
                     print(f"Aviso: Formato de máscara inválido '{args[i + 1]}'. Use: x1,y1,x2,y2")
                 i += 2
+            elif args[i] == '--pingpong':
+                pingpong = True
+                i += 1
+            elif args[i] == '--mirror':
+                mirror = True
+                i += 1
             else:
                 # Argumentos posicionais: threshold e max_frames
-                if i == 0:
+                if pos_idx == 0:
                     try:
                         threshold = int(args[i])
                     except ValueError:
                         print(f"Aviso: Tolerância '{args[i]}' inválida. Usando padrão 30.")
-                elif i == 1:
+                elif pos_idx == 1:
                     try:
                         max_frames = int(args[i])
                     except ValueError:
                         print(f"Aviso: Max frames '{args[i]}' inválido. Usando padrão 20.")
+                pos_idx += 1
                 i += 1
         
-        mp4_to_atlas(video_path, output_name, threshold, max_frames, mask_region=mask_region)
+        mp4_to_atlas(video_path, output_name, threshold, max_frames, mask_region=mask_region, pingpong=pingpong, mirror=mirror)
+
 
