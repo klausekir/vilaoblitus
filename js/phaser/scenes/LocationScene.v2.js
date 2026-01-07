@@ -2878,7 +2878,13 @@ class LocationScene extends Phaser.Scene {
             wallSprite.setDisplaySize(width, height);
             wallSprite.setOrigin(0.5);
             wallSprite.setDepth(25); // Acima do background, abaixo de itens
-            wallSprite.setInteractive();
+
+            // ✅ Wall should interaction (drop zone) but NOT show hand cursor "pointer"
+            // User request: "quando mouse aproxima da parede antes, o mouse não pode mudar para clicavel"
+            wallSprite.setInteractive({ useHandCursor: false });
+            if (wallSprite.input) {
+                wallSprite.input.cursor = 'default';
+            }
 
             // Salvar referência
             wallSprite.wallData = wallData;
