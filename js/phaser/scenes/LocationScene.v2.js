@@ -1913,7 +1913,6 @@ class LocationScene extends Phaser.Scene {
                     // Só bloquear se a parede ainda não foi destruída
                     const isDestroyed = gameStateManager.isWallDestroyed(this.currentLocation, wallAtClick.id);
                     if (!isDestroyed) {
-                        console.log('[Hotspot] Bloqueado - parede destrutível na frente:', wallAtClick.id);
                         return;
                     }
                 }
