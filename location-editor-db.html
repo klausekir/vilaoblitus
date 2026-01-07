@@ -3736,17 +3736,24 @@
                 const newWidth = Math.abs(mouseX - centerX) * 2;
                 const newHeight = Math.abs(mouseY - centerY) * 2;
 
+                // CRITICAL: Adjust for container scale (zoom)
+                // rect.width is the SCALED width. container.offsetWidth is the LOGICAL width.
+                const containerScale = rect.width / container.offsetWidth;
+
+                // Convert screen pixels to logical pixels
+                const logicalWidth = newWidth / containerScale;
+                const logicalHeight = newHeight / containerScale;
+
                 if (typeof activeWaypointIndex !== 'undefined' && activeWaypointIndex !== -1) {
-                    // MODO WAYPOINT: Ajustar ESCALA, não tamanho
+                    // MODO WAYPOINT: Ajustar ESCALA relative to base size
                     const baseW = visual.data.size.width;
                     const baseH = visual.data.size.height;
 
-                    // Calcular proporção
-                    const scaleX = Math.max(0.1, newWidth / baseW);
-                    const scaleY = Math.max(0.1, newHeight / baseH);
+                    // Calcular proporção (Logical / Base)
+                    const scaleX = Math.max(0.1, logicalWidth / baseW);
+                    const scaleY = Math.max(0.1, logicalHeight / baseH);
 
-                    // Manter proporção (usar o maior) ou livre?
-                    // Waypoints usam 'scale' único (uniforme) na estrutura de dados atual
+                    // Waypoints usam 'scale' único (uniforme)
                     const scale = Math.max(scaleX, scaleY);
 
                     if (!visual.data.transform) visual.data.transform = cloneDefaultTransform();
@@ -3766,12 +3773,10 @@
                         `skewY(${itemVisual.transform.skewY || 0}deg)`
                     ];
                     resizingItem.style.transform = transforms.join(' ');
-
-                    // Update size in input just for feedback? No, confuses user.
                 } else {
-                    // MODO NORMAL: Ajustar TAMANHO
-                    visual.data.size.width = Math.max(20, Math.round(newWidth));
-                    visual.data.size.height = Math.max(20, Math.round(newHeight));
+                    // MODO NORMAL: Ajustar TAMANHO (Logical pixels)
+                    visual.data.size.width = Math.max(20, Math.round(logicalWidth));
+                    visual.data.size.height = Math.max(20, Math.round(logicalHeight));
 
                     resizingItem.style.width = visual.data.size.width + 'px';
                     resizingItem.style.height = visual.data.size.height + 'px';
