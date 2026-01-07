@@ -1889,6 +1889,16 @@ class LocationScene extends Phaser.Scene {
 
             // Click handler
             zone.on('pointerdown', (pointer) => {
+                // Verificar se há puzzle NÃO RESOLVIDO cobrindo esta área
+                // Isso impede clicar em hotspots "atrás" da parede/puzzle
+                if (this.puzzleHitArea && this.currentPuzzleData) {
+                    const puzzleNotSolved = !gameStateManager.isPuzzleSolved(this.currentPuzzleData.id);
+                    if (puzzleNotSolved && this.isPointInsidePuzzle(pointer.worldX, pointer.worldY)) {
+                        // Clique está na área do puzzle não resolvido - bloquear
+                        return;
+                    }
+                }
+
                 // Verificar se há um dropped item na posição do clique
                 const hasDroppedItemAtPosition = this.droppedItemSprites.some(entry => {
                     if (!entry.sprite) return false;
