@@ -3134,12 +3134,13 @@
         }
 
         // ===== WAYPOINTS FUNCTIONS =====
-        if (!points || points.length === 0) {
-            return '<div style="font-size: 11px; color: #999; padding: 8px; text-align: center;">Nenhum ponto definido</div>';
-        }
+        function renderWaypointsList(points) {
+            if (!points || points.length === 0) {
+                return '<div style="font-size: 11px; color: #999; padding: 8px; text-align: center;">Nenhum ponto definido</div>';
+            }
 
-        // Cabeçalho da tabela
-        const header = `
+            // Cabeçalho da tabela
+            const header = `
                 <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; padding: 0 5px 5px 5px; font-size: 10px; color: #666; font-weight: bold; text-align: center;">
                     <span>#</span>
                     <span>X (%)</span>
@@ -3150,7 +3151,7 @@
                 </div>
             `;
 
-        const rows = points.map((p, i) => `
+            const rows = points.map((p, i) => `
                 <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; align-items: center; background: white; border-radius: 4px; margin-bottom: 4px; padding: 4px;">
                     <span style="font-size: 11px; color: #666; text-align: center;">${i + 1}</span>
                     
@@ -3176,7 +3177,8 @@
                 </div>
             `).join('');
 
-        return header + rows;
+            return header + rows;
+        }
 
         function toggleWaypoints(enabled) {
             const visual = getSelectedVisual();
