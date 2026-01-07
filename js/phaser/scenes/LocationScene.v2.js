@@ -762,8 +762,11 @@ class LocationScene extends Phaser.Scene {
 
             if (puzzle.type === 'prism_light') {
                 // ✅ Prisma: Interativo (bloqueia clique no background) mas SEM Hand Cursor e SEM ação
-                this.puzzleSprite.setInteractive({ useHandCursor: false });
-                if (this.puzzleSprite.input) this.puzzleSprite.input.cursor = 'default';
+                // APENAS SE NÃO ESTIVER RESOLVIDO. Se resolvido, libera cliques para o que estiver atrás.
+                if (!isSolved) {
+                    this.puzzleSprite.setInteractive({ useHandCursor: false });
+                    if (this.puzzleSprite.input) this.puzzleSprite.input.cursor = 'default';
+                }
             } else {
                 // Outros puzzles: Interativos com Hand Cursor e Ação
                 this.puzzleSprite.setInteractive({ useHandCursor: true });
