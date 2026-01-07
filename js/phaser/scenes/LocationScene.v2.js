@@ -755,7 +755,15 @@ class LocationScene extends Phaser.Scene {
         };
 
         if (puzzle.type && puzzle.type !== 'item_combination') {
-            this.puzzleSprite.setInteractive({ useHandCursor: true });
+            // ✅ Prisma visual não deve ter cursor de "clicável" (mãozinha), pois o jogador interage arrastando coisas ou clicando especificamente
+            const useHandCursor = puzzle.type !== 'prism_light';
+            this.puzzleSprite.setInteractive({ useHandCursor: useHandCursor });
+
+            // Forçar default cursor se necessário
+            if (!useHandCursor && this.puzzleSprite.input) {
+                this.puzzleSprite.input.cursor = 'default';
+            }
+
             this.puzzleSprite.on('pointerdown', () => {
                 if (gameStateManager.isPuzzleSolved(puzzle.id)) {
                     // ✅ TODOS os puzzles podem ter ação ao clicar quando resolvidos
@@ -2879,12 +2887,7 @@ class LocationScene extends Phaser.Scene {
             wallSprite.setOrigin(0.5);
             wallSprite.setDepth(25); // Acima do background, abaixo de itens
 
-            // ✅ Wall should interaction (drop zone) but NOT show hand cursor "pointer"
-            // User request: "quando mouse aproxima da parede antes, o mouse não pode mudar para clicavel"
-            wallSprite.setInteractive({ useHandCursor: false });
-            if (wallSprite.input) {
-                wallSprite.input.cursor = 'default';
-            }
+            wallSprite.setInteractive();
 
             // Salvar referência
             wallSprite.wallData = wallData;
