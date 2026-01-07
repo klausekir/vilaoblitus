@@ -3003,12 +3003,171 @@
                     </div>
                 </div>
 
+                ${visual.type === 'item' ? `
+                <div style="margin-bottom: 15px; padding: 10px; background: #fff8e1; border-radius: 6px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #f57c00;">🛤️ Waypoints (Caminho)</label>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+                            <input type="checkbox" id="waypoints-enabled" ${data.waypoints?.enabled ? 'checked' : ''} 
+                                   onchange="toggleWaypoints(this.checked)">
+                            Habilitar animação de caminho
+                        </label>
+                    </div>
+                    
+                    <div id="waypoints-config" style="display: ${data.waypoints?.enabled ? 'block' : 'none'};">
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 11px; color: #666;">Pontos do caminho:</label>
+                            <div id="waypoints-list" style="max-height: 150px; overflow-y: auto; margin: 5px 0;">
+                                ${renderWaypointsList(data.waypoints?.points || [])}
+                            </div>
+                            <button onclick="addWaypoint()" class="btn btn-secondary btn-small" style="width: 100%; margin-top: 5px;">
+                                ➕ Adicionar Ponto
+                            </button>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 11px; color: #666;">Velocidade (px/s)</label>
+                                <input type="number" id="waypoint-speed" value="${data.waypoints?.speed || 50}" min="10" max="300" step="10"
+                                       style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                       onchange="updateWaypointConfig()">
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; color: #666;">Modo</label>
+                                <select id="waypoint-mode" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;"
+                                        onchange="updateWaypointConfig()">
+                                    <option value="loop" ${(data.waypoints?.mode || 'loop') === 'loop' ? 'selected' : ''}>Loop (circular)</option>
+                                    <option value="pingpong" ${data.waypoints?.mode === 'pingpong' ? 'selected' : ''}>Ping-pong (vai e volta)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 11px; color: #805400; line-height: 1.4;">
+                            💡 Cada ponto usa coordenadas % (0-100). Clique no canvas para adicionar pontos automaticamente.
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
                     <button onclick="resetTransforms()" class="btn btn-danger btn-small" style="width: 100%;">
                         🔄 Resetar Transformações
                     </button>
                 </div>
             `;
+        }
+
+        // ===== WAYPOINTS FUNCTIONS =====
+        function renderWaypointsList(points) {
+            if (!points || points.length === 0) {
+                return '<div style="font-size: 11px; color: #999; padding: 8px; text-align: center;">Nenhum ponto definido</div>';
+            }
+
+            return points.map((p, i) => `
+                <div style="display: flex; align-items: center; gap: 6px; padding: 5px; background: white; border-radius: 4px; margin-bottom: 4px;">
+                    <span style="font-size: 11px; color: #666; width: 20px;">${i + 1}.</span>
+                    <input type="number" value="${p.x.toFixed(1)}" step="0.5" min="0" max="100"
+                           style="width: 50px; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;"
+                           onchange="updateWaypointPoint(${i}, 'x', parseFloat(this.value))">
+                    <span style="font-size: 11px; color: #999;">%</span>
+                    <input type="number" value="${p.y.toFixed(1)}" step="0.5" min="0" max="100"
+                           style="width: 50px; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;"
+                           onchange="updateWaypointPoint(${i}, 'y', parseFloat(this.value))">
+                    <span style="font-size: 11px; color: #999;">%</span>
+                    <button onclick="removeWaypoint(${i})" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px;">×</button>
+                </div>
+            `).join('');
+        }
+
+        function toggleWaypoints(enabled) {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item') return;
+
+            if (!visual.data.waypoints) {
+                visual.data.waypoints = {
+                    enabled: false,
+                    points: [],
+                    speed: 50,
+                    mode: 'loop'
+                };
+            }
+
+            visual.data.waypoints.enabled = enabled;
+
+            const configDiv = document.getElementById('waypoints-config');
+            if (configDiv) {
+                configDiv.style.display = enabled ? 'block' : 'none';
+            }
+
+            // Se habilitando e não tem pontos, adicionar posição atual como primeiro ponto
+            if (enabled && visual.data.waypoints.points.length === 0 && visual.data.position) {
+                visual.data.waypoints.points.push({
+                    x: visual.data.position.x,
+                    y: visual.data.position.y
+                });
+                renderTransformControls();
+            }
+
+            autoSave();
+        }
+
+        function addWaypoint() {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item') return;
+
+            if (!visual.data.waypoints) {
+                visual.data.waypoints = { enabled: true, points: [], speed: 50, mode: 'loop' };
+            }
+
+            // Adicionar novo ponto baseado na posição atual ou último ponto
+            const lastPoint = visual.data.waypoints.points.length > 0
+                ? visual.data.waypoints.points[visual.data.waypoints.points.length - 1]
+                : { x: 50, y: 50 };
+
+            visual.data.waypoints.points.push({
+                x: (lastPoint.x + 10) % 100,
+                y: lastPoint.y
+            });
+
+            renderTransformControls();
+            autoSave();
+        }
+
+        function removeWaypoint(index) {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item' || !visual.data.waypoints) return;
+
+            visual.data.waypoints.points.splice(index, 1);
+            renderTransformControls();
+            autoSave();
+        }
+
+        function updateWaypointPoint(index, prop, value) {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item' || !visual.data.waypoints) return;
+
+            if (visual.data.waypoints.points[index]) {
+                visual.data.waypoints.points[index][prop] = value;
+                autoSave();
+            }
+        }
+
+        function updateWaypointConfig() {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item') return;
+
+            if (!visual.data.waypoints) {
+                visual.data.waypoints = { enabled: true, points: [], speed: 50, mode: 'loop' };
+            }
+
+            const speedEl = document.getElementById('waypoint-speed');
+            const modeEl = document.getElementById('waypoint-mode');
+
+            if (speedEl) visual.data.waypoints.speed = parseInt(speedEl.value) || 50;
+            if (modeEl) visual.data.waypoints.mode = modeEl.value;
+
+            autoSave();
         }
 
         function updateWallProperty(prop, value) {
