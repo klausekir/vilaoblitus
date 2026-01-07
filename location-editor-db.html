@@ -3371,26 +3371,42 @@
         }
 
         function jumpToWaypoint(index) {
+            console.log("Jump to waypoint:", index);
             const visual = getSelectedVisual();
             if (!visual || visual.type !== 'item' || !visual.data.waypoints) return;
 
             const point = visual.data.waypoints.points[index];
             if (!point) return;
 
-            // Atualizar propriedades visuais do item
-            visual.data.position.x = point.x;
-            visual.data.position.y = point.y;
+            console.log("Target point:", point);
 
-            if (!visual.data.transform) visual.data.transform = {};
-            visual.data.transform.scaleX = point.scale !== undefined ? point.scale : 1;
-            visual.data.transform.scaleY = point.scale !== undefined ? point.scale : 1;
-            visual.data.transform.rotation = point.rotation !== undefined ? point.rotation : 0;
+            // Atualizar propriedades visuais do item
+            if (point.x !== undefined) visual.data.position.x = parseFloat(point.x);
+            if (point.y !== undefined) visual.data.position.y = parseFloat(point.y);
+
+            if (!visual.data.transform) {
+                visual.data.transform = {
+                    rotation: 0, rotateX: 0, rotateY: 0,
+                    scaleX: 1, scaleY: 1,
+                    skewX: 0, skewY: 0,
+                    flipX: false, flipY: false,
+                    opacity: 1,
+                    shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0
+                };
+            }
+
+            const scale = point.scale !== undefined ? parseFloat(point.scale) : 1;
+            visual.data.transform.scaleX = scale;
+            visual.data.transform.scaleY = scale;
+            visual.data.transform.rotation = point.rotation !== undefined ? parseFloat(point.rotation) : 0;
+
+            console.log("Applied transform:", visual.data.transform);
 
             renderTransformControls();
+
+            // Forçar atualização visual completa
             renderPositionedItems();
-            // Não precisa salvar (autoSave), pois é só visualização temporária, 
-            // mas se o usuário quiser salvar essa posição como "Home", ele pode.
-            // Vou chamar autoSave para persistir que o item "andou" até lá.
+
             autoSave();
         }
 
