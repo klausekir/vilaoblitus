@@ -2500,6 +2500,17 @@ class LocationScene extends Phaser.Scene {
 
             const target = worldPoints[currentIndex];
 
+            // Calcular escala alvo considerando direção (PingPong Mirror)
+            // Se pingpong e voltando (direction = -1), inverte o scaleX
+            const mirrorFactor = (mode === 'pingpong' && direction === -1) ? -1 : 1;
+            const targetScaleX = target.scaleX * mirrorFactor;
+
+            // Flip instantâneo se a direção mudou (para não "girar" / paper-mario)
+            // Verifica se o sinal do scaleX atual é diferente do sinal do alvo
+            if (Math.sign(sprite.scaleX) !== Math.sign(targetScaleX) && Math.abs(targetScaleX) > 0) {
+                sprite.scaleX *= -1;
+            }
+
             // Calcular duração baseada na distância e velocidade
             const distance = Phaser.Math.Distance.Between(
                 sprite.x, sprite.y, target.x, target.y
@@ -2511,7 +2522,7 @@ class LocationScene extends Phaser.Scene {
                 targets: sprite,
                 x: target.x,
                 y: target.y,
-                scaleX: target.scaleX,
+                scaleX: targetScaleX,
                 scaleY: target.scaleY,
                 angle: target.rotation,
                 duration: Math.max(duration, 100), // Mínimo 100ms
