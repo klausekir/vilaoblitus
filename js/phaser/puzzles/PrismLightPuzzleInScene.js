@@ -327,7 +327,15 @@ class PrismLightPuzzleInScene {
     rotatePrism(slot, index) {
         if (this.solved || !slot.filled) return;
 
+        // Girar 90°
         slot.rotation = (slot.rotation + 90) % 360;
+
+        // Quando completa uma volta (voltou a 0°), fazer flip
+        // Assim o jogador pode acessar todas as 8 posições possíveis com cliques simples
+        if (slot.rotation === 0) {
+            slot.flipX = !slot.flipX;
+        }
+
         this.drawPrism(slot);
         this.saveSlotState(slot);
         if (typeof gameStateManager !== 'undefined' && gameStateManager) {
