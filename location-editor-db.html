@@ -2369,8 +2369,8 @@
         function stopRotateItem() {
             if (isRotating) {
                 isRotating = false;
-                window.removeEventListener('mousemove', dragItem);
-                window.removeEventListener('mouseup', stopDragItem);
+                window.removeEventListener('mousemove', rotateItemDrag);
+                window.removeEventListener('mouseup', stopRotateItem);
 
                 // Auto-sync position if editing a waypoint
                 if (typeof activeWaypointIndex !== 'undefined' && activeWaypointIndex !== -1) {
@@ -3732,22 +3732,63 @@
                 ];
                 resizingItem.style.transform = transforms.join(' ');
             } else {
-                // Para items, usar SIZE (comportamento original)
+                // Para items
                 const newWidth = Math.abs(mouseX - centerX) * 2;
                 const newHeight = Math.abs(mouseY - centerY) * 2;
 
-                visual.data.size.width = Math.max(20, Math.round(newWidth));
-                visual.data.size.height = Math.max(20, Math.round(newHeight));
+                if (typeof activeWaypointIndex !== 'undefined' && activeWaypointIndex !== -1) {
+                    // MODO WAYPOINT: Ajustar ESCALA, não tamanho
+                    const baseW = visual.data.size.width;
+                    const baseH = visual.data.size.height;
 
-                resizingItem.style.width = visual.data.size.width + 'px';
-                resizingItem.style.height = visual.data.size.height + 'px';
+                    // Calcular proporção
+                    const scaleX = Math.max(0.1, newWidth / baseW);
+                    const scaleY = Math.max(0.1, newHeight / baseH);
+
+                    // Manter proporção (usar o maior) ou livre?
+                    // Waypoints usam 'scale' único (uniforme) na estrutura de dados atual
+                    const scale = Math.max(scaleX, scaleY);
+
+                    if (!visual.data.transform) visual.data.transform = cloneDefaultTransform();
+                    visual.data.transform.scaleX = scale;
+                    visual.data.transform.scaleY = scale;
+
+                    // Atualizar visualmente (Transform)
+                    const itemVisual = visual.data;
+                    const transforms = [
+                        'translate(-50%, -50%)',
+                        `rotateZ(${itemVisual.transform.rotation || 0}deg)`,
+                        `rotateX(${itemVisual.transform.rotateX || 0}deg)`,
+                        `rotateY(${itemVisual.transform.rotateY || 0}deg)`,
+                        `scaleX(${(itemVisual.transform.scaleX || 1) * (itemVisual.transform.flipX ? -1 : 1)})`,
+                        `scaleY(${(itemVisual.transform.scaleY || 1) * (itemVisual.transform.flipY ? -1 : 1)})`,
+                        `skewX(${itemVisual.transform.skewX || 0}deg)`,
+                        `skewY(${itemVisual.transform.skewY || 0}deg)`
+                    ];
+                    resizingItem.style.transform = transforms.join(' ');
+
+                    // Update size in input just for feedback? No, confuses user.
+                } else {
+                    // MODO NORMAL: Ajustar TAMANHO
+                    visual.data.size.width = Math.max(20, Math.round(newWidth));
+                    visual.data.size.height = Math.max(20, Math.round(newHeight));
+
+                    resizingItem.style.width = visual.data.size.width + 'px';
+                    resizingItem.style.height = visual.data.size.height + 'px';
+                }
             }
         }
 
         function stopResizeItem() {
             if (resizingItem) {
                 renderTransformControls();
-                autoSave();
+
+                // Auto-sync
+                if (typeof activeWaypointIndex !== 'undefined' && activeWaypointIndex !== -1) {
+                    syncActiveWaypoint();
+                } else {
+                    autoSave();
+                }
             }
 
             resizingItem = null;
