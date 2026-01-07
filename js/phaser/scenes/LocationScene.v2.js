@@ -1979,8 +1979,15 @@ class LocationScene extends Phaser.Scene {
             const x = bgX + (item.position.x / 100) * bgWidth;
             const y = bgY + (item.position.y / 100) * bgHeight;
 
+            // ✅ Ajustar tamanho item proporcionalmente à escala do background
+            const bgScale = this.background ? this.background.scaleX : 1;
+            const rawSize = item.size || { width: 80, height: 80 };
+            const size = {
+                width: rawSize.width * bgScale,
+                height: rawSize.height * bgScale
+            };
+
             // ✅ Usar DOM para transforms 3D/skew, sprites Phaser para o resto
-            const size = item.size || { width: 80, height: 80 };
             const transform = item.transform || {};
             const textureKey = `item_${item.id}`;
             let element;
@@ -2459,9 +2466,9 @@ class LocationScene extends Phaser.Scene {
 
         // Converter pontos percentuais para coordenadas do mundo
         // E calcular escala relativa ao tamanho inicial do sprite
-        // O sprite já vem com setDisplaySize() aplicado, então sua scaleX/scaleY inicial é a base.
-        const baseScaleX = sprite.scaleX;
-        const baseScaleY = sprite.scaleY;
+        // O sprite já vem com setDisplaySize() aplicado. scaleX/scaleY são a base.
+        const baseScaleX = (sprite.scaleX && Number.isFinite(sprite.scaleX)) ? sprite.scaleX : 1;
+        const baseScaleY = (sprite.scaleY && Number.isFinite(sprite.scaleY)) ? sprite.scaleY : 1;
 
         const worldPoints = points.map(p => ({
             x: bgX + (p.x / 100) * bgWidth,
