@@ -1847,7 +1847,7 @@ class LocationScene extends Phaser.Scene {
             const zone = this.add.zone(x + w / 2, y + h / 2, w, h);
             zone.setInteractive({ useHandCursor: true });
             zone.setOrigin(0.5);
-            zone.setDepth(10); // Baixa prioridade - items devem ter preferência
+            zone.setDepth(90); // Acima do puzzle sprite (depth 80) para poder clicar
 
             // Label (nome do destino)
             const labelCenterX = x + w / 2;
@@ -1862,7 +1862,7 @@ class LocationScene extends Phaser.Scene {
             });
             label.setOrigin(0.5);
             label.setAlpha(0); // Invisível por padrão
-            label.setDepth(15); // Acima das zones, mas abaixo dos items
+            label.setDepth(95); // Acima das zones e puzzle sprite
 
             // Hover effects - apenas label
             zone.on('pointerover', () => {
