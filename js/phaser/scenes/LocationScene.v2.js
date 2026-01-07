@@ -372,8 +372,8 @@ class LocationScene extends Phaser.Scene {
 
             if (!isPuzzleActive && this.puzzleManager && this.puzzleManager.isAnyPuzzleActive && this.puzzleManager.isAnyPuzzleActive()) {
                 const activePuzzle = this.puzzleManager.activePuzzle;
-                // ShapeMatchPuzzle não bloqueia drag
-                if (activePuzzle && activePuzzle.constructor.name !== 'ShapeMatchPuzzle') {
+                // ShapeMatchPuzzle e PrismLightPuzzleInScene não bloqueiam drag
+                if (activePuzzle && activePuzzle.constructor.name !== 'ShapeMatchPuzzle' && activePuzzle.constructor.name !== 'PrismLightPuzzleInScene') {
                     isPuzzleActive = true;
                 }
             }
@@ -396,8 +396,8 @@ class LocationScene extends Phaser.Scene {
 
             if (!isPuzzleActive && this.puzzleManager && this.puzzleManager.isAnyPuzzleActive && this.puzzleManager.isAnyPuzzleActive()) {
                 const activePuzzle = this.puzzleManager.activePuzzle;
-                // ShapeMatchPuzzle não bloqueia drag
-                if (activePuzzle && activePuzzle.constructor.name !== 'ShapeMatchPuzzle') {
+                // ShapeMatchPuzzle e PrismLightPuzzleInScene não bloqueiam drag
+                if (activePuzzle && activePuzzle.constructor.name !== 'ShapeMatchPuzzle' && activePuzzle.constructor.name !== 'PrismLightPuzzleInScene') {
                     isPuzzleActive = true;
                 }
             }
