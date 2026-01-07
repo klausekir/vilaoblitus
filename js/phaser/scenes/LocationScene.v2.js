@@ -754,7 +754,7 @@ class LocationScene extends Phaser.Scene {
             height: displayHeight
         };
 
-        if (puzzle.type && puzzle.type !== 'item_combination') {
+        if (puzzle.type && puzzle.type !== 'item_combination' && puzzle.type !== 'prism_light') {
             // ✅ Prisma visual não deve ter cursor de "clicável" (mãozinha), pois o jogador interage arrastando coisas ou clicando especificamente
             const useHandCursor = puzzle.type !== 'prism_light';
             this.puzzleSprite.setInteractive({ useHandCursor: useHandCursor });
