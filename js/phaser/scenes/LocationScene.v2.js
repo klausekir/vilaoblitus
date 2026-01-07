@@ -1864,8 +1864,14 @@ class LocationScene extends Phaser.Scene {
             label.setAlpha(0); // Invisível por padrão
             label.setDepth(95); // Acima das zones e puzzle sprite
 
-            // Hover effects - apenas label
-            zone.on('pointerover', () => {
+            // Hover effects - apenas label (bloqueado se parede na frente)
+            zone.on('pointerover', (pointer) => {
+                // Verificar se há parede na frente - não mostrar hover
+                const wallAtHover = this.checkWallInteraction(pointer.worldX, pointer.worldY);
+                if (wallAtHover && !gameStateManager.isWallDestroyed(this.currentLocation, wallAtHover.id)) {
+                    return; // Não mostrar hover quando parede está na frente
+                }
+
                 this.tweens.killTweensOf(label);
                 this.tweens.add({
                     targets: label,
@@ -1885,6 +1891,18 @@ class LocationScene extends Phaser.Scene {
                     duration: 150,
                     ease: 'Power2'
                 });
+            });
+
+            // Também esconder label quando mouse se move sobre uma parede
+            zone.on('pointermove', (pointer) => {
+                const wallAtPos = this.checkWallInteraction(pointer.worldX, pointer.worldY);
+                if (wallAtPos && !gameStateManager.isWallDestroyed(this.currentLocation, wallAtPos.id)) {
+                    // Parede está na frente - esconder label
+                    if (label.alpha > 0) {
+                        this.tweens.killTweensOf(label);
+                        label.setAlpha(0);
+                    }
+                }
             });
 
             // Click handler
