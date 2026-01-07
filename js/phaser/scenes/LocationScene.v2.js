@@ -1922,12 +1922,15 @@ class LocationScene extends Phaser.Scene {
 
             // Click handler
             zone.on('pointerdown', (pointer) => {
+                console.log('[HotspotDebug] Click detected on hotspot:', hotspot.label);
+
                 // Verificar se há PAREDE DESTRUTÍVEL (não destruída) cobrindo esta área
                 const wallAtClick = this.checkWallInteraction(pointer.worldX, pointer.worldY);
                 if (wallAtClick) {
                     // Só bloquear se a parede ainda não foi destruída
                     const isDestroyed = gameStateManager.isWallDestroyed(this.currentLocation, wallAtClick.id);
                     if (!isDestroyed) {
+                        console.log('[HotspotDebug] Blocked by Wall:', wallAtClick.id);
                         return;
                     }
                 }
@@ -1936,12 +1939,17 @@ class LocationScene extends Phaser.Scene {
                 // Isso impede clicar em hotspots "atrás" da parede/puzzle
                 if (this.puzzleHitArea && this.currentPuzzleData) {
                     const puzzleNotSolved = !gameStateManager.isPuzzleSolved(this.currentPuzzleData.id);
+                    // Force check to see if puzzleHitArea is erroneously active
+                    console.log('[HotspotDebug] PuzzleHitArea active. Solved?', !puzzleNotSolved, 'Type:', this.currentPuzzleData.type);
+
                     const isInsidePuzzle = this.isPointInsidePuzzle(pointer.worldX, pointer.worldY);
 
                     if (puzzleNotSolved && isInsidePuzzle) {
-                        // Clique está na área do puzzle não resolvido - bloquear
+                        console.log('[HotspotDebug] Blocked by Unsolved Puzzle');
                         return;
                     }
+                } else {
+                    console.log('[HotspotDebug] No PuzzleHitArea blocking.');
                 }
 
                 // Verificar se há um dropped item na posição do clique
@@ -1955,9 +1963,11 @@ class LocationScene extends Phaser.Scene {
 
                 // Se há dropped item, não processar o hotspot
                 if (hasDroppedItemAtPosition) {
+                    console.log('[HotspotDebug] Blocked by Dropped Item');
                     return;
                 }
 
+                console.log('[HotspotDebug] Executing navigation to:', hotspot.targetLocation);
                 this.handleHotspotClick(hotspot);
             });
 
