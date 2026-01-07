@@ -2411,22 +2411,9 @@ class LocationScene extends Phaser.Scene {
 
             this.items.push({ sprite: element, data: item });
 
-            // [DEBUG] Log para verificar dados
-            if (item.id && item.id.includes('ghost')) {
-                console.log(`[Waypoints DEBUG] Item ${item.id}`, {
-                    hasWaypoints: !!item.waypoints,
-                    enabled: item.waypoints?.enabled,
-                    pointsLen: item.waypoints?.points?.length,
-                    data: item.waypoints
-                });
-            }
-
             // ✅ Iniciar animação de waypoints se configurada
             if (element && item.waypoints && item.waypoints.enabled && item.waypoints.points?.length > 0) {
-                console.log(`[Waypoints] Starting for ${item.id} with ${item.waypoints.points.length} points`);
                 this.startWaypointAnimation(element, item.waypoints, item);
-            } else if (item.waypoints) {
-                console.log(`[Waypoints] Skipped for ${item.id}: enabled=${item.waypoints.enabled}, points=${item.waypoints.points?.length}`);
             }
         });
     }
@@ -2467,8 +2454,6 @@ class LocationScene extends Phaser.Scene {
         const { points, speed = 50, mode = 'loop' } = waypointConfig;
         const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
 
-        console.log(`[Waypoints] Config: speed=${speed}, mode=${mode}, bg=[${bgWidth}x${bgHeight} at ${bgX},${bgY}]`);
-
         let currentIndex = 0;
         let direction = 1; // 1 = forward, -1 = backward (for pingpong)
 
@@ -2477,8 +2462,6 @@ class LocationScene extends Phaser.Scene {
             x: bgX + (p.x / 100) * bgWidth,
             y: bgY + (p.y / 100) * bgHeight
         }));
-
-        console.log(`[Waypoints] World Points:`, worldPoints);
 
         const moveToNextWaypoint = () => {
             // Verificar se sprite ainda existe
