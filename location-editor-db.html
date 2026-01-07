@@ -7958,6 +7958,7 @@ if (typeof module !== 'undefined' && module.exports) {
                                     shadowOffsetX: parseFloat(h.shadow_offset_x) || 0,
                                     shadowOffsetY: parseFloat(h.shadow_offset_y) || 0
                                 },
+                                waypoints: h.waypoints ? (typeof h.waypoints === 'string' ? JSON.parse(h.waypoints) : h.waypoints) : null,
                                 found: false
                             });
                         } else {
@@ -8145,7 +8146,8 @@ if (typeof module !== 'undefined' && module.exports) {
                             opacity: item.transform?.opacity || 1,
                             shadow_blur: item.transform?.shadowBlur || 0,
                             shadow_offset_x: item.transform?.shadowOffsetX || 0,
-                            shadow_offset_y: item.transform?.shadowOffsetY || 0
+                            shadow_offset_y: item.transform?.shadowOffsetY || 0,
+                            waypoints: item.waypoints ? JSON.stringify(item.waypoints) : null
                         };
 
                         return hotspot;
