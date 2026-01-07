@@ -2650,9 +2650,6 @@
                 if (isSelected && item.waypoints && item.waypoints.enabled && item.waypoints.points && item.waypoints.points.length > 0) {
                     const points = item.waypoints.points;
 
-                    // Debug log
-                    console.log('Rendering waypoints for item', index, points);
-
                     // Desenhar linhas conectando os pontos
                     const svgContainer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                     svgContainer.style.cssText = `
@@ -2662,8 +2659,7 @@
                         width: 100%;
                         height: 100%;
                         pointer-events: none;
-                        z-index: 9999; /* Z-index extremo para teste */
-                        border: 2px solid rgba(255, 0, 0, 0.5); /* Borda de debug */
+                        z-index: 90;
                     `;
 
                     // Adicionar posição atual do item como ponto inicial se não houver pontos
@@ -3200,14 +3196,10 @@
                 visual.data.waypoints = { enabled: true, points: [], speed: 50, mode: 'loop' };
             }
 
-            // Adicionar novo ponto baseado na posição atual ou último ponto
-            const lastPoint = visual.data.waypoints.points.length > 0
-                ? visual.data.waypoints.points[visual.data.waypoints.points.length - 1]
-                : { x: 50, y: 50 };
-
+            // Adicionar novo ponto usando a posição ATUAL do item (snapshot)
             visual.data.waypoints.points.push({
-                x: (lastPoint.x + 10) % 100,
-                y: lastPoint.y
+                x: visual.data.position.x,
+                y: visual.data.position.y
             });
 
             renderTransformControls();
