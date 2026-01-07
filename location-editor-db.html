@@ -2369,11 +2369,11 @@
         function stopRotateItem() {
             if (isRotating) {
                 isRotating = false;
-                window.removeEventListener('mousemove', rotateItemDrag);
-                window.removeEventListener('mouseup', stopRotateItem);
+                window.removeEventListener('mousemove', dragItem);
+                window.removeEventListener('mouseup', stopDragItem);
 
-                // Auto-sync se estiver editando waypoint
-                if (activeWaypointIndex !== -1) {
+                // Auto-sync position if editing a waypoint
+                if (typeof activeWaypointIndex !== 'undefined' && activeWaypointIndex !== -1) {
                     syncActiveWaypoint();
                 } else {
                     autoSave();
@@ -3483,6 +3483,18 @@
 
             if (visual.data.waypoints.points[index]) {
                 visual.data.waypoints.points[index][prop] = value;
+
+                // If we are editing this waypoint currently, update the visual item immediately
+                if (activeWaypointIndex === index) {
+                    if (prop === 'x') visual.data.position.x = value;
+                    if (prop === 'y') visual.data.position.y = value;
+                    if (prop === 'scale') {
+                        visual.data.transform.scaleX = value;
+                        visual.data.transform.scaleY = value;
+                    }
+                    if (prop === 'rotation') visual.data.transform.rotation = value;
+                }
+
                 autoSave();
                 renderPositionedItems();
             }
