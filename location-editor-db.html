@@ -3134,26 +3134,49 @@
         }
 
         // ===== WAYPOINTS FUNCTIONS =====
-        function renderWaypointsList(points) {
-            if (!points || points.length === 0) {
-                return '<div style="font-size: 11px; color: #999; padding: 8px; text-align: center;">Nenhum ponto definido</div>';
-            }
+        if (!points || points.length === 0) {
+            return '<div style="font-size: 11px; color: #999; padding: 8px; text-align: center;">Nenhum ponto definido</div>';
+        }
 
-            return points.map((p, i) => `
-                <div style="display: flex; align-items: center; gap: 6px; padding: 5px; background: white; border-radius: 4px; margin-bottom: 4px;">
-                    <span style="font-size: 11px; color: #666; width: 20px;">${i + 1}.</span>
+        // Cabeçalho da tabela
+        const header = `
+                <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; padding: 0 5px 5px 5px; font-size: 10px; color: #666; font-weight: bold; text-align: center;">
+                    <span>#</span>
+                    <span>X (%)</span>
+                    <span>Y (%)</span>
+                    <span>Escala</span>
+                    <span>Rot (°)</span>
+                    <span></span>
+                </div>
+            `;
+
+        const rows = points.map((p, i) => `
+                <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; align-items: center; background: white; border-radius: 4px; margin-bottom: 4px; padding: 4px;">
+                    <span style="font-size: 11px; color: #666; text-align: center;">${i + 1}</span>
+                    
                     <input type="number" value="${p.x.toFixed(1)}" step="0.5" min="0" max="100"
-                           style="width: 50px; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;"
+                           style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
                            onchange="updateWaypointPoint(${i}, 'x', parseFloat(this.value))">
-                    <span style="font-size: 11px; color: #999;">%</span>
+                    
                     <input type="number" value="${p.y.toFixed(1)}" step="0.5" min="0" max="100"
-                           style="width: 50px; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;"
+                           style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
                            onchange="updateWaypointPoint(${i}, 'y', parseFloat(this.value))">
-                    <span style="font-size: 11px; color: #999;">%</span>
-                    <button onclick="removeWaypoint(${i})" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px;">×</button>
+
+                    <input type="number" value="${p.scale !== undefined ? p.scale : 1}" step="0.1"
+                           style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
+                           placeholder="1"
+                           onchange="updateWaypointPoint(${i}, 'scale', parseFloat(this.value))">
+
+                    <input type="number" value="${p.rotation !== undefined ? p.rotation : 0}" step="15"
+                           style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
+                           placeholder="0"
+                           onchange="updateWaypointPoint(${i}, 'rotation', parseFloat(this.value))">
+                           
+                    <button onclick="removeWaypoint(${i})" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
                 </div>
             `).join('');
-        }
+
+        return header + rows;
 
         function toggleWaypoints(enabled) {
             const visual = getSelectedVisual();
@@ -3196,10 +3219,12 @@
                 visual.data.waypoints = { enabled: true, points: [], speed: 50, mode: 'loop' };
             }
 
-            // Adicionar novo ponto usando a posição ATUAL do item (snapshot)
+            // Adicionar novo ponto usando a posição ATUAL e snapshot de transformação
             visual.data.waypoints.points.push({
                 x: visual.data.position.x,
-                y: visual.data.position.y
+                y: visual.data.position.y,
+                scale: visual.data.transform ? (visual.data.transform.scaleX || 1) : 1,
+                rotation: visual.data.transform ? (visual.data.transform.rotation || 0) : 0
             });
 
             renderTransformControls();

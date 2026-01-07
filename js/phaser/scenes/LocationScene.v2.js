@@ -2460,7 +2460,9 @@ class LocationScene extends Phaser.Scene {
         // Converter pontos percentuais para coordenadas do mundo
         const worldPoints = points.map(p => ({
             x: bgX + (p.x / 100) * bgWidth,
-            y: bgY + (p.y / 100) * bgHeight
+            y: bgY + (p.y / 100) * bgHeight,
+            scale: p.scale !== undefined ? p.scale : 1,
+            rotation: p.rotation !== undefined ? p.rotation : 0
         }));
 
         const moveToNextWaypoint = () => {
@@ -2495,6 +2497,9 @@ class LocationScene extends Phaser.Scene {
                 targets: sprite,
                 x: target.x,
                 y: target.y,
+                scaleX: target.scale,
+                scaleY: target.scale,
+                angle: target.rotation,
                 duration: Math.max(duration, 100), // Mínimo 100ms
                 ease: 'Linear',
                 onComplete: moveToNextWaypoint
@@ -2505,6 +2510,8 @@ class LocationScene extends Phaser.Scene {
         const firstWaypoint = worldPoints[0];
         sprite.x = firstWaypoint.x;
         sprite.y = firstWaypoint.y;
+        sprite.setScale(firstWaypoint.scale);
+        sprite.setAngle(firstWaypoint.rotation);
 
         // Iniciar movimento para o segundo waypoint
         if (worldPoints.length > 1) {
