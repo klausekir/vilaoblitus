@@ -3299,7 +3299,8 @@
                            onclick="event.stopPropagation()"
                            onchange="updateWaypointPoint(${i}, 'rotation', parseFloat(this.value))">
                            
-                    <button onclick="event.stopPropagation(); removeWaypoint(${i})" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
+                    <button onclick="event.stopPropagation(); updateWaypointFromItem(${i})" title="Atualizar ponto com posição atual do item" style="background: #4ecdc4; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; margin-right: 2px;">🔄</button>
+                    <button onclick="event.stopPropagation(); removeWaypoint(${i})" title="Remover ponto" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
                 </div>
             `).join('');
 
@@ -3408,6 +3409,32 @@
             renderPositionedItems();
 
             autoSave();
+        }
+
+        function updateWaypointFromItem(index) {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item' || !visual.data.waypoints) return;
+
+            const point = visual.data.waypoints.points[index];
+            if (!point) return;
+
+            // Copiar propriedades atuais do item para o ponto
+            point.x = visual.data.position.x;
+            point.y = visual.data.position.y;
+
+            if (visual.data.transform) {
+                point.scale = visual.data.transform.scaleX || 1;
+                point.rotation = visual.data.transform.rotation || 0;
+            } else {
+                point.scale = 1;
+                point.rotation = 0;
+            }
+
+            renderTransformControls(); // Re-renderizar lista para mostrar valores atualizados
+            renderPositionedItems();
+            autoSave();
+
+            showToast('✅ Ponto atualizado com sucesso!', 'success');
         }
 
         function updateWaypointPoint(index, prop, value) {
