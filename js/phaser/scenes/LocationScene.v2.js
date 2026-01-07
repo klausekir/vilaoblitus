@@ -2410,6 +2410,11 @@ class LocationScene extends Phaser.Scene {
             }
 
             this.items.push({ sprite: element, data: item });
+
+            // ✅ Iniciar animação de waypoints se configurada
+            if (element && item.waypoints && item.waypoints.enabled && item.waypoints.points?.length > 1) {
+                this.startWaypointAnimation(element, item.waypoints, item);
+            }
         });
     }
 
@@ -2436,6 +2441,74 @@ class LocationScene extends Phaser.Scene {
             case 'interact':
                 uiManager.showNotification('Nada de interessante aqui...');
                 break;
+        }
+    }
+
+    /**
+     * Inicia animação de waypoints para um sprite
+     * @param {Phaser.GameObjects.Sprite} sprite - Sprite a animar
+     * @param {Object} waypointConfig - Configuração de waypoints
+     * @param {Object} item - Dados do item original
+     */
+    startWaypointAnimation(sprite, waypointConfig, item) {
+        const { points, speed = 50, mode = 'loop' } = waypointConfig;
+        const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
+
+        let currentIndex = 0;
+        let direction = 1; // 1 = forward, -1 = backward (for pingpong)
+
+        // Converter pontos percentuais para coordenadas do mundo
+        const worldPoints = points.map(p => ({
+            x: bgX + (p.x / 100) * bgWidth,
+            y: bgY + (p.y / 100) * bgHeight
+        }));
+
+        const moveToNextWaypoint = () => {
+            // Verificar se sprite ainda existe
+            if (!sprite || !sprite.scene) return;
+
+            // Calcular próximo índice
+            if (mode === 'pingpong') {
+                currentIndex += direction;
+                if (currentIndex >= worldPoints.length - 1) {
+                    direction = -1;
+                    currentIndex = worldPoints.length - 1;
+                } else if (currentIndex <= 0) {
+                    direction = 1;
+                    currentIndex = 0;
+                }
+            } else {
+                // mode === 'loop'
+                currentIndex = (currentIndex + 1) % worldPoints.length;
+            }
+
+            const target = worldPoints[currentIndex];
+
+            // Calcular duração baseada na distância e velocidade
+            const distance = Phaser.Math.Distance.Between(
+                sprite.x, sprite.y, target.x, target.y
+            );
+            const duration = (distance / speed) * 1000; // speed em pixels/segundo
+
+            // Animar para o próximo ponto
+            this.tweens.add({
+                targets: sprite,
+                x: target.x,
+                y: target.y,
+                duration: Math.max(duration, 100), // Mínimo 100ms
+                ease: 'Linear',
+                onComplete: moveToNextWaypoint
+            });
+        };
+
+        // Mover o sprite para o primeiro waypoint (posição inicial)
+        const firstWaypoint = worldPoints[0];
+        sprite.x = firstWaypoint.x;
+        sprite.y = firstWaypoint.y;
+
+        // Iniciar movimento para o segundo waypoint
+        if (worldPoints.length > 1) {
+            moveToNextWaypoint();
         }
     }
 
