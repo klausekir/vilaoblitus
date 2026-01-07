@@ -2500,14 +2500,28 @@ class LocationScene extends Phaser.Scene {
 
             const target = worldPoints[currentIndex];
 
-            // Calcular escala alvo considerando direção (PingPong Mirror)
-            // Se pingpong e voltando (direction = -1), inverte o scaleX
-            const mirrorFactor = (mode === 'pingpong' && direction === -1) ? -1 : 1;
-            const targetScaleX = target.scaleX * mirrorFactor;
+            // Calcular direção do movimento (Face Movement Direction)
+            const dx = target.x - sprite.x;
 
-            // Flip instantâneo se a direção mudou (para não "girar" / paper-mario)
-            // Verifica se o sinal do scaleX atual é diferente do sinal do alvo
-            if (Math.sign(sprite.scaleX) !== Math.sign(targetScaleX) && Math.abs(targetScaleX) > 0) {
+            // Determinar sinal desejado para scaleX
+            // Se dx > 1, face Right (scaleX > 0). Se dx < -1, face Left (scaleX < 0).
+            // Se movimento vertical (dx ~ 0), mantém sinal atual.
+            let desiredSign = Math.sign(baseScaleX || 1); // Padrão
+
+            if (Math.abs(dx) > 1) {
+                desiredSign = Math.sign(dx);
+            } else {
+                desiredSign = Math.sign(sprite.scaleX);
+            }
+
+            // Target Absolute Scale (definida no waypoint)
+            const absTargetScale = Math.abs(target.scaleX);
+
+            // Aplicar sinal
+            const finalScaleX = absTargetScale * desiredSign;
+
+            // Flip instantâneo se a direção mudou
+            if (Math.sign(sprite.scaleX) !== Math.sign(finalScaleX)) {
                 sprite.scaleX *= -1;
             }
 
@@ -2522,7 +2536,7 @@ class LocationScene extends Phaser.Scene {
                 targets: sprite,
                 x: target.x,
                 y: target.y,
-                scaleX: targetScaleX,
+                scaleX: finalScaleX,
                 scaleY: target.scaleY,
                 angle: target.rotation,
                 duration: Math.max(duration, 100), // Mínimo 100ms
