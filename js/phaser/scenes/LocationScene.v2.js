@@ -1891,6 +1891,16 @@ class LocationScene extends Phaser.Scene {
                     return; // Não mostrar hover quando parede está na frente
                 }
 
+                // Verificar se há puzzle NÃO RESOLVIDO na frente
+                if (this.puzzleHitArea && this.currentPuzzleData) {
+                    const puzzleNotSolved = !gameStateManager.isPuzzleSolved(this.currentPuzzleData.id);
+                    const isInsidePuzzle = this.isPointInsidePuzzle(pointer.worldX, pointer.worldY);
+
+                    if (puzzleNotSolved && isInsidePuzzle) {
+                        return; // Não mostrar hover se bloqueado por puzzle
+                    }
+                }
+
                 this.tweens.killTweensOf(label);
                 this.tweens.add({
                     targets: label,
