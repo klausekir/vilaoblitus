@@ -1843,6 +1843,8 @@ class LocationScene extends Phaser.Scene {
     }
 
     renderHotspots() {
+        console.log('[HotspotDebug] renderHotspots called. Hotspots count:', this.locationData.hotspots ? this.locationData.hotspots.length : 0);
+
         if (!this.locationData.hotspots) return;
 
         const { bgWidth, bgHeight, bgX, bgY } = this.getBackgroundBounds();
