@@ -2294,6 +2294,7 @@
         let isRotating = false;
         let rotateCenter = { x: 0, y: 0 };
         let initialRotation = 0;
+        let activeWaypointIndex = -1; // Global state for auto-sync
 
         function startRotateItem(e) {
             e.stopPropagation();
@@ -2301,6 +2302,11 @@
 
             const visual = getSelectedVisual();
             if (!visual) return;
+
+            // Se estivermos editando um waypoint, marcar para sync
+            if (activeWaypointIndex !== -1 && visual.type === 'item') {
+                showToast('🔄 Ajustando rotação do Ponto ' + (activeWaypointIndex + 1), 'info');
+            }
 
             isRotating = true;
 
@@ -2365,7 +2371,13 @@
                 isRotating = false;
                 window.removeEventListener('mousemove', rotateItemDrag);
                 window.removeEventListener('mouseup', stopRotateItem);
-                autoSave();
+
+                // Auto-sync se estiver editando waypoint
+                if (activeWaypointIndex !== -1) {
+                    syncActiveWaypoint();
+                } else {
+                    autoSave();
+                }
             }
         }
 
@@ -2962,7 +2974,6 @@
                                     🤖 Auto-Posicionar IA
                                 </button>
                             ` : ''}
-                            ${previewHtml}
                             <input type="text" value="${wall.image || ''}"
                                    placeholder="ou cole o caminho da imagem"
                                    style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; margin-top: 8px; font-size: 12px;"
@@ -3274,8 +3285,8 @@
             `;
 
             const rows = points.map((p, i) => `
-                <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; align-items: center; background: white; border-radius: 4px; margin-bottom: 4px; padding: 4px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.2s;" onclick="jumpToWaypoint(${i})" onmouseover="this.style.borderColor='#ff9800'" onmouseout="this.style.borderColor='transparent'">
-                    <span style="font-size: 11px; color: #666; text-align: center;">${i + 1}</span>
+                <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; align-items: center; background: ${activeWaypointIndex === i ? '#e3f2fd' : 'white'}; border-radius: 4px; margin-bottom: 4px; padding: 4px; cursor: pointer; border: 1px solid ${activeWaypointIndex === i ? '#2196f3' : 'transparent'}; transition: all 0.2s;" onclick="jumpToWaypoint(${i})" onmouseover="this.style.borderColor='#ff9800'" onmouseout="this.style.borderColor='${activeWaypointIndex === i ? '#2196f3' : 'transparent'}'">
+                    <span style="font-size: 11px; color: ${activeWaypointIndex === i ? '#2196f3' : '#666'}; font-weight: ${activeWaypointIndex === i ? 'bold' : 'normal'}; text-align: center;">${i + 1}</span>
                     
                     <input type="number" value="${p.x.toFixed(1)}" step="0.5" min="0" max="100"
                            style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
@@ -3296,10 +3307,8 @@
                     <input type="number" value="${p.rotation !== undefined ? p.rotation : 0}" step="15"
                            style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
                            placeholder="0"
-                           onclick="event.stopPropagation()"
                            onchange="updateWaypointPoint(${i}, 'rotation', parseFloat(this.value))">
                            
-                    <button onclick="event.stopPropagation(); updateWaypointFromItem(${i})" title="Atualizar ponto com posição atual do item" style="background: #4ecdc4; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; margin-right: 2px;">🔄</button>
                     <button onclick="event.stopPropagation(); removeWaypoint(${i})" title="Remover ponto" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
                 </div>
             `).join('');
@@ -3373,6 +3382,10 @@
 
         function jumpToWaypoint(index) {
             console.log("Jump to waypoint:", index);
+
+            // Set active index for auto-sync
+            activeWaypointIndex = index;
+
             const visual = getSelectedVisual();
             if (!visual || visual.type !== 'item' || !visual.data.waypoints) return;
 
@@ -3408,7 +3421,34 @@
             // Forçar atualização visual completa
             renderPositionedItems();
 
+            // Re-render list to show highlight
+            renderWaypointsList(visual.data.waypoints.points);
+
+            // Show toast
+            showToast(`📍 Editando Ponto ${index + 1}. Alterações serão salvas automaticamente!`, 'info');
+        }
+
+        function syncActiveWaypoint() {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item' || activeWaypointIndex === -1) return;
+
+            if (!visual.data.waypoints || !visual.data.waypoints.points[activeWaypointIndex]) return;
+
+            const point = visual.data.waypoints.points[activeWaypointIndex];
+
+            // Sync values from Item -> Waypoint
+            point.x = visual.data.position.x;
+            point.y = visual.data.position.y;
+            if (visual.data.transform) {
+                point.scale = visual.data.transform.scaleX || 1;
+                point.rotation = visual.data.transform.rotation || 0;
+            }
+
+            console.log("Auto-synced waypoint", activeWaypointIndex, point);
+
+            renderTransformControls(); // Render list (values update)
             autoSave();
+            showToast('💾 Ponto salvo!', 'success');
         }
 
         function updateWaypointFromItem(index) {
