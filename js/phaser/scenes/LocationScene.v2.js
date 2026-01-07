@@ -747,12 +747,16 @@ class LocationScene extends Phaser.Scene {
         const displayWidth = this.puzzleSprite.displayWidth || targetWidth;
         const displayHeight = this.puzzleSprite.displayHeight || targetHeight;
 
-        this.puzzleHitArea = {
-            x: this.puzzleSprite.x - displayWidth / 2,
-            y: this.puzzleSprite.y - displayHeight / 2,
-            width: displayWidth,
-            height: displayHeight
-        };
+        if (puzzle.type !== 'prism_light') {
+            this.puzzleHitArea = {
+                x: this.puzzleSprite.x - displayWidth / 2,
+                y: this.puzzleSprite.y - displayHeight / 2,
+                width: displayWidth,
+                height: displayHeight
+            };
+        } else {
+            this.puzzleHitArea = null;
+        }
 
         if (puzzle.type && puzzle.type !== 'item_combination') {
 
