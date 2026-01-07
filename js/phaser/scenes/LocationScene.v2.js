@@ -448,8 +448,8 @@ class LocationScene extends Phaser.Scene {
             let managerActive = false;
             if (this.puzzleManager && this.puzzleManager.isAnyPuzzleActive && this.puzzleManager.isAnyPuzzleActive()) {
                 const activePuzzle = this.puzzleManager.activePuzzle;
-                // ShapeMatchPuzzle não bloqueia navegação por teclado
-                if (activePuzzle && activePuzzle.constructor.name !== 'ShapeMatchPuzzle') {
+                // ShapeMatchPuzzle e PrismLightPuzzleInScene não bloqueiam navegação por teclado
+                if (activePuzzle && activePuzzle.constructor.name !== 'ShapeMatchPuzzle' && activePuzzle.constructor.name !== 'PrismLightPuzzleInScene') {
                     managerActive = true;
                 }
             }
