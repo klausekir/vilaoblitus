@@ -2712,10 +2712,15 @@
                             cursor: pointer;
                             border: 2px solid white;
                             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                            pointer-events: auto;
                         `;
-                        marker.title = `Waypoint ${i + 1}`;
+                        marker.title = `Waypoint ${i + 1} (Clique para pular)`;
 
-                        // Permitir arrastar waypoint (futura melhoria, por enquanto visualizacao)
+                        // Clique no marcador pula para o ponto
+                        marker.onclick = (e) => {
+                            e.stopPropagation(); // Evitar desselecionar
+                            jumpToWaypoint(i);
+                        };
 
                         container.appendChild(marker);
                     });
@@ -3152,28 +3157,32 @@
             `;
 
             const rows = points.map((p, i) => `
-                <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; align-items: center; background: white; border-radius: 4px; margin-bottom: 4px; padding: 4px;">
+                <div style="display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 25px; gap: 4px; align-items: center; background: white; border-radius: 4px; margin-bottom: 4px; padding: 4px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.2s;" onclick="jumpToWaypoint(${i})" onmouseover="this.style.borderColor='#ff9800'" onmouseout="this.style.borderColor='transparent'">
                     <span style="font-size: 11px; color: #666; text-align: center;">${i + 1}</span>
                     
                     <input type="number" value="${p.x.toFixed(1)}" step="0.5" min="0" max="100"
                            style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
+                           onclick="event.stopPropagation()"
                            onchange="updateWaypointPoint(${i}, 'x', parseFloat(this.value))">
                     
                     <input type="number" value="${p.y.toFixed(1)}" step="0.5" min="0" max="100"
                            style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
+                           onclick="event.stopPropagation()"
                            onchange="updateWaypointPoint(${i}, 'y', parseFloat(this.value))">
 
                     <input type="number" value="${p.scale !== undefined ? p.scale : 1}" step="0.1"
                            style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
                            placeholder="1"
+                           onclick="event.stopPropagation()"
                            onchange="updateWaypointPoint(${i}, 'scale', parseFloat(this.value))">
 
                     <input type="number" value="${p.rotation !== undefined ? p.rotation : 0}" step="15"
                            style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;"
                            placeholder="0"
+                           onclick="event.stopPropagation()"
                            onchange="updateWaypointPoint(${i}, 'rotation', parseFloat(this.value))">
                            
-                    <button onclick="removeWaypoint(${i})" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
+                    <button onclick="event.stopPropagation(); removeWaypoint(${i})" style="background: #ff6b6b; color: white; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
                 </div>
             `).join('');
 
@@ -3241,6 +3250,30 @@
             visual.data.waypoints.points.splice(index, 1);
             renderTransformControls();
             renderPositionedItems();
+            autoSave();
+        }
+
+        function jumpToWaypoint(index) {
+            const visual = getSelectedVisual();
+            if (!visual || visual.type !== 'item' || !visual.data.waypoints) return;
+
+            const point = visual.data.waypoints.points[index];
+            if (!point) return;
+
+            // Atualizar propriedades visuais do item
+            visual.data.position.x = point.x;
+            visual.data.position.y = point.y;
+
+            if (!visual.data.transform) visual.data.transform = {};
+            visual.data.transform.scaleX = point.scale !== undefined ? point.scale : 1;
+            visual.data.transform.scaleY = point.scale !== undefined ? point.scale : 1;
+            visual.data.transform.rotation = point.rotation !== undefined ? point.rotation : 0;
+
+            renderTransformControls();
+            renderPositionedItems();
+            // Não precisa salvar (autoSave), pois é só visualização temporária, 
+            // mas se o usuário quiser salvar essa posição como "Home", ele pode.
+            // Vou chamar autoSave para persistir que o item "andou" até lá.
             autoSave();
         }
 
