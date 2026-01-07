@@ -1889,25 +1889,25 @@ class LocationScene extends Phaser.Scene {
 
             // Click handler
             zone.on('pointerdown', (pointer) => {
+                // Verificar se há PAREDE DESTRUTÍVEL (não destruída) cobrindo esta área
+                const wallAtClick = this.checkWallInteraction(pointer.worldX, pointer.worldY);
+                if (wallAtClick) {
+                    // Só bloquear se a parede ainda não foi destruída
+                    const isDestroyed = gameStateManager.isWallDestroyed(this.currentLocation, wallAtClick.id);
+                    if (!isDestroyed) {
+                        console.log('[Hotspot] Bloqueado - parede destrutível na frente:', wallAtClick.id);
+                        return;
+                    }
+                }
+
                 // Verificar se há puzzle NÃO RESOLVIDO cobrindo esta área
                 // Isso impede clicar em hotspots "atrás" da parede/puzzle
                 if (this.puzzleHitArea && this.currentPuzzleData) {
                     const puzzleNotSolved = !gameStateManager.isPuzzleSolved(this.currentPuzzleData.id);
                     const isInsidePuzzle = this.isPointInsidePuzzle(pointer.worldX, pointer.worldY);
 
-                    console.log('[Hotspot Debug]', {
-                        hotspotLabel: hotspot.label,
-                        puzzleId: this.currentPuzzleData.id,
-                        puzzleNotSolved,
-                        isInsidePuzzle,
-                        clickX: pointer.worldX,
-                        clickY: pointer.worldY,
-                        puzzleHitArea: this.puzzleHitArea
-                    });
-
                     if (puzzleNotSolved && isInsidePuzzle) {
                         // Clique está na área do puzzle não resolvido - bloquear
-                        console.log('[Hotspot Debug] BLOQUEADO - clique na área do puzzle');
                         return;
                     }
                 }
