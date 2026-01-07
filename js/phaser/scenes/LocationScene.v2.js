@@ -1893,8 +1893,21 @@ class LocationScene extends Phaser.Scene {
                 // Isso impede clicar em hotspots "atrás" da parede/puzzle
                 if (this.puzzleHitArea && this.currentPuzzleData) {
                     const puzzleNotSolved = !gameStateManager.isPuzzleSolved(this.currentPuzzleData.id);
-                    if (puzzleNotSolved && this.isPointInsidePuzzle(pointer.worldX, pointer.worldY)) {
+                    const isInsidePuzzle = this.isPointInsidePuzzle(pointer.worldX, pointer.worldY);
+
+                    console.log('[Hotspot Debug]', {
+                        hotspotLabel: hotspot.label,
+                        puzzleId: this.currentPuzzleData.id,
+                        puzzleNotSolved,
+                        isInsidePuzzle,
+                        clickX: pointer.worldX,
+                        clickY: pointer.worldY,
+                        puzzleHitArea: this.puzzleHitArea
+                    });
+
+                    if (puzzleNotSolved && isInsidePuzzle) {
                         // Clique está na área do puzzle não resolvido - bloquear
+                        console.log('[Hotspot Debug] BLOQUEADO - clique na área do puzzle');
                         return;
                     }
                 }
