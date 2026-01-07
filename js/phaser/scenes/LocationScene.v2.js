@@ -2458,10 +2458,17 @@ class LocationScene extends Phaser.Scene {
         let direction = 1; // 1 = forward, -1 = backward (for pingpong)
 
         // Converter pontos percentuais para coordenadas do mundo
+        // E calcular escala relativa ao tamanho inicial do sprite
+        // O sprite já vem com setDisplaySize() aplicado, então sua scaleX/scaleY inicial é a base.
+        const baseScaleX = sprite.scaleX;
+        const baseScaleY = sprite.scaleY;
+
         const worldPoints = points.map(p => ({
             x: bgX + (p.x / 100) * bgWidth,
             y: bgY + (p.y / 100) * bgHeight,
-            scale: p.scale !== undefined ? p.scale : 1,
+            // Escala do waypoint é um Multiplicador sobre a escala base (definida pelo tamanho no editor)
+            scaleX: (p.scale !== undefined ? p.scale : 1) * baseScaleX,
+            scaleY: (p.scale !== undefined ? p.scale : 1) * baseScaleY,
             rotation: p.rotation !== undefined ? p.rotation : 0
         }));
 
@@ -2497,8 +2504,8 @@ class LocationScene extends Phaser.Scene {
                 targets: sprite,
                 x: target.x,
                 y: target.y,
-                scaleX: target.scale,
-                scaleY: target.scale,
+                scaleX: target.scaleX,
+                scaleY: target.scaleY,
                 angle: target.rotation,
                 duration: Math.max(duration, 100), // Mínimo 100ms
                 ease: 'Linear',
@@ -2510,7 +2517,8 @@ class LocationScene extends Phaser.Scene {
         const firstWaypoint = worldPoints[0];
         sprite.x = firstWaypoint.x;
         sprite.y = firstWaypoint.y;
-        sprite.setScale(firstWaypoint.scale);
+        sprite.scaleX = firstWaypoint.scaleX;
+        sprite.scaleY = firstWaypoint.scaleY;
         sprite.setAngle(firstWaypoint.rotation);
 
         // Iniciar movimento para o segundo waypoint
