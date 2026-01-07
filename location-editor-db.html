@@ -2650,6 +2650,9 @@
                 if (isSelected && item.waypoints && item.waypoints.enabled && item.waypoints.points && item.waypoints.points.length > 0) {
                     const points = item.waypoints.points;
 
+                    // Debug log
+                    console.log('Rendering waypoints for item', index, points);
+
                     // Desenhar linhas conectando os pontos
                     const svgContainer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                     svgContainer.style.cssText = `
@@ -2659,7 +2662,8 @@
                         width: 100%;
                         height: 100%;
                         pointer-events: none;
-                        z-index: 90;
+                        z-index: 9999; /* Z-index extremo para teste */
+                        border: 2px solid rgba(255, 0, 0, 0.5); /* Borda de debug */
                     `;
 
                     // Adicionar posição atual do item como ponto inicial se não houver pontos
@@ -3185,6 +3189,7 @@
             }
 
             autoSave();
+            renderPositionedItems();
         }
 
         function addWaypoint() {
@@ -3206,6 +3211,7 @@
             });
 
             renderTransformControls();
+            renderPositionedItems();
             autoSave();
         }
 
@@ -3215,6 +3221,7 @@
 
             visual.data.waypoints.points.splice(index, 1);
             renderTransformControls();
+            renderPositionedItems();
             autoSave();
         }
 
@@ -3225,6 +3232,7 @@
             if (visual.data.waypoints.points[index]) {
                 visual.data.waypoints.points[index][prop] = value;
                 autoSave();
+                renderPositionedItems();
             }
         }
 
@@ -3243,6 +3251,7 @@
             if (modeEl) visual.data.waypoints.mode = modeEl.value;
 
             autoSave();
+            renderPositionedItems();
         }
 
         function updateWallProperty(prop, value) {
