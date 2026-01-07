@@ -233,10 +233,9 @@ class PrismLightPuzzleInScene {
                     this.fillSlot(slot, itemId);
                     return true;
                 } else {
-                    if (window.uiManager?.showNotification) {
-                        uiManager.showNotification('Este slot precisa de um prisma');
-                    }
-                    return true;
+                    // Se não for prisma, não mostrar erro e não bloquear evento.
+                    // Retornar false permite que o LocationScene teste outros handlers (ex: quebrar parede com pedecabra)
+                    return false;
                 }
             }
         }

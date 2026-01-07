@@ -3254,13 +3254,7 @@ class LocationScene extends Phaser.Scene {
                 if (puzzle.onDropFromInventory(itemId, worldX, worldY)) {
                     return; // Item processado pelo puzzle
                 }
-
-                // Se não processou, verificar se há slots vazios
-                const hasEmptySlots = puzzle.prisms && puzzle.prisms.some(slot => !slot.filled);
-                if (hasEmptySlots) {
-                    uiManager.showNotification('Solte o prisma sobre um dos slots.', 2000);
-                    return;
-                }
+                // Se retornou false, continuamos para verificar outras interações (parede, etc)
             } else {
                 console.log('[InventoryDrop] Puzzle não tem método onDropFromInventory');
             }
